@@ -5,7 +5,7 @@ Linin-Kernighanin heuristinen algoritmi (Lin-Kernighan Heuristic Algorithm) on t
 ## Toteutussuunnitelma
 Aloitetaan työ laatimalla mahdollisimman yksinkertainen LK:n pääpiirteet toteuttava algoritmi Pythonilla. Laaditaan lisäksi suhteellisen yksinkertainen, mutta ei kaikkien vaihtoehtojen läpikäyntiin perustuva (aikavaatimus *O(n!)*), parhaan ratkaisun löytävä algoritmi. Tällainen voisi olla esimerkiksi Held-Karp-algoritmi, joka perustuu dynaamiseen ohjelmointiin ja löytää parhaan ratkaisun aikavaatimuksella *O(n^2*2^n)*. 
 
-Alkuperäinen artikkeli kuvaa LK:n kombinatorisen heuristiikan yleisellä tasolla satunnaisen ratkaisun iteratiiviseksi parantamiseksi seuraavasti:
+Alkuperäinen artikkeli[^1] kuvaa LK:n kombinatorisen heuristiikan yleisellä tasolla satunnaisen ratkaisun iteratiiviseksi parantamiseksi seuraavasti:
 1. Luo pseudosatunnainen ratkaisu T, joka täyttää kriteerit
 2. Yritä löytää parannettu ratkaisu T’ jollain T:n muunnoksella
 3. Jos ratkaisu T’ on parempi, niin T = T’ ja palaa kohtaan 2.

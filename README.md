@@ -13,10 +13,6 @@ Alkuperäinen Linin ja Kernighanin artikkeli[^1] kuvaa LK:n kombinatorisen heuri
 
 Artikkeli ei käytä vaikiintunutta pseudokoodia ja alkuperäisessä algoritmin kuvauksessa on myöhemmin tunnistettuja puutteita, jotka vaikuttavat suorituskykyyn suuremmilla syötteillä. Tämän vuoksi käytän ensisijaisena lähteenä LK:n toteutukselle TSP:tä käsittelevän *The Traveling Salesman Problem: A Computational Study*[^3] kirjan esitystä LK:sta. Teoksessa käydään myös läpi eri parannuksia LK:iin, joita pyrin toteuttamaan Pythonin asettamissa rajoissa asteittain kehitysversioissa.
 
-## Tutkimuskysymyksiä
-Tässä tutkimuskysymyksiä, joihin projektissa pyritään vastaamaan:
-1. 
-
 ## Testaus kehityksen aikana
 Laadin testitapauksia eri syötteillä, joilla voidaan verrata LK:n suorituskykyä ja approksimaation laatua suhteessa vertailukohtana käytettäviin algoritmeihin, jotka antavat aina parhaan ratkaisun. Syötteenä käytän eri kokoisia ja eri muotoisia verkkoja. Tutkimuskirjallisuudessa käytetään TSP-tiedostoja kuvaamaan verkkoja, joten toteutan testisyötteet TSP-muodossa. Tällöin voin myös käyttää valmiita testisyötteitä.
 

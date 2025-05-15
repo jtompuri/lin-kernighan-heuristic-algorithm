@@ -30,7 +30,7 @@ Pythonin rajoitteet saattavat algoritmin suorituskyvyn testauksessa peittää jo
 ## Raportointi
 Säilytän toimivat ja testatut LK:n kehitysversiot ja niiden testitulokset. Raportoin loppulisen LK:n tulosten lisäksi aikasarjana LK:n suorituskyvyn asteittaisen kehityksen tehtyjen parannuksen myötä. Raportoin mahdollisuuksien mukaan myös epäonnistuneita kokeiluja ja tuloksiltaan heikompia saman kehitysvaiheen vaihtoehtoja. 
 
-LK:n ajonaikana tulostetaan tietoa laskennan etenemisestä ja lopuksi raportoidaan tilastotietoja laskennasta, kuten suoritusaika, tulosten laatu (suhdeluku tulos / paras tulos) ja suoritettujen askelten määrä. Yksikkötestejä ja ajonaikaista lokitulostusta käytetään tarpeen mukaan ohjelman virheiden selvittämiseen.
+LK:n ajonaikana tulostetaan tietoa laskennan etenemisestä ja lopuksi piirretään kuva verkosta ja raportoidaan tilastotietoja laskennasta, kuten suoritusaika, tulosten laatu (suhdeluku tulos / paras tulos) ja suoritettujen askelten määrä. Yksikkötestejä ja ajonaikaista lokitulostusta käytetään tarpeen mukaan ohjelman virheiden selvittämiseen.
 
 [^1]: Lin, Shen & Kernighan, Brian W. (1973): ”An Effective Heuristic Algorithm for the Traveling-Salesman Problem”, Operations Research, Vol. 21, No. 2, s. 498–516.
 

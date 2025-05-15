@@ -32,7 +32,6 @@ Säilytän toimivat ja testatut LK:n kehitysversiot ja niiden testitulokset. Rap
 
 LK:n ajonaikana tulostetaan tietoa laskennan etenemisestä ja lopuksi raportoidaan tilastotietoja laskennasta, kuten suoritusaika ja suoritettujen askelten määrä. Ajonaikaista tulostusta käytetään tarvittaessa ohjelman virheiden selvittämiseen.
 
-## Lähteet:
 [^1]: Lin, Shen & Kernighan, Brian W. (1973): ”An Effective Heuristic Algorithm for the Traveling-Salesman Problem”, Operations Research, Vol. 21, No. 2, s. 498–516.
 
 [^2]: Mulder, Samuel A. & Wunsch II, Donald C. (2003): ”Million city traveling salesman problem solution by divide and conquer clustering with adaptive resonance neural networks”, Neural Networks 16, s. 827–832.

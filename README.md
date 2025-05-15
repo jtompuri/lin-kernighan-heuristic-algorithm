@@ -1,11 +1,11 @@
 # Lin-Kernighan heuristinen algoritmi
 
-Lin-Kernighan heuristinen algoritmi (_Lin-Kernighan Heuristic Algorithm_) on tehokas algoritmi symmetrisen kauppamatkustajan ongelman (_Traveling Salesperson Problem_) likimääräiseen ratkaisuun keskimääräisellä aikavaativuudella $O(n^2)$. Lin-Kernighan heuristinen algoritmi (jatkossa LK) ei anna aina parasta ratkaisua ja se voi jäädä jumiin paikalliseen minimiin. LK esiteltiin Shen Lin ja Brian W. Kernighanin artikkelissa ”An Effective Heuristic Algorithm for the Traveling-Salesman Problem” vuonna 1973[^1]. LK ja sen ideoihin perustuvat algoritmit ovat edelleen tehokkaimpia likimääräisiä ratkaisuja kauppamatkustajan ongelma (jatkossa TSP). LK:ta myös käytetään alkuratkaisuna algoritmeille, jotka pystyvät löytämään parhaan ratkaisun TSP:lle[^2]. 
+Lin-Kernighan heuristinen algoritmi (_Lin-Kernighan Heuristic Algorithm_) on tehokas algoritmi symmetrisen kauppamatkustajan ongelman (_Traveling Salesperson Problem_) likimääräiseen ratkaisuun keskimääräisellä aikavaativuudella $O(n^2)$. Lin-Kernighan heuristinen algoritmi (jatkossa LK) ei anna aina parasta ratkaisua ja se voi jäädä jumiin paikalliseen minimiin. LK esiteltiin Shen Linin ja Brian W. Kernighanin artikkelissa ”An Effective Heuristic Algorithm for the Traveling-Salesman Problem” vuonna 1973[^1]. LK ja sen ideoihin perustuvat algoritmit ovat edelleen tehokkaimpia likimääräisiä ratkaisuja kauppamatkustajan ongelma (jatkossa TSP). LK:ta myös käytetään alkuratkaisuna algoritmeille, jotka pystyvät löytämään parhaan ratkaisun TSP:lle[^2]. 
 
 ## Toteutussuunnitelma
 Tämä on kurssityö Helsingin yliopiston Tietojenkäsittelytieteen laitoksen kurssille _Tekoäly ja algoritmit_ (5-6/2025). Aloitan työn laatimalla yksinkertaisen LK:n pääpiirteet toteuttavan algoritmin Pythonilla. Laadin lisäksi yksinkertaisen kaikkien vaihtoehtojen läpikäyntiin perustuvan parhaan ratkaisun  aikavaativuudella *O(n!)* löytävän algoritmin. Lisäksi laadin Held-Karp-algoritmin, joka perustuu dynaamiseen ohjelmointiin ja löytää parhaan ratkaisun aikavaatimuksella $O(n^2*2^n)$. TSP on tunnetusti päätösongelmana vaativuusluokaltaan NP-täydellinen, kun kysytään onko verkossa hamiltonin polkua. Optimointiongelma TSP on NP-kova, kun halutaan selvittää verkon lyhin polku. 
 
-Alkuperäinen Lin'n ja Kernighanin artikkeli[^1] kuvaa LK:n kombinatorisen heuristiikan satunnaisen ratkaisun iteratiiviseksi parantamiseksi seuraavasti:
+Alkuperäinen Linin ja Kernighanin artikkeli[^1] kuvaa LK:n kombinatorisen heuristiikan satunnaisen ratkaisun iteratiiviseksi parantamiseksi seuraavasti:
 1. Luo pseudosatunnainen ratkaisu T, joka täyttää kriteerit
 2. Yritä löytää parannettu ratkaisu T’ jollain T:n muunnoksella
 3. Jos ratkaisu T’ on parempi, niin T = T’ ja palaa kohtaan 2.

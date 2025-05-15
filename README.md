@@ -13,7 +13,7 @@ Alkuperäinen Linin ja Kernighanin artikkeli[^1] kuvaa LK:n kombinatorisen heuri
 
 Artikkeli ei käytä vaikiintunutta pseudokoodia ja alkuperäisessä algoritmin kuvauksessa on myöhemmin tunnistettuja puutteita, jotka vaikuttavat suorituskykyyn suuremmilla syötteillä. Tämän vuoksi käytän ensisijaisena lähteenä LK:n toteutukselle TSP:tä käsittelevän *The Traveling Salesman Problem: A Computational Study*[^3] kirjan esitystä LK:sta. Teoksessa käydään myös läpi eri parannuksia LK:iin, joita pyrin toteuttamaan Pythonin asettamissa rajoissa asteittain kehitysversioissa.
 
-## Testaus kehityksen aikana
+## Testaus
 Laadin testitapauksia eri syötteillä, joilla voidaan verrata LK:n suorituskykyä ja approksimaation laatua suhteessa vertailukohtana käytettäviin algoritmeihin, jotka antavat aina parhaan ratkaisun. Syötteenä käytän eri kokoisia ja eri muotoisia verkkoja. Tutkimuskirjallisuudessa käytetään TSP-tiedostoja kuvaamaan verkkoja, joten toteutan testisyötteet TSP-muodossa. Tällöin voin myös käyttää valmiita testisyötteitä.
 
 Testauksessa minua kiinnostaa, miten algoritmi suoriutuu ei-satunnaisesti jakautuneesta verkosta. Hyvin tyypillisesti testiverkko luodaan satunnaisesti, mutta jos ajatellaan esimerkiksi kaupunkien sijoittumista maantieteellisesti, niin niiden sijaintiin vaikuttaa ratkaisevasti luonnolliset maantieteelliset esteet, kuten vesistöt ja vuoristot. Tästä seuraa, että kaupunkeja sijaitsee historiallisesti tiheämmin vesistöjen rannoilla ja harvemmin vuoristoissa eikä lainkaan vesistöissä.

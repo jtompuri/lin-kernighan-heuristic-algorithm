@@ -1,6 +1,6 @@
 # Viikkoraportti 1
 
-1. Mitä olen tehnyt tällä viikolla?
+## 1. Mitä olen tehnyt tällä viikolla?
 
 Käytin aikaa aiheen valintaan Eigenface-kasvojentunnistuksen ja Lin-Kernighan algoritmin välillä.
 
@@ -10,19 +10,19 @@ Valitsin aiheeksi Lin-Kernighan heuristisen algoritmin. Luin alkuperäisen artik
 
 Pohdin aihetta ja kävin keskustelun Hannu Kärnän kanssa, jonka pohjalta päätin työn rajauksen. Dokumentoin suunnitelman projektin Github-sivulle.    
 
-2. Miten ohjelma on edistynyt?
+## 2. Miten ohjelma on edistynyt?
 
 LK-algoritmi perustuu sitä edeltäneeseen opt2-algoritmiin, joten olen tehnyt kokeiluja yksinkertaisemalla opt2-algoritmilla, joka toimii yllättävän hyvin pienillä optimoinneilla. Ilman optimointeja sain ratkaistua noin 50 solmun verkon ja ottamalla käyttöön NumPyn taulukon tietorakenteeksi ja nopeuttamalla silmukoita kääntämällä ne konekielisiksi numban JIT-käännöstyökalulla, sain ratkaistua 300 solmun verkon. Tätä suuremmilla verkoilla algoritmi luultavasti jäi jumiin paikalliseen minimiin ja Python ikuiseen luuppiin. Tarkoitus on toteuttaa LK-algoritmin "variable k-opt"-algoritmin ja vältettyä paikalliset minimit esimerkiksi "double bridge kick"-algoritmilla. 
 
-3. Mitä opin tällä viikolla / tänään?
+## 3. Mitä opin tällä viikolla / tänään?
 
 Perusideat LK-algoritmissa ja TSP:n heuristisessa ratkaisemisessa. Olen kerrannut kerrattua TSP-algoritmien aikavaativuuksia. Algoritmit opt-2, opt-3 ja variable k-opt. 
 
-4. Mikä jäi epäselväksi tai tuottanut vaikeuksia? Vastaa tähän kohtaan rehellisesti, koska saat tarvittaessa apua tämän kohdan perusteella.
+## 4. Mikä jäi epäselväksi tai tuottanut vaikeuksia? Vastaa tähän kohtaan rehellisesti, koska saat tarvittaessa apua tämän kohdan perusteella.
 
 Alkuperäinen artikkeli on vaikeaselkoinen. Onneksi TSP-kirja on huomattavasti selkeämpi ja myös nostaa esiin alkuperäisen artikkelin algoritmin puutteita. Minulle on syntynyt yleiskuva variable k-opt -algoritmista, mutta lähteiden pseudokoodi jättää toteutukseen tosi paljon kysymyksiä esimerkiksi valittavista tietorakenteista. Kirjassa kyllä puhutaan näistä, kuten linkitetyistä listoista ja kaksitasoisista linkitetyistä listoista, mutta toteutuksessa pitää huomioida Pythonin asettamat rajoitukset. Kirja puhuu myös monista LK-algoritmiin tehdyistä parannuksista Concorde-sovellusta kehitettäessä. Jotkut näistä parannuksista voisi olla toteutettavissa tässä projektissa, mutta osa menee selvästi yli realistisesta työn rajauksesta, kuten esimerkiksi "QSopt linear programming solver"-kirjaston hyödyntäminen algoritmissa.
 
-6. Mitä teen seuraavaksi?
+## 5. Mitä teen seuraavaksi?
 
 Työ jakautuu karkeasti näihin vaiheisiin:
 - LK-algoritmin tutkiminen kirjallisuudessa ja ohjelmointi

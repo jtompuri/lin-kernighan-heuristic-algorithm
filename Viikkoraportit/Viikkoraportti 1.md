@@ -6,7 +6,7 @@ Käytin aikaa aiheen valintaan Eigenface-kasvojentunnistuksen ja Lin-Kernighan a
 
 Yritin toteuttaa Eigenfaces-algoritmin. Skaalasin ja rajasin Yalefaces-kirjaston 16 380 kuvaa Matlabissa. laskin eigenface-matriisin. Tein matriisille pääkomponenttianalyysin. Laskin 95% tarkkuuteen riittävän määrän pääkomponentteja, joka oli reilu 200 dimensiota. Siirsin aineiston Pythoniin ja toteutin kasvontunnistusalgoritmin, jolla yritin tunnistaa, onko kuvassa kasvoja. Tämä ei toiminut, sillä algoritmi tunnisti tasaisissa pinnoissa kasvoja, mikä johtui luultavasti siitä, että eigenfaces toimii pikemminkin henkilön kasvojen tunnistamisessa muista henkilöistä kuin kasvojen tunnistamiseen kuvasta. Tutkin asiaa ja kasvojentunnistukseen kuvasta on olemassa paljon parempia algoritmeja, joten hylkäsin aiheen.
 
-Valitsin aiheeksi Lin-Kernighan heuristisen algoritmin. Luin alkuperäisen artikkelin vuodelta 1973 ja lainasin ja kuin kirjan _The Traveling Salesman Problem: Computational Study_ luvut TSP:n taustasta ja Lin-Kernighan algoritmista sekä Concorde TSP Solver -ohjelmasta, joka tekijöitä kirjan kirjoittajat ovat. Latasin verkosta ja käänsin Concorden C-kielisen lähdekoodin ja testasin sitä luomiini testiaineistoihin ja TSPLIB-aineistoihin. Latasin ja käänsin myös LKH TSP Solver ohjelman, joka on tällä hetkellä tehokkaimpia TSP-ratkaisija. Tutustuin kursorisesti C-kieliseen lähdekoodiin. 
+Valitsin aiheeksi Lin-Kernighan heuristisen algoritmin. Luin alkuperäisen artikkelin vuodelta 1973 ja lainasin ja kuin kirjan _The Traveling Salesman Problem: Computational Study_ luvut TSP:n taustasta ja Lin-Kernighan algoritmista sekä Concorde TSP Solver -ohjelmasta, joka tekijöitä kirjan kirjoittajat ovat. Latasin verkosta ja käänsin Concorden C-kielisen lähdekoodin ja testasin sitä luomiini testiaineistoihin ja TSPLIB-aineistoihin. Latasin ja käänsin myös LKH TSP Solver ohjelman, joka on tällä hetkellä tehokkain heuristinen TSP-ratkaisija. Tutustuin kursorisesti C-kieliseen lähdekoodiin. 
 
 Pohdin aihetta ja kävin keskustelun Hannu Kärnän kanssa, jonka pohjalta päätin työn rajauksen. Dokumentoin suunnitelman projektin Github-sivulle.    
 
@@ -26,6 +26,8 @@ Alkuperäinen artikkeli on vaikeaselkoinen. Onneksi TSP-kirja on huomattavasti s
 
 Työ jakautuu karkeasti näihin vaiheisiin:
 - LK-algoritmin tutkiminen kirjallisuudessa ja ohjelmointi
+  - Alustava algoritmi jää paikalliseen minimiin, joten se tuota parasta ratkaisua    
+  - Tarkoitus on supistaa rekursiivisen haun leveyttä rekursion syvyyden kasvaessa
 - testauksen suunnittelu ja toteuttaminen
 - Brute force ja opt-2 algoritmien toteutus vertailua varten
 

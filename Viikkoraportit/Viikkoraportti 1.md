@@ -35,6 +35,6 @@ Työ jakautuu karkeasti näihin vaiheisiin:
 ## LK:n ratkaisu 100 solmun polulle (ei optimaalinen)
 ![LK:n ratkaisema 100 solmun polku](/kuvat/lk-k-depth-1.png)
 
-## Animaatio 20 solmun ratkaisusta
+## Animaatio 20 solmun ratkaisusta (ei optimaalinen)
 ![Animaatio 20 solmun ratkaisusta](/kuvat/lk_tsp.gif)
 

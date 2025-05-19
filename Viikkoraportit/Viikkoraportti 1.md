@@ -26,7 +26,8 @@ Alkuperäinen artikkeli on vaikeaselkoinen. Onneksi TSP-kirja on huomattavasti s
 
 Työ jakautuu karkeasti näihin vaiheisiin:
 - LK-algoritmin tutkiminen kirjallisuudessa ja ohjelmointi
-  - Alustava algoritmi jää paikalliseen minimiin, joten se tuota parasta ratkaisua    
+  - Alustava algoritmi jää paikalliseen minimiin, joten se ei tuota parasta ratkaisua
+  - Lasketaan brute forcella paras ratkaisu pieneen verkkoon ja verrataan luonnoksen tulokseen    
   - Tarkoitus on supistaa rekursiivisen haun leveyttä rekursion syvyyden kasvaessa
 - testauksen suunnittelu ja toteuttaminen
 - Brute force ja opt-2 algoritmien toteutus vertailua varten

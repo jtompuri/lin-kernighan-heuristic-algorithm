@@ -2,7 +2,7 @@
 
 1. Mitä olen tehnyt tällä viikolla?
 
-Käytin aikaa aiheen valintaan Eigenfaces ja Lin-Kernighan algoritmin välillä.
+Käytin aikaa aiheen valintaan Eigenface-kasvojentunnistuksen ja Lin-Kernighan algoritmin välillä.
 
 Yritin toteuttaa Eigenfaces-algoritmin. Skaalasin ja rajasin Yalefaces-kirjaston 16 380 kuvaa Matlabissa. laskin eigenface-matriisin. Tein matriisille pääkomponenttianalyysin. Laskin 95% tarkkuuteen riittävän määrän pääkomponentteja, joka oli reilu 200 dimensiota. Siirsin aineiston Pythoniin ja toteutin kasvontunnistusalgoritmin, jolla yritin tunnistaa, onko kuvassa kasvoja. Tämä ei toiminut, sillä algoritmi tunnisti tasaisissa pinnoissa kasvoja, mikä johtui luultavasti siitä, että eigenfaces toimii pikemminkin henkilön kasvojen tunnistamisessa muista henkilöistä kuin kasvojen tunnistamiseen kuvasta. Tutkin asiaa ja kasvojentunnistukseen kuvasta on olemassa paljon parempia algoritmeja, joten hylkäsin aiheen.
 

@@ -18,7 +18,7 @@ LK-algoritmi perustuu sitä edeltäneeseen opt2-algoritmiin, joten olen tehnyt k
 
 Perusideat LK-algoritmissa ja TSP:n heuristisessa ratkaisemisessa. Olen kerrannut kerrattua TSP-algoritmien aikavaativuuksia. Algoritmit opt-2, opt-3 ja variable k-opt. 
 
-## 4. Mikä jäi epäselväksi tai tuottanut vaikeuksia? Vastaa tähän kohtaan rehellisesti, koska saat tarvittaessa apua tämän kohdan perusteella.
+## 4. Mikä jäi epäselväksi tai tuottanut vaikeuksia? 
 
 Alkuperäinen artikkeli on vaikeaselkoinen. Onneksi TSP-kirja on huomattavasti selkeämpi ja myös nostaa esiin alkuperäisen artikkelin algoritmin puutteita. Minulle on syntynyt yleiskuva variable k-opt -algoritmista, mutta lähteiden pseudokoodi jättää toteutukseen tosi paljon kysymyksiä esimerkiksi valittavista tietorakenteista. Kirjassa kyllä puhutaan näistä, kuten linkitetyistä listoista ja kaksitasoisista linkitetyistä listoista, mutta toteutuksessa pitää huomioida Pythonin asettamat rajoitukset. Kirja puhuu myös monista LK-algoritmiin tehdyistä parannuksista Concorde-sovellusta kehitettäessä. Jotkut näistä parannuksista voisi olla toteutettavissa tässä projektissa, mutta osa menee selvästi yli realistisesta työn rajauksesta, kuten esimerkiksi "QSopt linear programming solver"-kirjaston hyödyntäminen algoritmissa.
 

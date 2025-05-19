@@ -29,11 +29,11 @@ Työ jakautuu karkeasti näihin vaiheisiin:
 - testauksen suunnittelu ja toteuttaminen
 - Brute force ja opt-2 algoritmien toteutus vertailua varten
 
-## Satunnaisesta 100 solmun polusta
+## Satunnainen 100 solmun polku
 ![Satunnainen 100 solmun polku](/kuvat/random_tour.png)
 
 ## LK:n ratkaisu 100 solmun polulle (ei optimaalinen)
-![LK:n ratkaisema 100 solmun polku](/kuvat/random_tour.png)
+![LK:n ratkaisema 100 solmun polku](/kuvat/lk-k-depth-1.png)
 
 ## Animaatio 20 solmun ratkaisusta
 ![Animaatio 20 solmun ratkaisusta](/kuvat/lk_tsp.gif)

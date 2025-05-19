@@ -14,9 +14,9 @@ Pohdin aihetta ja kävin keskustelun Hannu Kärnän kanssa, jonka pohjalta pää
 
 LK-algoritmi perustuu sitä edeltäneeseen opt2-algoritmiin, joten olen tehnyt kokeiluja yksinkertaisemalla opt2-algoritmilla, joka toimii yllättävän hyvin pienillä optimoinneilla. Ilman optimointeja sain ratkaistua noin 50 solmun verkon ja ottamalla käyttöön NumPyn taulukon tietorakenteeksi ja nopeuttamalla silmukoita kääntämällä ne konekielisiksi numban JIT-käännöstyökalulla, sain ratkaistua 300 solmun verkon. Tätä suuremmilla verkoilla algoritmi luultavasti jäi jumiin paikalliseen minimiin ja Python ikuiseen luuppiin. Tarkoitus on toteuttaa LK-algoritmin "variable k-opt"-algoritmin ja vältettyä paikalliset minimit esimerkiksi "double bridge kick"-algoritmilla. 
 
-![Satunnainen 100 solmun polku](kuvat/random_tour.png)
-![LK:n ratkaisema 100 solmun polku](kuvat/random_tour.png)
-![Animaatio 20 solmun ratkaisusta](kuvat/lk_tsp.gif)
+![Satunnainen 100 solmun polku](/kuvat/random_tour.png)
+![LK:n ratkaisema 100 solmun polku](/kuvat/random_tour.png)
+![Animaatio 20 solmun ratkaisusta](/kuvat/lk_tsp.gif)
 
 3. Mitä opin tällä viikolla / tänään?
 

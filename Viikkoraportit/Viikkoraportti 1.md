@@ -55,6 +55,7 @@ Animaatio siitä miten luonnos LK-algoritmista lyhentää iteratiivisesti polun 
 ![Animaatio 20 solmun ratkaisusta](/kuvat/lk_tsp.gif)
 
 Animaation viimeinen ruutu, johon LK-algoritmin luonnos päättyy. 
+
 ![Animaation viimeinen ruutu](/kuvat/animation.png)
 
 Kuten nähdään, niin polku ei ole optimaalinen, sillä se risteää kahdesti itsensä kanssa. Huomataan myös, että tekemällä "double bridgen" niin, että molemmat polun muodostamat "lenkit" käännetään ympäri, saadaan polku, joka ei risteä itsensä kanssa. Tämä operaatio luultavasti siirtäisi algoritmin pois paikallisesta minimistä, johon se päätyi, ja näin se pystyisi löytämään lyhyemmän ja luultavasti myös parhaan reitin näin pienellä solmujen määrällä. 

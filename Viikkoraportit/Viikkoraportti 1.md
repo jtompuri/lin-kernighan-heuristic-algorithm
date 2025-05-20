@@ -37,11 +37,20 @@ Työ jakautuu karkeasti näihin vaiheisiin:
 Tiedostossa recursive-k-opt-lin-kernighan.py löytyy alustava luonnos LK-algoritmista, joka pystyy ratkaisemaan järkevässä ajassa satojen solmujen verkon likimääräisen lyhimmän reitin. Algoritmin tuottamista kuvaajista näkee, että reitti ei ole optimaalinen, sillä riippuen sattunaisluvun siemenarvosta reitti tekee isoja hyppäyksiä tai se kulkee poikki oman reittinsä. On tunnetusti todistettu, että optimaalinen reitti ei koskaan risteä itsensä kanssa, joten reitti ei voi olla optimaalinen. Tarkoitus on todistaa tämä pienillä verkoilla käyttämällä parhaan tuloksen antavaa, raakaan laskentaan perustuvaa algoritmia. 
 
 ### Satunnainen 100 solmun polku
+
+LK-algoritmin luonnoksessa valitaan lähtökohdaksi satunnainen reitti. Lähtökohtana voisi sen sijaan olla jollain tehokkaalla algoritmilla, kuten "Nearest Neighbor"-algoritmilla (NN), laskettu approksimaatio, jota sitten tarkennetaan LK:lla. Hieman yllättäen TSP-kirjan mukaan satunnaisen ja NN-algoritmilla luodun verkon ratkaisun kestossa tai tarkkuudessa ei ole merkittävää eroa. NN-algoritmia itse asiassa käytetään LK:ssa, kun valitaan paikallisesti kaaria, joita ristiin kytkemällä etsitään lyhyempää reittiä, sillä kaaret valitaan alkaen lähimmistä solmuista edeten kaukaisempiin solmuihin. 
+
 ![Satunnainen 100 solmun polku](/kuvat/random_tour.png)
 
 ### LK:n ratkaisu 100 solmun polulle (ei optimaalinen)
+
+Tässä LK-algoritmin luonnoksen ei-optimaalinen ratkaisu 100 solmun polulle. Kuten nähdään, niin se ei missään vaiheessa päädy kokeilemaan kaarien vaihtoa "pullistumalle", joka rajautuu kaarella, joka ylittää reitin kahdesti. Toimiessaan oikein rekursion pitäisi käydä läpi myös vaihtoehto, että kaikki "pullistuman" kaaret korvataan niin, että reitti ei enää risteä itsensä kanssa. Toisin sanoen, algoritmi jää jumiin paikalliseen minimiin. LK:ssa käytetään paikallisten minimien välttämiseen "kick"-operaatiota, jolla tuotetaan polkuun satunnaisia "double bridge"-rakenteita, jotka rikkovat polun kahdesta kohdasta ja pidentävät polkua. "Kick"-operaation tarkoitus on siirtää algoritmi ulos paikallisesta minimistä. Jos "kick"-operaation tuloksena löydetään sitä edeltänyttä lyhyempi reitti, niin algoritmi jatkaa tästä. Muussa tapauksessa "kick"-operaatio perutaan. 
+
 ![LK:n ratkaisema 100 solmun polku](/kuvat/lk-k-depth-1.png)
 
 ### Animaatio 20 solmun ratkaisusta (ei optimaalinen)
+
+Animaatio siitä miten luonnos LK-algoritmista lyhentää iteratiivisesti polun pituutta vaihtamalla kaaria ristiin. LK pystyy vaihtamaan enemmän kuin kaksi kaarta keskenään, mutta nämä useamman kaaren vaihdot perustuvat ketjutettuihin kahden kaaren vaihtoihin, minkä vuoksi LK-algoritmin ytimessä on opt-2-algoritmi, joka vaihtaa kaksi kaarta keskenään. Animaatio ei esitä hylttyjä vaihtoehtoja, jotka osoittautuivat pidemmiksi, eikä siinä näy kaarien rekursiivisen haun syvyys. Jatkossa voisin raportoida mahdollisesti myös rekursion syvyyden. Yllätteän LK:n luonnoksessa en saanut ratkaisussa tuotettua eroja eri sallituilla maksimi rekursion syvyyksillä. Luonnollisesti, kun rekursio syvyys on nolla (max_k = 0), niin algoritmi tuottaa satunnaisen polun (ks. yllä), mutta k:n arvoilla 1-5 sain kaikilla saman ratkaisun 100 solmun verkolle (ks. yllä). Eroa oli lähinnä algoritmin suoritusajassa: kun k = 1, aikaa kului puolet ajasta verrattuna, kun k = 5. Pitää tutkia, onko algoritmissa jotain vikaa vai liittyykö tämä verkon muotoon. 
+
 ![Animaatio 20 solmun ratkaisusta](/kuvat/lk_tsp.gif)
 

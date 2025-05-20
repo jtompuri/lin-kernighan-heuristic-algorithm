@@ -32,12 +32,16 @@ Työ jakautuu karkeasti näihin vaiheisiin:
 - testauksen suunnittelu ja toteuttaminen
 - Brute force ja opt-2 algoritmien toteutus vertailua varten
 
-## Satunnainen 100 solmun polku
+## Ensimmäisen viikon tuloksia
+
+Tiedostossa recursive-k-opt-lin-kernighan.py löytyy alustava luonnos LK-algoritmista, joka pystyy ratkaisemaan järkevässä ajassa satojen solmujen verkon likimääräisen lyhimmän reitin. Algoritmin tuottamista kuvaajista näkee, että reitti ei ole optimaalinen, sillä riippuen sattunaisluvun siemenarvosta reitti tekee isoja hyppäyksiä tai se kulkee poikki oman reittinsä. On tunnetusti todistettu, että optimaalinen reitti ei koskaan risteä itsensä kanssa, joten reitti ei voi olla optimaalinen. Tarkoitus on todistaa tämä pienillä verkoilla käyttämällä parhaan tuloksen antavaa, raakaan laskentaan perustuvaa algoritmia. 
+
+### Satunnainen 100 solmun polku
 ![Satunnainen 100 solmun polku](/kuvat/random_tour.png)
 
-## LK:n ratkaisu 100 solmun polulle (ei optimaalinen)
+### LK:n ratkaisu 100 solmun polulle (ei optimaalinen)
 ![LK:n ratkaisema 100 solmun polku](/kuvat/lk-k-depth-1.png)
 
-## Animaatio 20 solmun ratkaisusta (ei optimaalinen)
+### Animaatio 20 solmun ratkaisusta (ei optimaalinen)
 ![Animaatio 20 solmun ratkaisusta](/kuvat/lk_tsp.gif)
 

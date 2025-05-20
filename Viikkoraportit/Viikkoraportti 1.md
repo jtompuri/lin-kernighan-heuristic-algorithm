@@ -60,5 +60,5 @@ Animaation viimeinen ruutu, johon LK-algoritmin luonnos päättyy. Kuten nähdä
 
 Esimerkkikuva "double bridge"-operaatiosta:
 
-![Animaation viimeinen ruutu](/kuvat/animation_double_bridge.png)
+![Animaation viimeinen ruutu](/kuvat/animation_double-bridge.png)
 

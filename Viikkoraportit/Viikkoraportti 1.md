@@ -54,3 +54,8 @@ Animaatio siitä miten luonnos LK-algoritmista lyhentää iteratiivisesti polun 
 
 ![Animaatio 20 solmun ratkaisusta](/kuvat/lk_tsp.gif)
 
+Animaation viimeinen ruutu, johon LK-algoritmin luonnos päättyy:
+
+![Animaation viimeinen ruutu](/kuvat/animation.png)
+
+

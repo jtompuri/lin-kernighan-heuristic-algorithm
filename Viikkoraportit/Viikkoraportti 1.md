@@ -58,7 +58,7 @@ Animaation viimeinen ruutu, johon LK-algoritmin luonnos päättyy.
 
 ![Animaation viimeinen ruutu](/kuvat/animation.png)
 
-Kuten nähdään, niin polku ei ole optimaalinen, sillä se risteää kahdesti itsensä kanssa. Huomataan, että vaihtamalla risteävät kaaret, saadaan polku, joka ei risteä itsensä kanssa, ja on todistetusti lyhyempi. Herää kysymys, että miksi algoritmi ei yrittänyt vaihtaa kyseisiä kaareja päittäin. Tätä pitää jatkossa selvittää.  
+Kuten nähdään, niin polku ei ole optimaalinen, sillä se risteää kahdesti itsensä kanssa. Huomataan, että vaihtamalla risteävät kaaret, saadaan polku, joka on tunnetusti lyhyempi. Herää kysymys, että miksi algoritmi ei yrittänyt vaihtaa kaaria keskenään. Onko algoritmin luonnoksessa virhe vai voiko ei-optimaalinen ratkaisu johtua jumittumisesta lokaaliin minimiin, mikä ei vaikuta uskottavalta.  
 
 ![Animaation viimeinen ruutu](/kuvat/animation_double_bridge.png)
 

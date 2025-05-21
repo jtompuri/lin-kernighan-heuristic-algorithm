@@ -59,6 +59,8 @@ Algoritmin idea perustuu polun kaarien vaihtoihin, joilla käännetään reitin 
 
 LK-algoritmin suunnittelussa on panostettu erityisesti kaarien vaihtojen optimointiin. Haasteena kaarien vaihdossa on toisaalta se, että pitäisi välttää turhia kaarenvaihtoja, ja toisaalta etsiä rohkeasti lyhyempää reittiä eikä tyytyä paikallisesti optimaaliseen ratkaisuun. Käytännösssä LK-algoritmi toki lähes poikkeuksetta päätyy paikalliseen eikä yleiseen optimaaliseen ratkaisuun pois lukien hyvin yksinkertaiset verkot. Rekursiivisen haun leveyttä, eli kuinka monta naapurisolmua otetaan mukaan hakuun, rajoitetaan suhteessa haun syvyyteen. Mallitoteutuksessa syvyydelle ei ole asetettu ylärajaa, mutta käytännön toteutuksissa käytetään usein 10-12 ylärajaa rekursioille. Tyypillisesti haun leveys on rajoitettu ensimäisellä tasolla 5 naapuriin, toisella tasolla 5 naapuriin ja tätä seuraavilla tasoilla yhteen naapuriin.
 
+#### Funktio `step()`
+
 ![Funktio step()](/images/algorithm_15_1.png)
 
 Funktio `step()` on rekursiivinen funktio, joka etsii parannuksia nykyiseen kierrokseen suorittamalla mahdollisia k-opt-vaihtoja — yksi kerrallaan — niin kauan kuin parannus näyttää mahdolliselta.
@@ -69,6 +71,8 @@ Toiminnot:
 - Jokaiselle kandidaatille yrittää tehdä flip-operaation, jolla kaksi reunaa korvataan kahdella uudella.
 - Jos flip parantaa kierrosta (tai saattaa johtaa parannukseen), funktio kutsuu itseään seuraavalla tasolla (depth-first-haku).
 - Jos jokin haara johtaa parempaan reittiin, se palautetaan. Muuten peruuntuu (backtrack) ja yrittää seuraavaa vaihtoehtoa.
+
+#### Funktio `alternate_step()`
 
 ![Funktio alternate_step()](/images/algorithm_15_2.png)
 
@@ -83,6 +87,8 @@ Toiminnot:
         - Muuten: luodaan D-ordering ja suoritetaan syvempi flip (kuva 15.6).
 3.	Jokainen flip-sarja tarkistaa, paraneeko kierros.
 4.	Jos löytyy parannus, kutsutaan `step()`-funktiota seuraavalta tasolta.
+
+#### Funktio `lk_search()` 
 
 ![Funktio lk_search()](/images/algorithm_15_3.png)
 
@@ -99,6 +105,8 @@ Toiminnot:
 3.	Jos parannus löytyi, palauttaa flip-sekvenssin, muuten ilmoittaa epäonnistumisesta
 
 ![lin_kernighan()](/images/algorithm_15_4.png)
+
+#### Funktio `lin_kernighan()` 
 
 Funktio `lin_kernighan()` on pääfunktio, joka iteroi Lin–Kernighan-haun (`lk_search`) useilla aloitussolmuilla, ja päivittää parhaan tunnetun reitin, kunnes yhtään parannusta ei enää löydy. Se on koko heuristisen algoritmin "moottori". 
 
@@ -120,6 +128,10 @@ Toiminnot:
             - Poistetaan v aktiivisista solmuista.
 3.	Palautus:
     - Lopuksi palautetaan `lk_tour`, eli paras löytynyt reitti.
+
+#### Funktio `chained_lin_kernighan()`
+
+Funktio `chained_lin_kernighan()` on edistyneempi versio `lin_kernighan()`-funktiosta. Sen tarkoituksena on jatkaa parannusten hakua myös sen jälkeen, kun tavallinen Lin–Kernighan ei enää löydä parannuksia — tekemällä hallittuja satunnaisia häiriöitä (kicks) reittiin ja käynnistämällä `lin_kernighan()` funktion uudelleen.
 
 ## 7. Aika- ja tilavaativuus
 

@@ -61,19 +61,65 @@ LK-algoritmin suunnittelussa on panostettu erityisesti kaarien vaihtojen optimoi
 
 ![Funktio step()](/images/algorithm_15_1.png)
 
-LK-algoritmin funktio `step()` etsii parannuksen aloittamalla tietystä reunaparista ja kokeilee useita vaihtoehtoja, mistä reitin voisi katkaista ja liittää uudelleen. Funktio pitää kirjaa peräkkäisten kaarien vaihtojen kumulatiivisen hyödyn erotuksesta (_delta_). Yksinkertaisissa toteutuksissa hyöty lasketaan joka kerta koko reitille, mallitoteutuksessa vältetään koko reitin hyödyn laskemista. Funktio lisää toteutettavia kaarien vaihtoja ja palauttaa uuden reitin, mikäli lyhyempi reitti löytyi. Muuten funktio hylkää kyseisen kaarien vaihdon.
+Funktio `step()` on rekursiivinen funktio, joka etsii parannuksia nykyiseen kierrokseen suorittamalla mahdollisia k-opt-vaihtoja — yksi kerrallaan — niin kauan kuin parannus näyttää mahdolliselta.
+
+Toiminnot:
+- Luo lk-ordering eli lista lupaavista naapureista vertexille base.
+- Käy läpi korkeintaan breadth(level) lupaavaa naapuria (eli “leveys” tietyllä tasolla).
+- Jokaiselle kandidaatille yrittää tehdä flip-operaation, jolla kaksi reunaa korvataan kahdella uudella.
+- Jos flip parantaa kierrosta (tai saattaa johtaa parannukseen), funktio kutsuu itseään seuraavalla tasolla (depth-first-haku).
+- Jos jokin haara johtaa parempaan reittiin, se palautetaan. Muuten peruuntuu (backtrack) ja yrittää seuraavaa vaihtoehtoa.
 
 ![Funktio alternate_step()](/images/algorithm_15_2.png)
 
-LK-algoritmi laajentaa hakualuetta vaihtoehtoisella `alternate_step()` funktiolla, joka löytää ratkaisuja joita `step()` funktio ei löydä. Siinä missä funktio `step()` etsii kaarien vaihtoja yhdestä suunnasta, `alternate_step()` kokeilee vaihdella kaarien vaihtosuuntien välillä ja kokeilee eri mahdollisia katkaisu- ja liitoskohtia. Se sallii epäsäännöllisempiä reittejä, jotka voivat ohittaa paikallisen minimin. Funktion muuttujat `breadthA`, `breadthB` ja `breadthD` säätelevät haun leveyttä. Ne ovat maksimiarvoja valittavien solmujen ja solmujen parien määrälle. Muuttujien avulla voi hienosäätää algoritmia tietyn TSP-ongelman piirteitä vastaavaksi.
+Funktio `alternate_step()` laajentaa hakua etsimällä vaihtoehtoisia ensimmäisiä siirtoja ja syvempiä vaihtopolkuja, jotka eivät ole saatavilla step()-funktion kautta. Käyttää kolmitasoista leveyshakua (A-, B- ja D-tila) ja erilaisia flip-sekvenssejä.
+
+Toiminnot:
+	1.	Luo A-ordering (lupaavat naapurit `next(base)`-solmulle).
+	2.	Jokaiselle a:
+    - Luo B-ordering naapureille next(a).
+    - Jokaiselle b:
+        - Jos b on reitillä next(base) -> a, suoritetaan vaihtoehtoinen flip-sarja (kuva 15.5).
+        - Muuten: luodaan D-ordering ja suoritetaan syvempi flip (kuva 15.6).
+	3.	Jokainen flip-sarja tarkistaa, paraneeko kierros.
+	4.	Jos löytyy parannus, kutsutaan `step()`-funktiota seuraavalta tasolta.
 
 ![Funktio lk_search()](/images/algorithm_15_3.png)
 
-Funktio `lk_search()` on LK-algoritmin pääsilmukka, joka etsii parannuksia koko TSP-reittiin useilla `step()`- ja `alternate_step()`-kutsuilla. Se toimii ajurina tai orkestroijana yksittäisille k-vaihdon vaiheille. Se aloittaa eri kohdista reittiä, kokeilee mahdollisia k-opt-vaihtoja ja ottaa käyttöön parannuksia, jos sellaisia löytyy.
+Funktio `lk_search()` äynnistää Lin–Kernighan-parannushaun yksittäisestä solmusta v ja annetusta kierroksesta T. Koostuu step()- ja alternate_step()-kutsujen ketjusta. Palauttaa parannetun flip-sekvenssin tai ilmoittaa, ettei parannusta löytynyt.
+
+Toiminnot:
+	1.	Alustaa:
+    - Nykyinen kierros = T
+    - Tyhjä flip-sekvenssi
+    - Asettaa base = v
+	2.	Kutsuu:
+    - `step(1, 0)` – yrittää löytää suoraa parannusta
+    - Jos ei löydy, kutsuu `alternate_step()`
+	3.	Jos parannus löytyi, palauttaa flip-sekvenssin, muuten ilmoittaa epäonnistumisesta
 
 ![lin_kernighan()](/images/algorithm_15_4.png)
 
+Funktio `lin_kernighan()` on pääfunktio, joka iteroi Lin–Kernighan-haun (`lk_search`) useilla aloitussolmuilla, ja päivittää parhaan tunnetun reitin, kunnes yhtään parannusta ei enää löydy. Se on koko heuristisen algoritmin "moottori". 
 
+Toiminnot:
+	1.	Alustus:
+    - Aseta lk_tour = T (lähtökierros).
+    - Merkitse kaikki solmut aktiivisiksi (eli kelvollisiksi hakupisteiksi).
+	2.	Iteratiivinen parannushaku:
+    - Niin kauan kuin löytyy merkittyjä solmuja:
+        - Valitaan merkitty solmu v.
+        - Kutsutaan lk_search(v, lk_tour):
+            - Jos löytyi parantava flip-sekvenssi:
+            - Käydään flipit läpi yksi kerrallaan:
+                - Sovelletaan flipiä flip(x, y).
+                - Päivitetään lk_tour.
+                - Merkitään solmut x ja y (koska ne saattavat avata uusia parannuksia).
+            - Poistetaan flip-sekvenssi listalta.
+        - Jos parannusta ei löytynyt:
+            - Poistetaan v aktiivisista solmuista.
+	3.	Palautus:
+    - Lopuksi palautetaan lk_tour, eli paras löytynyt reitti.
 
 ## 7. Aika- ja tilavaativuus
 

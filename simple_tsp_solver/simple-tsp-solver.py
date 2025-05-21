@@ -182,7 +182,10 @@ def read_opt_tour(path):
 
 # Batch run and plot
 if __name__ == '__main__':
-    folder = '../TSPLIB95/tsp'               # Change to your TSPLIB path
+
+    # Change to your TSPLIB path
+    #folder = '../TSPLIB95/tsp'
+    folder = '../tsp'               
     results = []
 
     for fn in sorted(os.listdir(folder)):
@@ -206,7 +209,7 @@ if __name__ == '__main__':
         print(f"  Optimal length: {opt_len:.2f}")
 
         start = time.time()
-        heu_tour, heu_len = simple_tsp_solver(coords, max_k=4, time_limit=5.0)
+        heu_tour, heu_len = simple_tsp_solver(coords, max_k=4, time_limit=20.0)
         elapsed = time.time() - start
         gap = max(0.0, 100.0 * (heu_len - opt_len) / opt_len)
         print(f"  Heuristic length: {heu_len:.2f}  Gap: {gap:.2f}%  Time: {elapsed:.2f}s")

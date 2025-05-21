@@ -1,5 +1,7 @@
 # Määrittelydokumentti
 
+Janne Tompuri, Matemaattisten tieteiden kandiohjelma ja maisteriohjelma
+
 ## 1. Johdanto
 
 Harjoitustyössä toteutetaan Lin–Kernighan-heuristinen algoritmi, joka antaa likimääräisen ratkaisun symmetriseen kauppamatkustajan ongelmaan (_Traveling Salesman Problem_, TSP). Kauppamatkustajan ongelmaa pidetään TSP-kovana ja tarkan ratkaisun antava kaikki reitit läpikäyvän algoritmin aikavaativuutena pidetään O(n!), mikä tekee algoritmista käyttökelvottoman jo 20 kaupungin verkoissa. Tämän vuoksi TSP-ongelmaa on yritetty ratkaista heuristisilla algoritmeilla, joista Lin–Kernighan-heuristinen algoritmi (LK) on osoittautunut yhdeksi tehokkaimmista. TSP-ongelman tutkimuksessa kehitettyjä heuristisia algoritmeja käytetään laajasti erilaisissa optimointia vaativissa tehtävissä kuten logistiikassa, teollisuudessa, biotieteissä, autonomisissa järjestelmissä, tietokonepeleissä ja verkkopalveluissa.
@@ -207,7 +209,11 @@ Käytössä olevia Python standardikirjastoja ovat os ja time. Asennettavia Pyth
 
 Kansiosta `documentation` löytyy `pip freeze > requirements.txt` tehty lista kirjastoista versioineen.
 
-## 11. Lähteet
+## 11. Dokumentaation kieli
+
+Harjoitustyön kirjallinen dokumentaatio on suomeksi. Solvelluksen lähdekoodin yhteydessä oleva dokumentaatio sekä versionhallinan kommentit on englanniksi.
+
+## 12. Lähteet
 
 Applegate, David L. & Bixby, Robert E. & Chvtal,  Vaek & Cook, William J. (2006): *The Traveling Salesman Problem : A Computational Study*, Princeton University Press.
 

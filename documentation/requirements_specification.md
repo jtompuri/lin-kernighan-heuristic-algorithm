@@ -19,6 +19,7 @@ LK-algoritmin toteutuksen rajauksia, jotta toteutuksen laajuus pysyy hallittavan
 
 _Kauppamatkustajan ongelma_ voi viitata kysymykseen, onko verkossa Hamiltonin kierros, tai kysymykseen, mikä on lyhimmän Hamiltonin kierroksen pituus. Tässä työssä sillä tarkoitetaan kysymystä, mikä on lyhimmän Hamiltonin kierroksen likiarvo, sillä heuristiset algoritmit eivät tyypillisesti anna parasta ratkaisua. 
 
+Keskeisiä TSP-ongelmaan ja LK-algoritmiin liittyviä käsitteitä:
 - _Solmu_ tai _kaupunki (vertex, city)_: TSP:n piste, joita kierretään.
 - _Reitti_ tai _kierros (tour)_: solmujärjestys, joka muodostaa suljetun polun kaikkien pisteiden läpi.
 - _Etäisyysmatriisi (distance matrix)_: matriisi, joka sisältää solmujen väliset etäisyydet.

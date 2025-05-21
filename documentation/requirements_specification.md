@@ -66,11 +66,11 @@ LK-algoritmin suunnittelussa on panostettu erityisesti kaarien vaihtojen optimoi
 Funktio `step()` on rekursiivinen funktio, joka etsii parannuksia nykyiseen kierrokseen suorittamalla mahdollisia k-opt-vaihtoja — yksi kerrallaan — niin kauan kuin parannus näyttää mahdolliselta.
 
 Toiminta:
-- Luo lk-ordering eli lista lupaavista naapureista vertexille base.
-- Käy läpi korkeintaan `breadth(level)` lupaavaa naapuria (eli leveys tietyllä tasolla).
-- Jokaiselle kandidaatille yrittää tehdä flip-operaation, jolla kaksi reunaa korvataan kahdella uudella.
-- Jos flip parantaa kierrosta (tai saattaa johtaa parannukseen), funktio kutsuu itseään seuraavalla tasolla (depth-first-haku).
-- Jos jokin haara johtaa parempaan reittiin, se palautetaan. Muuten peruuntuu (backtrack) ja yrittää seuraavaa vaihtoehtoa.
+1. Luo lk-ordering eli lista lupaavista naapureista vertexille base.
+2. Käy läpi korkeintaan `breadth(level)` lupaavaa naapuria (eli leveys tietyllä tasolla).
+    - Jokaiselle kandidaatille yrittää tehdä flip-operaation, jolla kaksi reunaa korvataan kahdella uudella.
+    - Jos flip parantaa kierrosta (tai saattaa johtaa parannukseen), funktio kutsuu itseään seuraavalla tasolla (depth-first-haku).
+3. Jos jokin haara johtaa parempaan reittiin, se palautetaan. Muuten peruuntuu (backtrack) ja yrittää seuraavaa vaihtoehtoa.
 
 #### Funktio `alternate_step()`
 

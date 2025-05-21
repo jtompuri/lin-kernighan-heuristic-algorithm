@@ -60,7 +60,7 @@ Kuvassa nähdään TSP-ongelmien verkon muodon vaikuttavan ratkaisevasti approks
 
 ![Lin-Kernighan TSP solver ja TSPLIB](/images/lin_kernighan_tsp_solver_plots_20s.png)
 
-Kuvaajista nähdään, että LK-algoritmi löytää useassa tapauksessa reitin, joka on alle 5 %:n päässä parhaasta ratkaisusta, mihin voi olla hyvin tyytyväinen. Pääsääntöisesti 20 sekunnin aikaraja tuotti paremman tuloksen kuin 5 sekunnin aikaraja, mutta mukana oli yksi poikkeus, joka voi toki olla sattumaa. Vaikeita ongelmia LK-algoritmille olivat `pcb442`, `pr1002` ja `pr76`. Huomataan, että LK-algoritmi pärjäsi keskimäärin selvästi paremmin kuin yksinkertainen algoritmi. Merkittävin ero oli `pcb442` ongelmassa. Toisaalta taas yksinkertainen algoritmi selvityi yllättäen paremmin ongelmasta `pr76`. Tämä voi olla sattumaa, sillä LK-algoritmi ratkaisi `pr76` ongelman 5,13 % poikkeamalla, kun aikaraja oli 5 sekuntia.
+Kuvaajista nähdään, että LK-algoritmi löytää useassa tapauksessa reitin, joka on alle 5 %:n päässä parhaasta ratkaisusta, mihin olen tyytyväinen. Pääsääntöisesti 20 sekunnin aikaraja tuotti paremman tuloksen kuin 5 sekunnin aikaraja, mutta mukana oli yksi poikkeus, joka voi toki olla sattumaa. Vaikeita ongelmia LK-algoritmille olivat `pcb442`, `pr1002` ja `pr76`. Huomataan, että LK-algoritmi pärjäsi keskimäärin selvästi paremmin kuin yksinkertainen algoritmi. Merkittävin ero oli `pcb442` ongelmassa. Toisaalta taas yksinkertainen algoritmi selvityi yllättäen paremmin ongelmasta `pr76`. Tämä voi olla sattumaa, sillä LK-algoritmi ratkaisi `pr76` ongelman 5,13 % poikkeamalla, kun aikaraja oli 5 sekuntia.
 
 ## Pohdintaa
 

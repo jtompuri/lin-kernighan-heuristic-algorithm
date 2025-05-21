@@ -207,6 +207,9 @@ Käytössä olevia Python standardikirjastoja ovat os ja time. Asennettavia Pyth
 
 Kansiosta `documentation` löytyy `pip freeze > requirements.txt` tehty lista kirjastoista versioineen.
 
-## 11. Liitteet
+## 11. Lähteet
 
+Applegate, David L. & Bixby, Robert E. & Chvtal,  Vaek & Cook, William J. (2006): *The Traveling Salesman Problem : A Computational Study*, Princeton University Press.
+
+Lin, Shen & Kernighan, Brian W. (1973): ”An Effective Heuristic Algorithm for the Traveling-Salesman Problem”, Operations Research, Vol. 21, No. 2, s. 498–516.
 

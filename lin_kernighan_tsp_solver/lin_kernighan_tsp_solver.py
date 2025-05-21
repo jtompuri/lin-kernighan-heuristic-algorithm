@@ -221,6 +221,10 @@ def lin_kernighan(coords, init):
 # Algorithm 15.5: Chained LK with final cost recompute
 def double_bridge(order):
     n = len(order)
+    if n <= 4:
+        # no 4-segment double-bridge possible; just return the tour unchanged
+        return list(order)
+
     a,b,c,d = sorted(np.random.choice(range(1,n),4,False))
     s0,s1 = order[:a], order[a:b]
     s2,s3 = order[b:c], order[c:d]
@@ -284,7 +288,10 @@ def read_opt_tour(path):
 
 # Batch & Plot
 if __name__ == '__main__':
+
+    # Change to your TSPLIB path
     folder = '../TSPLIB95/tsp'
+    #folder = '../tsp'
     results = []
     for fn in sorted(os.listdir(folder)):
         if not fn.lower().endswith('.tsp'): continue

@@ -219,3 +219,6 @@ Applegate, David L. & Bixby, Robert E. & Chvtal,  Vaek & Cook, William J. (2006)
 
 Lin, Shen & Kernighan, Brian W. (1973): ”An Effective Heuristic Algorithm for the Traveling-Salesman Problem”, Operations Research, Vol. 21, No. 2, s. 498–516.
 
+Lin-Kernighan-Helsgaun algoritmin C-kielinen toteutus: http://webhotel4.ruc.dk/~keld/research/LKH/
+
+Concorde TSP Solver on LK:n C-kielinen toteutus: https://www.math.uwaterloo.ca/tsp/concorde/gui/gui.htm

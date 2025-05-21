@@ -75,51 +75,51 @@ Toiminnot:
 Funktio `alternate_step()` laajentaa hakua etsimällä vaihtoehtoisia ensimmäisiä siirtoja ja syvempiä vaihtopolkuja, jotka eivät ole saatavilla step()-funktion kautta. Käyttää kolmitasoista leveyshakua (A-, B- ja D-tila) ja erilaisia flip-sekvenssejä.
 
 Toiminnot:
-	1.	Luo A-ordering (lupaavat naapurit `next(base)`-solmulle).
-	2.	Jokaiselle a:
-    - Luo B-ordering naapureille next(a).
-    - Jokaiselle b:
-        - Jos b on reitillä next(base) -> a, suoritetaan vaihtoehtoinen flip-sarja (kuva 15.5).
-        - Muuten: luodaan D-ordering ja suoritetaan syvempi flip (kuva 15.6).
-	3.	Jokainen flip-sarja tarkistaa, paraneeko kierros.
-	4.	Jos löytyy parannus, kutsutaan `step()`-funktiota seuraavalta tasolta.
+1.	Luo A-ordering (lupaavat naapurit `next(base)`-solmulle).
+2.	Jokaiselle a:
+- Luo B-ordering naapureille next(a).
+- Jokaiselle b:
+    - Jos b on reitillä next(base) -> a, suoritetaan vaihtoehtoinen flip-sarja (kuva 15.5).
+    - Muuten: luodaan D-ordering ja suoritetaan syvempi flip (kuva 15.6).
+3.	Jokainen flip-sarja tarkistaa, paraneeko kierros.
+4.	Jos löytyy parannus, kutsutaan `step()`-funktiota seuraavalta tasolta.
 
 ![Funktio lk_search()](/images/algorithm_15_3.png)
 
 Funktio `lk_search()` äynnistää Lin–Kernighan-parannushaun yksittäisestä solmusta v ja annetusta kierroksesta T. Koostuu step()- ja alternate_step()-kutsujen ketjusta. Palauttaa parannetun flip-sekvenssin tai ilmoittaa, ettei parannusta löytynyt.
 
 Toiminnot:
-	1.	Alustaa:
-    - Nykyinen kierros = T
-    - Tyhjä flip-sekvenssi
-    - Asettaa base = v
-	2.	Kutsuu:
-    - `step(1, 0)` – yrittää löytää suoraa parannusta
-    - Jos ei löydy, kutsuu `alternate_step()`
-	3.	Jos parannus löytyi, palauttaa flip-sekvenssin, muuten ilmoittaa epäonnistumisesta
+1.	Alustaa:
+- Nykyinen kierros = T
+- Tyhjä flip-sekvenssi
+- Asettaa base = v
+2.	Kutsuu:
+- `step(1, 0)` – yrittää löytää suoraa parannusta
+- Jos ei löydy, kutsuu `alternate_step()`
+3.	Jos parannus löytyi, palauttaa flip-sekvenssin, muuten ilmoittaa epäonnistumisesta
 
 ![lin_kernighan()](/images/algorithm_15_4.png)
 
 Funktio `lin_kernighan()` on pääfunktio, joka iteroi Lin–Kernighan-haun (`lk_search`) useilla aloitussolmuilla, ja päivittää parhaan tunnetun reitin, kunnes yhtään parannusta ei enää löydy. Se on koko heuristisen algoritmin "moottori". 
 
 Toiminnot:
-	1.	Alustus:
-    - Aseta lk_tour = T (lähtökierros).
-    - Merkitse kaikki solmut aktiivisiksi (eli kelvollisiksi hakupisteiksi).
-	2.	Iteratiivinen parannushaku:
-    - Niin kauan kuin löytyy merkittyjä solmuja:
-        - Valitaan merkitty solmu v.
-        - Kutsutaan lk_search(v, lk_tour):
-            - Jos löytyi parantava flip-sekvenssi:
-            - Käydään flipit läpi yksi kerrallaan:
-                - Sovelletaan flipiä flip(x, y).
-                - Päivitetään lk_tour.
-                - Merkitään solmut x ja y (koska ne saattavat avata uusia parannuksia).
-            - Poistetaan flip-sekvenssi listalta.
-        - Jos parannusta ei löytynyt:
-            - Poistetaan v aktiivisista solmuista.
-	3.	Palautus:
-    - Lopuksi palautetaan lk_tour, eli paras löytynyt reitti.
+1.	Alustus:
+- Aseta lk_tour = T (lähtökierros).
+- Merkitse kaikki solmut aktiivisiksi (eli kelvollisiksi hakupisteiksi).
+2.	Iteratiivinen parannushaku:
+- Niin kauan kuin löytyy merkittyjä solmuja:
+    - Valitaan merkitty solmu v.
+    - Kutsutaan lk_search(v, lk_tour):
+        - Jos löytyi parantava flip-sekvenssi:
+        - Käydään flipit läpi yksi kerrallaan:
+            - Sovelletaan flipiä flip(x, y).
+            - Päivitetään lk_tour.
+            - Merkitään solmut x ja y (koska ne saattavat avata uusia parannuksia).
+        - Poistetaan flip-sekvenssi listalta.
+    - Jos parannusta ei löytynyt:
+        - Poistetaan v aktiivisista solmuista.
+3.	Palautus:
+- Lopuksi palautetaan lk_tour, eli paras löytynyt reitti.
 
 ## 7. Aika- ja tilavaativuus
 

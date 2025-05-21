@@ -181,11 +181,11 @@ Testauksen päätavoitteita ovat:
 ### 8.2 Testitapaukset
 
 1. Pienet käsin verifioitavat instanssit
-    - Esimerkiksi 4–10 kaupungin TSP:t, joissa optimaalinen kierros voidaan määrittää tai tarkistaa käsin.
+    - Esimerkiksi 10–12 solmun TSP-ongelmat, joissa paras ratkaisu voidaan tarkistaa kaikki vaihtoehdot läpikäyvällä algoritmilla.
     - Näillä testataan rakenteellista oikeellisuutta ja mahdollisten flip-toimintojen virheettömyyttä.
 
 2. Keskikokoiset tunnetut instanssit (esim. TSPLIB)
-    - Testaa 20–100 solmun tapauksilla, joissa tunnetaan optimaalinen ratkaisu.
+    - Testaa 40–300 solmun tapauksilla, joissa tunnetaan optimaalinen ratkaisu.
     - Vertaile LK:n ratkaisun pituutta optimiin tai muihin algoritmeihin.
 
 3. Satunnaisesti generoituja instansseja

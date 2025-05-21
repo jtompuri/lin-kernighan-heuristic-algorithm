@@ -57,6 +57,13 @@ _The Traveling Salesman Problem_-kirjan luku 15 _Tour Finding_ esittelee LK-algo
 
 Algoritmin idea perustuu polun kaarien vaihtoihin, joilla käännetään reitin osan solmujen järjestys päinvastaiseksi. Jos uuden reitin pituus on lyhyempi kuin alkuperäisen, säilytetään vaihto. Muuten vaihto hylätään. Yksinkertaisin vaihto on kahden kaaren vaihto, mutta yhtä hyvin voidaan vaihtaa kolme tai useampi kaari keskenään. Lisäksi kaaren vaihtoja voidaan tehdä peräkkäin useita ja hyväksyä, että reitin välivaiheen pituus on suurempi kuin alkuperäinen, jolloin on mahdollista löytää usean vaihdon tuloksena alkuperäistä lyhyempi reitti.  
 
+LK-algoritmin suunnittelussa on panostettu erityisesti kaarien vaihtojen optimointiin. Haasteena kaarien vaihdossa on toisaalta se, että pitäisi välttää turhia kaarenvaihtoja, ja toisaalta etsiä rohkeasti lyhyempää reittiä eikä tyytyä paikallisesti optimaaliseen ratkaisuun. Käytännösssä LK-algoritmi toki lähes poikkeuksetta päätyy paikalliseen eikä yleiseen optimaaliseen ratkaisuun pois lukien hyvin yksinkertaiset verkot. Rekursiivisen haun leveyttä, eli kuinka monta naapurisolmua otetaan mukaan hakuun, rajoitetaan suhteessa haun syvyyteen. Mallitoteutuksessa syvyydelle ei ole asetettu ylärajaa, mutta käytännön toteutuksissa käytetään usein 10-12 ylärajaa rekursioille. Tyypillisesti haun leveys on rajoitettu ensimäisellä tasolla 5 naapuriin, toisella tasolla 5 naapuriin ja tätä seuraavilla tasoilla yhteen naapuriin.
+
+![Algoritmi step()-funktiolle](/images/algorithm_15_1.png)
+
+
+
+
 ## 7. Aika- ja tilavaativuus
 
 ## 8. Testausstrategia

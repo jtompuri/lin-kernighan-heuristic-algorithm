@@ -4,10 +4,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tsplib95
 from scipy.spatial import Delaunay
-from typing import Tuple, Mapping, cast
 from itertools import combinations
 
-# --- Configuration parameters (modifiable) ---
+
+"""
+This is a Lin-Kernighan TSP solver that implements all the standard features:
+    - Basic k-opt moves
+    - Recursive improvement (step & alternate_step)
+    - Flip tracking & rollback
+    - Neighborhood ordering (lk-ordering)
+    - Breadth & depth parameters
+    - Kick / double-bridge restarts
+    - Tour object abstraction (next, flip)
+    - Delta-based tentative improvements
+    - Chained Lin-Kernighan algorithm
+"""
+
+
+# Configuration parameters (modifiable)
 MAX_LEVEL = 12        # recursion depth
 BREADTH1 = 5          # breadth at level 1
 BREADTH2 = 5          # breadth at level 2
@@ -18,7 +32,7 @@ BREADTHD = 1          # alternate-step D-ordering breadth
 TIME_LIMIT = 20.0      # time limit (s) for chained LK
 CONSISTENCY_CHECK_EVERY = 10000  # flips between consistency assertions
 
-# --- Tour data structure with incremental cost and consistency checks ---
+# Tour data structure with incremental cost and consistency checks
 class Tour:
     def __init__(self, order, D=None):
         self.n = len(order)
@@ -92,7 +106,7 @@ class Tour:
         return delta
 
 
-# --- Distance & neighbors ---
+# Distance & neighbors
 def build_distance_matrix(coords):
     return np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
 
@@ -105,7 +119,7 @@ def delaunay_neighbors(coords):
             neigh[u].add(v); neigh[v].add(u)
     return [sorted(neigh[i]) for i in range(len(coords))]
 
-# --- Lin–Kernighan subroutines ---
+# Lin–Kernighan subroutines
 def step(level, delta, base, tour, D, neigh, flip_seq, start_c, best_c):
     breadth = [BREADTH1, BREADTH2] + [BREADTH_K] * (MAX_LEVEL - 2)
     b = breadth[min(level - 1, len(breadth) - 1)]
@@ -188,7 +202,7 @@ def lk_search(v,tour,D,neigh):
     ok,seq = alternate_step(v,tour,D,neigh)
     return seq if ok else None
 
-# --- Algorithm 15.4: Lin-Kernighan with safety and final cost check ---
+# Algorithm 15.4: Lin-Kernighan with safety and final cost check
 def lin_kernighan(coords, init):
     n = len(coords)
     D = build_distance_matrix(coords)
@@ -214,7 +228,7 @@ def lin_kernighan(coords, init):
                 break
     return tour, best_len
 
-# --- Algorithm 15.5: Chained LK with final cost recompute ---
+# Algorithm 15.5: Chained LK with final cost recompute
 def double_bridge(order):
     n = len(order)
     a,b,c,d = sorted(np.random.choice(range(1,n),4,False))
@@ -246,15 +260,12 @@ def chained_lin_kernighan(coords, init, time_limit=None):
     return tour_obj.get_tour(), bl
 
 
-# --- TSPLIB I/O ---
+# TSPLIB I/O
 def read_tsp(path):
     prob = tsplib95.load(path)
-    coords_map: Mapping[int, Tuple[float, float]] = cast(
-        Mapping[int, Tuple[float, float]],
-        prob.node_coords)    
+    coords_map = dict(prob.node_coords)
     nodes = sorted(coords_map.keys())
     return np.array([coords_map[i] for i in nodes], float)
-
 
 def read_opt_tour(path):
     tour, reading = [], False
@@ -281,7 +292,7 @@ def read_opt_tour(path):
     return tour
 
 
-# --- Batch & Plot ---
+# Batch & Plot
 if __name__ == '__main__':
     folder = '../TSPLIB95/tsp'
     results = []

@@ -158,12 +158,12 @@ Tilavaativuus on hallittavissa, sillä tärkeimmät muistia vievät komponentit 
 
 Tämä tekee Lin–Kernighan-heuristiikasta erittäin käyttökelpoisen erityisesti silloin, kun etsitään hyviä (ei-optimaalisia) ratkaisuja nopeasti suurissa TSP-ongelmissa. Toisin kuin eksponentiaalista aikaa vievät tarkat menetelmät, LK-algoritmi skaalautuu käytännössä tuhansiin solmuihin ja tuottaa laadukkaita reittejä kohtuullisessa ajassa ja muistinkulutuksessa. Näin se tarjoaa tasapainon tehokkuuden ja tuloksen laadun välillä.
 
-| Algoritmi                   | Aikavaativuus                   | Tilavaativuus          | Kuvaus |
-|-----------------------------|----------------------------------|-------------------------|--------|
-| Brute-force                 | \((n-1)!\)                      | \(\mathcal{O}(n)\)      | Käy kaikki reitit läpi. |
-| Held–Karp                   | \(\mathcal{O}(n^2 \cdot 2^n)\)  | \(\mathcal{O}(n \cdot 2^n)\) | Täsmällinen algoritmi dynaamisella ohjelmoinnilla. |
-| Lin–Kernighan (LK)          | \(\mathcal{O}(n^2 \log n)\) – \(\mathcal{O}(n^3)\) | \(\mathcal{O}(n^2)\)     | Tehokas heuristiikka, joka tekee k-opt-vaihtoja dynaamisesti. |
-| Chained Lin–Kernighan     | Hieman suurempi kuin LK         | \(\mathcal{O}(n^2)\)     | Lisää satunnaisia häiriöitä ja toistaa LK-hakuja; parantaa globaalisti. |
+| Algoritmi                   | Aikavaativuus           | Tilavaativuus     | Kuvaus |
+|-----------------------------|-------------------------|-------------------|--------|
+| Brute-force                 | (n-1)!                  | O(n)              | Käy kaikki reitit läpi. |
+| Held–Karp                   | O(n^2 \cdot 2^n)        | O(n \cdot 2^n)    | Täsmällinen algoritmi dynaamisella ohjelmoinnilla. |
+| Lin–Kernighan               | O(n^2 \log n) – O(n^3)  | O(n^2)            | Tehokas heuristiikka, joka tekee k-opt-vaihtoja dynaamisesti. |
+| Chained Lin–Kernighan       | Hieman suurempi kuin LK | O(n^2)            | Lisää satunnaisia häiriöitä ja toistaa LK-hakuja; parantaa globaalisti. |
 
 
 ## 8. Testausstrategia

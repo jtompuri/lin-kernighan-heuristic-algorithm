@@ -138,9 +138,9 @@ Funktio `chained_lin_kernighan()` on edistyneempi versio `lin_kernighan()`-funkt
 Toiminta:
 1.	Alustus:
     - Suoritetaan tavallinen `lin_kernighan()`, josta saadaan alkuperäinen parannettu reitti T.
-2.	Iteratiivinen “ketjutus”:
+2.	Iteratiivinen ketjutus:
     - Niin kauan kuin aikaa on jäljellä:
-        - Luodaan “kick”: flip-sekvenssi, joka häiritsee nykyistä reittiä T (yleensä 4-opt siirto, esim. double-bridge).
+        - Luodaan kick: flip-sekvenssi, joka häiritsee nykyistä reittiä T (yleensä 4-opt siirto, esim. double-bridge).
         - Sovelletaan kick: T <- T'
         - Ajetaan `lin_kernighan(T')` -> saadaan uusi reitti Tʹ.
         - Jos Tʹ on parempi kuin alkuperäinen T, hyväksytään se:

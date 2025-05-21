@@ -40,25 +40,25 @@ Tiedostossa recursive-k-opt-lin-kernighan.py löytyy alustava luonnos LK-algorit
 
 LK-algoritmin luonnoksessa valitaan lähtökohdaksi satunnainen reitti. Lähtökohtana voisi sen sijaan olla jollain tehokkaalla algoritmilla, kuten "Nearest Neighbor"-algoritmilla (NN), laskettu approksimaatio, jota sitten tarkennetaan LK:lla. Hieman yllättäen TSP-kirjan mukaan satunnaisen ja NN-algoritmilla luodun verkon ratkaisun kestossa tai tarkkuudessa ei ole merkittävää eroa. NN-algoritmia itse asiassa käytetään LK:ssa, kun valitaan paikallisesti kaaria, joita ristiin kytkemällä etsitään lyhyempää reittiä, sillä kaaret valitaan alkaen lähimmistä solmuista edeten kaukaisempiin solmuihin. 
 
-![Satunnainen 100 solmun polku](/kuvat/random_tour.png)
+![Satunnainen 100 solmun polku](/images/random_tour.png)
 
 ### LK:n ratkaisu 100 solmun polulle (ei optimaalinen)
 
 Tässä LK-algoritmin luonnoksen ei-optimaalinen ratkaisu 100 solmun polulle. Kuten nähdään, niin se ei missään vaiheessa päädy kokeilemaan kaarien vaihtoa "pullistumalle", joka rajautuu kaarella, joka ylittää reitin kahdesti. Toimiessaan oikein rekursion pitäisi käydä läpi myös vaihtoehto, että kaikki "pullistuman" kaaret korvataan niin, että reitti ei enää risteä itsensä kanssa. Toisin sanoen, algoritmi jää jumiin paikalliseen minimiin. Jotta pullistuma poistettaisiin, algoritmin tulisi kokeilla ahneesti pullistuman kaikkien 7 kaaren vaihtamista yhdellä kertaa. Kuten nähdään, pullistuman solmujen muodostama reitti on paikallisesti optimaalinen, sillä kaaret muodostavat lyhimmän reitin solmujen välillä; on tunnetusti todistettu, että "kumilanka" konveksin kehän ympäri muodostaa aina lyhimmän reitin. Kehittyneemmissä LK-algoritmeissa, kuten alkuperäisen artikkelin ja TSP-kirjan LK-algoritmin esittelyssä, käytetään paikallisten minimien välttämiseen "kick"-operaatiota, jolla tuotetaan polkuun satunnaisia "double bridge"-rakenteita, jotka kääntävät polun ristiin kahdesta kohdasta ja näin tilapäisesti pidentävät polkua. "Kick"-operaation tarkoitus on pakottaa algoritmi ulos paikallisesta minimistä. Jos "kick"-operaation tuloksena löydetään sitä edeltänyttä lyhyempi reitti, niin algoritmi jatkaa tästä. Muussa tapauksessa "kick"-operaatio perutaan. 
 
-![LK:n ratkaisema 100 solmun polku](/kuvat/lk-k-depth-1.png)
+![LK:n ratkaisema 100 solmun polku](/images/lk-k-depth-1.png)
 
 ### Animaatio 20 solmun ratkaisusta (ei optimaalinen)
 
 Animaatio siitä miten luonnos LK-algoritmista lyhentää iteratiivisesti polun pituutta vaihtamalla kaaria ristiin. LK pystyy vaihtamaan enemmän kuin kaksi kaarta keskenään, mutta nämä useamman kaaren vaihdot perustuvat ketjutettuihin kahden kaaren vaihtoihin, minkä vuoksi LK-algoritmin ytimessä on opt-2-algoritmi, joka vaihtaa kaksi kaarta keskenään. Animaatio ei esitä hylttyjä vaihtoehtoja, jotka osoittautuivat pidemmiksi, eikä siinä näy kaarien rekursiivisen haun syvyys. Jatkossa voisin raportoida mahdollisesti myös rekursion syvyyden. Yllätteän LK:n luonnoksessa en saanut ratkaisussa tuotettua eroja eri sallituilla maksimi rekursion syvyyksillä. Luonnollisesti, kun rekursio syvyys on nolla (max_k = 0), niin algoritmi tuottaa satunnaisen polun (ks. yllä), mutta k:n arvoilla 1-5 sain kaikilla saman ratkaisun 100 solmun verkolle (ks. yllä). Eroa oli lähinnä algoritmin suoritusajassa: kun k = 1, aikaa kului puolet ajasta verrattuna, kun k = 5. Pitää tutkia, onko algoritmissa jotain vikaa vai liittyykö tämä verkon muotoon. 
 
-![Animaatio 20 solmun ratkaisusta](/kuvat/lk_tsp.gif)
+![Animaatio 20 solmun ratkaisusta](/images/lk_tsp.gif)
 
 Animaation viimeinen ruutu, johon LK-algoritmin luonnos päättyy. 
 
-![Animaation viimeinen ruutu](/kuvat/animation.png)
+![Animaation viimeinen ruutu](/images/animation.png)
 
 Kuten nähdään, niin polku ei ole optimaalinen, sillä se risteää kahdesti itsensä kanssa. Huomataan, että vaihtamalla risteävät kaaret, saadaan polku, joka on tunnetusti lyhyempi. Herää kysymys, että miksi algoritmi ei yrittänyt vaihtaa kaaria keskenään. Onko algoritmin luonnoksessa virhe vai voiko ei-optimaalinen ratkaisu johtua jumittumisesta lokaaliin minimiin, mikä ei vaikuta uskottavalta.  
 
-![Animaation viimeinen ruutu](/kuvat/animation_double_bridge.png)
+![Animaation viimeinen ruutu](/images/animation_double_bridge.png)
 

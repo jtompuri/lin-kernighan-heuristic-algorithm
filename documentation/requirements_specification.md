@@ -2,7 +2,7 @@
 
 ## 1. Johdanto
 
-Harjoitustyössä toteutetaan Lin-Kernighan heuristinen algoritmi, joka antaa likimääräisen ratkaisun symmetriseen kauppamatkustajan ongelmaan (_Traveling Salesman Problem_, TSP). Kauppamatkustajan ongelmaa pidetään TSP-kovana ja tarkan ratkaisun antava kaikki reitit läpikäyvän algoritmin aikavaativuutena pidetään O(n!), mikä tekee algoritmista käyttökelvottoman jo 20 kaupungin verkoissa. Tämän vuoksi TSP-ongelmaa on yritetty ratkaista heuristisilla algoritmeilla, joista Lin-Kernighan heuristinen algoritmi (LK) on osoittautunut yhdeksi tehokkaimmista. TSP-ongelman tutkimuksessa kehitettyjä heuristisia algoritmeja käytetään laajasti erilaisissa optimointia vaativissa tehtävissä kuten logistiikassa, teollisuudessa, biotieteissä, autonomisissa järjestelmissä, tietokonepeleissä ja verkkopalveluissa.
+Harjoitustyössä toteutetaan Lin–Kernighan-heuristinen algoritmi, joka antaa likimääräisen ratkaisun symmetriseen kauppamatkustajan ongelmaan (_Traveling Salesman Problem_, TSP). Kauppamatkustajan ongelmaa pidetään TSP-kovana ja tarkan ratkaisun antava kaikki reitit läpikäyvän algoritmin aikavaativuutena pidetään O(n!), mikä tekee algoritmista käyttökelvottoman jo 20 kaupungin verkoissa. Tämän vuoksi TSP-ongelmaa on yritetty ratkaista heuristisilla algoritmeilla, joista Lin–Kernighan-heuristinen algoritmi (LK) on osoittautunut yhdeksi tehokkaimmista. TSP-ongelman tutkimuksessa kehitettyjä heuristisia algoritmeja käytetään laajasti erilaisissa optimointia vaativissa tehtävissä kuten logistiikassa, teollisuudessa, biotieteissä, autonomisissa järjestelmissä, tietokonepeleissä ja verkkopalveluissa.
 
 ## 2. Rajaus ja soveltamisala
 
@@ -25,13 +25,13 @@ Keskeisiä TSP-ongelmaan ja LK-algoritmiin liittyviä käsitteitä:
 - _Etäisyysmatriisi (distance matrix)_: matriisi, joka sisältää solmujen väliset etäisyydet.
 - _Täysin kytketty verkko (fully connected network)_: graafi, jossa jokaisella solmulla on yhteys jokaiseen muuhun.
 - _K-opt-vaihto (k-opt)_: TSP-heuristiikassa operaatio, jossa katkaistaan ja yhdistetään uudelleen _k_ kaarta uudella tavalla lyhentääkseen kierrosta. LK käyttää vaihtuvaa _k_:ta.
-- _Lin-Kernighan heuristiikka (Lin-Kernighan heuristic)_: edistynyt TSP-heuristiikka, joka käyttää rekursiivista tai ketjutettua k-opt-rakennetta parantaakseen kierrosta inkrementaalisesti.
+- _Lin–Kernighan-heuristiikka (Lin–Kernighan heuristic)_: edistynyt TSP-heuristiikka, joka käyttää rekursiivista tai ketjutettua k-opt-rakennetta parantaakseen kierrosta inkrementaalisesti.
 - _Kandidaattireunat (candidate edges)_: valikoidut reunat, joita tarkastellaan mahdollisina vaihdon kohteina (esim. lähimmät _k_ naapurikaupunkia).
 - _Hyöty tai parannus (gain)_: kierroksen pituuden vähennys, joka saadaan tietystä k-vaihdosta.
 - _Laillinen vaihto (feasible move)_: vaihto, joka tuottaa kelvollisen, suljetun kierroksen ilman kaksoiskäyntejä tai verkosta irtoavia osia.
 - _Osittainen polku (partial path)_: väliaikainen reittijakso k-opt-vaihdon aikana.
 - _Rekursiivinen haku (recursive search)_: algoritmin kyky syventää parannuksia useilla peräkkäisillä k-opt-vaihdoksilla, kunnes ei enää saada lisähyötyä.
-- _Ketjutettu Lin-Kernighan (chained Lin-Kernighan)_: strategia, jossa yhdistetään useita LK-vaiheita satunnaisilla aloituksilla uuden, lyhyemmän kierroksen löytämiseksi.
+- _Ketjutettu Lin–Kernighan (chained Lin–Kernighan)_: strategia, jossa yhdistetään useita LK-vaiheita satunnaisilla aloituksilla uuden, lyhyemmän kierroksen löytämiseksi.
 
 ## 4. Syötteet ja tulosteet
 
@@ -41,7 +41,7 @@ Algoritmi tulostaa terminaaliin algoritmin konfiguraation tiedot ja yhteenvedon 
 
 ## 6. Algoritmin kuvaus
 
-LK-algoritmin toteutuksessa noudatetaan kirjan _The Traveling Salesman Problem: A Computational Study_ esitystä Lin-Kernighan heuristiikasta. Esitystä voi pitää kanonisena, sillä kirjan kirjoittajat ovat keskeisiä alan tutkijoita ja _Concorde TSP Solver_ sovelluksen kehittäjiä. Kirjassa käytetään esimerkkinä _Concorde_ sekä _LKH TSP Solveria_, jotka ovat tällä hetkellä tehokkaimpia TSP-ongelman ratkaisuun kehitettyjä sovelluksia.
+LK-algoritmin toteutuksessa noudatetaan kirjan _The Traveling Salesman Problem: A Computational Study_ esitystä Lin–Kernighan-heuristiikasta. Esitystä voi pitää kanonisena, sillä kirjan kirjoittajat ovat keskeisiä alan tutkijoita ja _Concorde TSP Solver_ sovelluksen kehittäjiä. Kirjassa käytetään esimerkkinä _Concorde_ sekä _LKH TSP Solveria_, jotka ovat tällä hetkellä tehokkaimpia TSP-ongelman ratkaisuun kehitettyjä sovelluksia.
 
 ### 6.1 Vertailualgoritmit
 
@@ -151,6 +151,20 @@ Toiminta:
 
 
 ## 7. Aika- ja tilavaativuus
+
+Lin–Kernighan-heuristisen algoritmin aikavaativuus ja tilavaativuus ovat merkittävästi parempia kuin tarkkojen ratkaisualgoritmien, kuten Held-Karp-algoritmin. Vaikka Lin–Kernighan-algoritmille ei ole olemassa tiukkaa teoreettista aikarajaa, käytännön havaintojen perusteella sen suorituskyky sijoittuu useimmissa tapauksissa väliin `O(n^2 \log n)` ja `O(n^3)`, riippuen muun muassa sallittujen vaihtoehtoisten reittivaihtojen määrästä, rekursion syvyydestä ja käytetyn naapurilistan pituudesta. Ketjutetussa versiossa (Chained Lin–Kernighan) aikavaativuus voi kasvaa hieman suuremmaksi, koska algoritmi suorittaa toistuvia häiriöitä (kick-vaiheita) ja käynnistää Lin–Kernighan-haun useita kertoja, mutta myös sen kohdalla kasvu pysyy käytännössä polynomisena.
+
+Tilavaativuus on hallittavissa, sillä tärkeimmät muistia vievät komponentit ovat etäisyysmatriisi, jonka koko on `O(n^2)`, sekä rakenteet reitin esittämiseen ja naapurilistojen ylläpitämiseen, jotka vaativat tyypillisesti `O(n)–O(_k_n)` muistia. Koska _k_ (esimerkiksi lähimmät 10-20 naapuria) on paljon pienempi kuin n, algoritmin muistinkäyttö pysyy maltillisena myös suurilla instansseilla.
+
+Tämä tekee Lin–Kernighan-heuristiikasta erittäin käyttökelpoisen erityisesti silloin, kun etsitään hyviä (ei-optimaalisia) ratkaisuja nopeasti suurissa TSP-ongelmissa. Toisin kuin eksponentiaalista aikaa vievät tarkat menetelmät, LK-algoritmi skaalautuu käytännössä tuhansiin solmuihin ja tuottaa laadukkaita reittejä kohtuullisessa ajassa ja muistinkulutuksessa. Näin se tarjoaa tasapainon tehokkuuden ja tuloksen laadun välillä.
+
+| Algoritmi                   | Aikavaativuus                   | Tilavaativuus          | Kuvaus |
+|-----------------------------|----------------------------------|-------------------------|--------|
+| Brute-force                 | \((n-1)!\)                      | \(\mathcal{O}(n)\)      | Käy kaikki reitit läpi. |
+| Held–Karp                   | \(\mathcal{O}(n^2 \cdot 2^n)\)  | \(\mathcal{O}(n \cdot 2^n)\) | Täsmällinen algoritmi dynaamisella ohjelmoinnilla. |
+| Lin–Kernighan (LK)          | \(\mathcal{O}(n^2 \log n)\) – \(\mathcal{O}(n^3)\) | \(\mathcal{O}(n^2)\)     | Tehokas heuristiikka, joka tekee k-opt-vaihtoja dynaamisesti. |
+| Chained Lin–Kernighan     | Hieman suurempi kuin LK         | \(\mathcal{O}(n^2)\)     | Lisää satunnaisia häiriöitä ja toistaa LK-hakuja; parantaa globaalisti. |
+
 
 ## 8. Testausstrategia
 

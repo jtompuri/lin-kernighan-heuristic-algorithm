@@ -65,9 +65,9 @@ LK-algoritmin suunnittelussa on panostettu erityisesti kaarien vaihtojen optimoi
 
 Funktio `step()` on rekursiivinen funktio, joka etsii parannuksia nykyiseen kierrokseen suorittamalla mahdollisia k-opt-vaihtoja — yksi kerrallaan — niin kauan kuin parannus näyttää mahdolliselta.
 
-Toiminnot:
+Toiminta:
 - Luo lk-ordering eli lista lupaavista naapureista vertexille base.
-- Käy läpi korkeintaan breadth(level) lupaavaa naapuria (eli “leveys” tietyllä tasolla).
+- Käy läpi korkeintaan `breadth(level)` lupaavaa naapuria (eli leveys tietyllä tasolla).
 - Jokaiselle kandidaatille yrittää tehdä flip-operaation, jolla kaksi reunaa korvataan kahdella uudella.
 - Jos flip parantaa kierrosta (tai saattaa johtaa parannukseen), funktio kutsuu itseään seuraavalla tasolla (depth-first-haku).
 - Jos jokin haara johtaa parempaan reittiin, se palautetaan. Muuten peruuntuu (backtrack) ja yrittää seuraavaa vaihtoehtoa.
@@ -81,9 +81,9 @@ Funktio `alternate_step()` laajentaa hakua etsimällä vaihtoehtoisia ensimmäis
 Toiminnot:
 1.	Luo A-ordering (lupaavat naapurit `next(base)`-solmulle).
 2.	Jokaiselle a:
-    - Luo B-ordering naapureille next(a).
+    - Luo B-ordering naapureille `next(a)`.
     - Jokaiselle b:
-        - Jos b on reitillä next(base) -> a, suoritetaan vaihtoehtoinen flip-sarja (kuva 15.5).
+        - Jos b on reitillä `next(base)` -> a, suoritetaan vaihtoehtoinen flip-sarja (kuva 15.5).
         - Muuten: luodaan D-ordering ja suoritetaan syvempi flip (kuva 15.6).
 3.	Jokainen flip-sarja tarkistaa, paraneeko kierros.
 4.	Jos löytyy parannus, kutsutaan `step()`-funktiota seuraavalta tasolta.
@@ -92,9 +92,9 @@ Toiminnot:
 
 ![Funktio lk_search()](/images/algorithm_15_3.png)
 
-Funktio `lk_search()` äynnistää Lin–Kernighan-parannushaun yksittäisestä solmusta v ja annetusta kierroksesta T. Koostuu step()- ja alternate_step()-kutsujen ketjusta. Palauttaa parannetun flip-sekvenssin tai ilmoittaa, ettei parannusta löytynyt.
+Funktio `lk_search()` äynnistää Lin–Kernighan-parannushaun yksittäisestä solmusta v ja annetusta kierroksesta T. Koostuu `step()`- ja `alternate_step()`-kutsujen ketjusta. Palauttaa parannetun flip-sekvenssin tai ilmoittaa, ettei parannusta löytynyt.
 
-Toiminnot:
+Toiminta:
 1.	Alustaa:
     - Nykyinen kierros = T
     - Tyhjä flip-sekvenssi
@@ -108,9 +108,9 @@ Toiminnot:
 
 ![lin_kernighan()](/images/algorithm_15_4.png)
 
-Funktio `lin_kernighan()` on pääfunktio, joka iteroi Lin–Kernighan-haun (`lk_search`) useilla aloitussolmuilla, ja päivittää parhaan tunnetun reitin, kunnes yhtään parannusta ei enää löydy. Se on koko heuristisen algoritmin "moottori". 
+Funktio `lin_kernighan()` on pääfunktio, joka iteroi Lin–Kernighan-haun (`lk_search`) useilla aloitussolmuilla, ja päivittää parhaan tunnetun reitin, kunnes yhtään parannusta ei enää löydy. Se on koko heuristisen algoritmin moottori. 
 
-Toiminnot:
+Toiminta:
 1.	Alustus:
     - Aseta `lk_tour = T` (lähtökierros).
     - Merkitse kaikki solmut aktiivisiksi (eli kelvollisiksi hakupisteiksi).
@@ -134,6 +134,21 @@ Toiminnot:
 ![chained_lin_kernighan()](/images/algorithm_15_5.png)
 
 Funktio `chained_lin_kernighan()` on edistyneempi versio `lin_kernighan()`-funktiosta. Sen tarkoituksena on jatkaa parannusten hakua myös sen jälkeen, kun tavallinen Lin–Kernighan ei enää löydä parannuksia — tekemällä hallittuja satunnaisia häiriöitä (kicks) reittiin ja käynnistämällä `lin_kernighan()` funktion uudelleen.
+
+Toiminta:
+1.	Alustus:
+    - Suoritetaan tavallinen `lin_kernighan()`, josta saadaan alkuperäinen parannettu reitti T.
+2.	Iteratiivinen “ketjutus”:
+    - Niin kauan kuin aikaa on jäljellä:
+        - Luodaan “kick”: flip-sekvenssi, joka häiritsee nykyistä reittiä T (yleensä 4-opt siirto, esim. double-bridge).
+        - Sovelletaan kick: T <- T'
+        - Ajetaan `lin_kernighan(T')` -> saadaan uusi reitti Tʹ.
+        - Jos Tʹ on parempi kuin alkuperäinen T, hyväksytään se:
+            - T <- Tʹ
+        - Muuten, palautetaan T takaisin vanhaan tilaansa (perutaan kick).
+3.	Palautus:
+    - Palautetaan paras löydetty reitti T.
+
 
 ## 7. Aika- ja tilavaativuus
 

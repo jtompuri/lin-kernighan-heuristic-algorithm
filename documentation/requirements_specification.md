@@ -166,6 +166,35 @@ Tilavaativuus on hallittavissa, sillä tärkeimmät muistia vievät komponentit 
 
 ## 8. Testausstrategia
 
+Hyvä testausstrategia LK-algoritmin toteuttamisessa yhdistää toiminnallisen oikeellisuuden varmistamisen, heuristiikan laadun arvioinnin ja suorituskyvyn testauksen. Koska LK on heuristinen eikä yleensä palauta parasta ratkaisua, testaus ei voi perustua pelkästään oikean tuloksen vertailuun — vaan siihen, että ratkaisu on kelvollinen ja riittävän hyvä. 
+
+### 8.1 Testauksen tavoitteet
+
+Testauksen päätavoitteita ovat:
+	1.	Oikeellisuus: varmista, että algoritmi palauttaa aina sallitun TSP-kierroksen eli se käy jokaisessa solmussa täsmälleen kerran ja palaa alkuun.
+	2.	Laadukkuus: arvioi, kuinka hyvä reitti on verrattuna tunnettuun optimiin tai muihin algoritmeihin kuten 2-opt-algoritmiin.
+	3.	Suorituskyky: mittaa algoritmin suoritusaika ja sen riippuvuus syötteen koosta.
+	4.	Vikasietoisuus: testaa, että algoritmi toimii myös erikoistapauksissa eikä kaadu virheellisiin tai epätavallisiin syötteisiin.
+
+### 8.2 Testitapaukset
+
+1. Pienet käsin verifioitavat instanssit
+    - Esimerkiksi 4–10 kaupungin TSP:t, joissa optimaalinen kierros voidaan määrittää tai tarkistaa käsin.
+    - Näillä testataan rakenteellista oikeellisuutta ja mahdollisten flip-toimintojen virheettömyyttä.
+
+2. Keskikokoiset tunnetut instanssit (esim. TSPLIB)
+    - Testaa 20–100 solmun tapauksilla, joissa tunnetaan optimaalinen ratkaisu.
+    - Vertaile LK:n ratkaisun pituutta optimiin tai muihin algoritmeihin.
+
+3. Satunnaisesti generoituja instansseja
+    - Luo euklidisia TSP-ongelmia esimerkiksi satunnaisilla pisteillä tasossa.
+    - Näillä arvioidaan suorituskykyä ja skaalautuvuutta.
+
+4. Erikoistapaukset
+    - Kaikki kaupungit samalla etäisyydellä.
+    - Kolmion muotoinen tai täysin lineaarinen järjestys.
+    - Syötteet, joissa etäisyydet eivät noudata kolmioepäyhtälöä.
+
 ## 9. Rajapinnat ja integraatio
 
 ## 10. Suoritusympäristö ja vaatimukset

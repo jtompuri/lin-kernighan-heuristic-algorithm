@@ -2,74 +2,105 @@ import itertools
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import List, Tuple, Optional
+import os
+# Instance saving without tsplib95 to ensure compatibility
+
 
 # Precompute pairwise Euclidean distances between all city coordinates
-# Returns an n x n distance matrix D where D[i, j] = distance between city i and city j
-def compute_distance_matrix(coords: np.ndarray) -> np.ndarray:
-    diff = coords[:, np.newaxis] - coords[np.newaxis, :]  # shape: (n, n, 2)
-    return np.linalg.norm(diff, axis=2)  # shape: (n, n)
+def compute_distance_matrix(coords):
+    diff = coords[:, np.newaxis] - coords[np.newaxis, :]
+    return np.linalg.norm(diff, axis=2)
 
-# Compute the total length of a tour using a distance matrix.
-# Early abandon: if the current total exceeds the best so far, return infinity.
-def total_distance(tour: List[int], D: np.ndarray, best_so_far: float = float('inf')) -> float:
+# Compute the total length of a tour using a distance matrix with early abandoning
+def total_distance(tour, D, best_so_far=float('inf')):
     total = 0.0
     n = len(tour)
     for i in range(n):
-        total += D[tour[i], tour[(i + 1) % n]]  # wrap around to form a cycle
-        if total > best_so_far:  # prune search if worse than current best
+        total += D[tour[i], tour[(i + 1) % n]]
+        if total > best_so_far:
             return float('inf')
     return total
 
-# Brute-force solution to the TSP: tries all (n-1)! possible tours that start from city 0
-# Returns the shortest tour found and its length
-def tsp_brute_force(coords: np.ndarray) -> Tuple[List[int], float]:
+# Brute-force TSP solver (fixing city 0)
+def tsp_brute_force(coords):
     n = len(coords)
     D = compute_distance_matrix(coords)
     cities = list(range(n))
-    best_tour: List[int] = []
+    best_tour = []
     best_length = float('inf')
-
-    # Fix city 0 as the starting point to avoid duplicate cycles with different rotations
     for perm in itertools.permutations(cities[1:]):
         tour = [0] + list(perm)
         length = total_distance(tour, D, best_length)
         if length < best_length:
-            best_tour = tour
-            best_length = length
-
+            best_tour, best_length = tour, length
     return best_tour, best_length
 
-# Plot the TSP tour on a 2D plane
-def plot_tour(coords: np.ndarray, tour: List[int], length: Optional[float] = None) -> None:
+# Plot the TSP tour
+def plot_tour(coords, tour, length=None):
+    path = tour + [tour[0]]
     coords = np.array(coords)
-    tour = tour + [tour[0]]  # close the loop by returning to the starting city
-    x = coords[tour, 0]
-    y = coords[tour, 1]
-
-    plt.figure(figsize=(6, 6))
-    plt.plot(x, y, 'o-', markersize=2)
-    plt.title(f"TSP tour (length: {length:.2f})" if length else "TSP tour")
+    x, y = coords[path, 0], coords[path, 1]
+    plt.figure(figsize=(4,4))
+    plt.plot(x, y, 'o-')
+    if length is not None:
+        plt.title(f"TSP tour (length: {length:.2f})")
     plt.xlabel("X")
     plt.ylabel("Y")
-    plt.axis("equal")
-    plt.grid(True)
-    plt.tight_layout()
+    plt.axis('equal'); plt.grid(True); plt.tight_layout()
     plt.show()
 
-# Example usage for testing the brute-force TSP solver
-if __name__ == "__main__":
-    n = 11  # number of cities
-    np.random.seed(42)
-    coords = np.random.rand(n, 2) * 1000  # random coordinates in 1000x1000 space
+# Save optimal tour manually in TSPLIB .tour format
+def save_tour(tour, filepath, name):
+    with open(filepath, 'w') as f:
+        f.write(f"NAME: {name}\n")
+        f.write("TYPE: TOUR\n")
+        f.write(f"DIMENSION: {len(tour)}\n")
+        f.write("TOUR_SECTION\n")
+        for node in tour:
+            f.write(f"{node+1}\n")
+        f.write("-1\n")
+        f.write("EOF\n")
 
+if __name__ == "__main__":
+    n = 11
+    np.random.seed(42)
+    coords = np.random.randint(1, 1001, size=(n, 2))  # integer coords in range [1,1000]
+
+    # Create output directory
+    out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "tsp"))
+    os.makedirs(out_dir, exist_ok=True)
+
+    # File names
+    tsp_fname = f"rand{n}.tsp"
+    tour_fname = f"rand{n}.opt.tour"
+    tsp_path = os.path.join(out_dir, tsp_fname)
+    tour_path = os.path.join(out_dir, tour_fname)
+
+    # Save TSPLIB instance manually to ensure proper format
+    with open(tsp_path, 'w') as f:
+        f.write(f"NAME: {os.path.splitext(tsp_fname)[0]}\n")
+        f.write("TYPE: TSP\n")
+        f.write(f"COMMENT: Random instance with {n} nodes\n")
+        f.write(f"DIMENSION: {n}\n")
+        f.write("EDGE_WEIGHT_TYPE: EUC_2D\n")
+        f.write("NODE_COORD_SECTION\n")
+        for i, (x, y) in enumerate(coords, start=1):
+            f.write(f"{i} {x} {y}\n")
+        f.write("EOF\n")
+    print(f"Saved TSPLIB instance to {tsp_path}")
+
+    # Solve brute-force
     print(f"Running brute-force TSP for {n} cities...")
     start = time.time()
     tour, length = tsp_brute_force(coords)
     duration = time.time() - start
-
     print(f"Optimal tour: {tour}")
     print(f"Optimal length: {length:.2f}")
     print(f"Time: {duration:.2f} s")
 
+    # Save optimal tour
+    save_tour(tour, tour_path, os.path.splitext(tour_fname)[0])
+    print(f"Saved optimal tour to {tour_path}")
+
+    # Plot
     plot_tour(coords, tour, length)

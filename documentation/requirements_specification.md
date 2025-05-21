@@ -72,9 +72,9 @@ Toiminta:
 - Jos flip parantaa kierrosta (tai saattaa johtaa parannukseen), funktio kutsuu itseään seuraavalla tasolla (depth-first-haku).
 - Jos jokin haara johtaa parempaan reittiin, se palautetaan. Muuten peruuntuu (backtrack) ja yrittää seuraavaa vaihtoehtoa.
 
-![Funktio alternate_step()](/images/algorithm_15_2.png)
-
 #### Funktio `alternate_step()`
+
+![Funktio alternate_step()](/images/algorithm_15_2.png)
 
 Funktio `alternate_step()` laajentaa hakua etsimällä vaihtoehtoisia ensimmäisiä siirtoja ja syvempiä vaihtopolkuja, jotka eivät ole saatavilla step()-funktion kautta. Käyttää kolmitasoista leveyshakua (A-, B- ja D-tila) ja erilaisia flip-sekvenssejä.
 
@@ -140,7 +140,7 @@ Toiminta:
     - Suoritetaan tavallinen `lin_kernighan()`, josta saadaan alkuperäinen parannettu reitti T.
 2.	Iteratiivinen ketjutus:
     - Niin kauan kuin aikaa on jäljellä:
-        - Luodaan kick: flip-sekvenssi, joka häiritsee nykyistä reittiä T (yleensä 4-opt siirto, esim. double-bridge).
+        - Luodaan kick: flip-sekvenssi, joka häiritsee nykyistä reittiä T (yleensä 4-opt siirto kuten double-bridge).
         - Sovelletaan kick: T <- T'
         - Ajetaan `lin_kernighan(T')` -> saadaan uusi reitti Tʹ.
         - Jos Tʹ on parempi kuin alkuperäinen T, hyväksytään se:

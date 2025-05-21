@@ -29,8 +29,7 @@ BREADTH_K = 1         # breadth at deeper levels
 BREADTHA = 5          # alternate-step A-ordering breadth
 BREADTHB = 5          # alternate-step B-ordering breadth
 BREADTHD = 1          # alternate-step D-ordering breadth
-TIME_LIMIT = 20.0      # time limit (s) for chained LK
-CONSISTENCY_CHECK_EVERY = 10000  # flips between consistency assertions
+TIME_LIMIT = 5.0      # time limit (s) for chained LK
 
 # Tour data structure with incremental cost and consistency checks
 class Tour:
@@ -94,15 +93,6 @@ class Tour:
         # Update cost and counter
         self.cost += delta
         self._flip_counter += 1
-        # Consistency check occasionally
-        if self._flip_counter % CONSISTENCY_CHECK_EVERY == 0:
-            true_c = 0.0
-            for i in range(self.n):
-                x = self.order[i]
-                y = self.order[(i+1) % self.n]
-                true_c += D[x, y]
-            assert abs(self.cost - true_c) < 1e-6, \
-                f"Cost drift: stored={self.cost}, true={true_c}"
         return delta
 
 

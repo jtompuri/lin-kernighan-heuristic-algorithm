@@ -72,9 +72,9 @@ Toiminnot:
 - Jos flip parantaa kierrosta (tai saattaa johtaa parannukseen), funktio kutsuu itseään seuraavalla tasolla (depth-first-haku).
 - Jos jokin haara johtaa parempaan reittiin, se palautetaan. Muuten peruuntuu (backtrack) ja yrittää seuraavaa vaihtoehtoa.
 
-#### Funktio `alternate_step()`
-
 ![Funktio alternate_step()](/images/algorithm_15_2.png)
+
+#### Funktio `alternate_step()`
 
 Funktio `alternate_step()` laajentaa hakua etsimällä vaihtoehtoisia ensimmäisiä siirtoja ja syvempiä vaihtopolkuja, jotka eivät ole saatavilla step()-funktion kautta. Käyttää kolmitasoista leveyshakua (A-, B- ja D-tila) ja erilaisia flip-sekvenssejä.
 
@@ -104,9 +104,9 @@ Toiminnot:
     - Jos ei löydy, kutsuu `alternate_step()`
 3.	Jos parannus löytyi, palauttaa flip-sekvenssin, muuten ilmoittaa epäonnistumisesta
 
-![lin_kernighan()](/images/algorithm_15_4.png)
-
 #### Funktio `lin_kernighan()` 
+
+![lin_kernighan()](/images/algorithm_15_4.png)
 
 Funktio `lin_kernighan()` on pääfunktio, joka iteroi Lin–Kernighan-haun (`lk_search`) useilla aloitussolmuilla, ja päivittää parhaan tunnetun reitin, kunnes yhtään parannusta ei enää löydy. Se on koko heuristisen algoritmin "moottori". 
 
@@ -130,6 +130,8 @@ Toiminnot:
     - Lopuksi palautetaan `lk_tour`, eli paras löytynyt reitti.
 
 #### Funktio `chained_lin_kernighan()`
+
+![chained_lin_kernighan()](/images/algorithm_15_5.png)
 
 Funktio `chained_lin_kernighan()` on edistyneempi versio `lin_kernighan()`-funktiosta. Sen tarkoituksena on jatkaa parannusten hakua myös sen jälkeen, kun tavallinen Lin–Kernighan ei enää löydä parannuksia — tekemällä hallittuja satunnaisia häiriöitä (kicks) reittiin ja käynnistämällä `lin_kernighan()` funktion uudelleen.
 

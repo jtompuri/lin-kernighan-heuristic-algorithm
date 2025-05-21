@@ -59,8 +59,19 @@ Algoritmin idea perustuu polun kaarien vaihtoihin, joilla käännetään reitin 
 
 LK-algoritmin suunnittelussa on panostettu erityisesti kaarien vaihtojen optimointiin. Haasteena kaarien vaihdossa on toisaalta se, että pitäisi välttää turhia kaarenvaihtoja, ja toisaalta etsiä rohkeasti lyhyempää reittiä eikä tyytyä paikallisesti optimaaliseen ratkaisuun. Käytännösssä LK-algoritmi toki lähes poikkeuksetta päätyy paikalliseen eikä yleiseen optimaaliseen ratkaisuun pois lukien hyvin yksinkertaiset verkot. Rekursiivisen haun leveyttä, eli kuinka monta naapurisolmua otetaan mukaan hakuun, rajoitetaan suhteessa haun syvyyteen. Mallitoteutuksessa syvyydelle ei ole asetettu ylärajaa, mutta käytännön toteutuksissa käytetään usein 10-12 ylärajaa rekursioille. Tyypillisesti haun leveys on rajoitettu ensimäisellä tasolla 5 naapuriin, toisella tasolla 5 naapuriin ja tätä seuraavilla tasoilla yhteen naapuriin.
 
-![Algoritmi step()-funktiolle](/images/algorithm_15_1.png)
+![Funktio step()](/images/algorithm_15_1.png)
 
+LK-algoritmin funktio `step()` etsii parannuksen aloittamalla tietystä reunaparista ja kokeilee useita vaihtoehtoja, mistä reitin voisi katkaista ja liittää uudelleen. Funktio pitää kirjaa peräkkäisten kaarien vaihtojen kumulatiivisen hyödyn erotuksesta (_delta_). Yksinkertaisissa toteutuksissa hyöty lasketaan joka kerta koko reitille, mallitoteutuksessa vältetään koko reitin hyödyn laskemista. Funktio lisää toteutettavia kaarien vaihtoja ja palauttaa uuden reitin, mikäli lyhyempi reitti löytyi. Muuten funktio hylkää kyseisen kaarien vaihdon.
+
+![Funktio alternate_step()](/images/algorithm_15_2.png)
+
+LK-algoritmi laajentaa hakualuetta vaihtoehtoisella `alternate_step()` funktiolla, joka löytää ratkaisuja joita `step()` funktio ei löydä. Siinä missä funktio `step()` etsii kaarien vaihtoja yhdestä suunnasta, `alternate_step()` kokeilee vaihdella kaarien vaihtosuuntien välillä ja kokeilee eri mahdollisia katkaisu- ja liitoskohtia. Se sallii epäsäännöllisempiä reittejä, jotka voivat ohittaa paikallisen minimin. Funktion muuttujat `breadthA`, `breadthB` ja `breadthD` säätelevät haun leveyttä. Ne ovat maksimiarvoja valittavien solmujen ja solmujen parien määrälle. Muuttujien avulla voi hienosäätää algoritmia tietyn TSP-ongelman piirteitä vastaavaksi.
+
+![Funktio lk_search()](/images/algorithm_15_3.png)
+
+Funktio `lk_search()` on LK-algoritmin pääsilmukka, joka etsii parannuksia koko TSP-reittiin useilla `step()`- ja `alternate_step()`-kutsuilla. Se toimii ajurina tai orkestroijana yksittäisille k-vaihdon vaiheille. Se aloittaa eri kohdista reittiä, kokeilee mahdollisia k-opt-vaihtoja ja ottaa käyttöön parannuksia, jos sellaisia löytyy.
+
+![lin_kernighan()](/images/algorithm_15_4.png)
 
 
 

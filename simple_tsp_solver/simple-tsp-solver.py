@@ -184,8 +184,8 @@ def read_opt_tour(path):
 if __name__ == '__main__':
 
     # Change to your TSPLIB path
-    #folder = '../TSPLIB95/tsp'
-    folder = '../tsp'               
+    folder = '../TSPLIB95/tsp'
+    # folder = '../tsp'               
     results = []
 
     for fn in sorted(os.listdir(folder)):

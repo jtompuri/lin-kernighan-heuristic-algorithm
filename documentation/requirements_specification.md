@@ -197,6 +197,16 @@ Testauksen päätavoitteita ovat:
 
 ## 9. Rajapinnat ja integraatio
 
+LK-algoritmia voidaan käyttää joko komentoriviltä ajamalla tiedosto sellaisenaan tai kirjastona tuomalla sen moduuliksi ja kutsumalla funktiota `chained_lin_kernighan(coords, init, time_limit)`. Algoritmi etsii oletuksena kansiossa `.../TSPLIB95/tsp/´ olevia TSP-tiedostoja, jotka täyttävät algoritmin vaatimukset. Omia TSP-tiedostoja voi suorittaa asettamalla ne omaan kansioonsa ja koodista kansion osoitteen.
+
 ## 10. Suoritusympäristö ja vaatimukset
 
+LK-algoritmi on toteutettu Python 3.12.5 ohjelmointikiellä.  
+
+Käytössä olevia Python standardikirjastoja ovat os ja time. Asennettavia Python kirjastoja ovat NumPy, matplotlib, tslib95. Lisäksi tarvitaan funktio Delaunay kirjastosta SciPy.Spatial ja combinations kirjastosta itertools.
+
+Kansiosta `documentation` löytyy `pip freeze > requirements.txt` tehty lista kirjastoista versioineen.
+
 ## 11. Liitteet
+
+

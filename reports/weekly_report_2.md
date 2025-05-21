@@ -38,19 +38,17 @@ Seuraavia työvaiheita:
 
 ## Toisen viikon viikon tuloksia
 
-Seuraavassa muutamia vertailuja algoritmien välillä. 
-
 ### Exact TSP solver vs. Simple TSP solver (4-12 solmua)
 
 ![Exact TSP solver vs. Simple TSP solver (4-12 solmua)](/images/simple_tsp_solver_plots_4_12_cities_20s.png)
 
-Kun verkossa on solmuja 4-12 nähdään, että Simple TSP solver löytää kolmessa tapauksessa yhdeksästä parhaan ratkaisun. Kuvissa paras ratkaisu on kiinteä sininen viiva ja heuristinen ratkaisu oranssilla pisteviiva. Koska algoritmi päätyy hyvin nopeasti paikalliseen minimiin ja pysähtyy yleensä parissa sekunnissa, ei aika rajan kasvattaminen muuta tuloksia kuin jos sen asettaa hyvin pieneksi. Myöskään maksimi syvyydellä ei ollut merkitystä.
+Kun verkossa on solmuja 4-12 nähdään, että Simple TSP solver löytää kolmessa tapauksessa yhdeksästä parhaan ratkaisun. Kuvissa paras ratkaisu on kiinteä sininen viiva ja heuristinen ratkaisu oranssi pisteviiva. Koska algoritmi päätyy hyvin nopeasti paikalliseen minimiin ja pysähtyy yleensä parissa sekunnissa, ei aika rajan kasvattaminen muuta tuloksia kuin jos sen asettaa hyvin pieneksi. Myöskään maksimi syvyydellä ei ollut merkitystä.
 
 ### Exact TSP solver vs. Lin-Kernighan TSP solver (4-12 solmua)
 
 ![Exact TSP solver vs. Lin-Kernighan TSP solver (4-12 solmua)](/images/lin_kernighan_tsp_solver_plots_4_12_cities_20s.png)
 
-Kun verkossa on solmuja 4-12 nähdään, että myös LK-algorimi löytää kolmessa tapauksessa yhdekstästä parhaan ratkaisun. Kuvissa paras ratkaisu on kiinteä sininen viiva ja heuristinen ratkaisu oranssilla pisteviiva. Käytin aikarajana 5, 10 ja 20 sekuntia. Tuloksissa oli jonkin verran satunnaista vaihelua, mutta 10 ja 20 sekuntia tuotti keskimäärin paremman tuloksen. Seuraavissa kuvissa olen käyttänyt järjestelmällisesti 20 sekunnin aikarajaa.
+Kun verkossa on solmuja 4-12 nähdään, että myös LK-algorimi löytää kolmessa tapauksessa yhdekstästä parhaan ratkaisun. Kuvissa paras ratkaisu on kiinteä sininen viiva ja heuristinen ratkaisu oranssi pisteviiva. Käytin aikarajana 5, 10 ja 20 sekuntia. Tuloksissa oli jonkin verran satunnaista vaihelua, mutta 10 ja 20 sekuntia tuotti keskimäärin paremman tuloksen. Seuraavissa kuvissa olen käyttänyt järjestelmällisesti 20 sekunnin aikarajaa.
 
 ### Simple TSP solver ja TSPLIB
 

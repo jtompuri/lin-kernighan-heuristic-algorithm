@@ -16,21 +16,21 @@ performed for it. The script displays a summary table and plots of the tours.
 
 Usage:
   1. Ensure all dependencies are installed:
-     pip install numpy matplotlib scipy tsplib95
+     pip install numpy matplotlib scipy
 
-  2. Place your TSPLIB .tsp files in a designated folder (e.g., '../TSPLIB95/tsp').
+  2. Place your TSPLIB .tsp files in a designated folder.
      Optionally, place corresponding .opt.tour files (if available) in the same
        folder.
 
-  3. Update the `tsp_folder_path` variable in the `if __name__ == '__main__':`
-     block at the bottom of this script to point to your TSPLIB folder.
+  3. Update the `TSP_FOLDER_PATH` constant at the top of this script
+     (in the "--- Constants ---" section) to point to your TSPLIB folder.
 
   4. Run the script from the command line:
      python lin_kernighan_tsp_solver.py
 
 The script will then process each EUC_2D TSP instance found. It prints progress
 and results to the console. For instances with an optimal tour, the gap is shown.
-For instances without an optimal tour, "N/A" is displayed for optimal length and gap.
+For instances without an optimal tour, nothing is displayed for optimal length and gap.
 Finally, a plot of all processed tours is displayed (showing both optimal and heuristic
 tours if the optimal is available, otherwise just the heuristic tour). Configuration
 parameters for the LK algorithm can be adjusted in the `LK_CONFIG` dictionary
@@ -46,6 +46,16 @@ import numpy as np
 from scipy.spatial import Delaunay
 from matplotlib.lines import Line2D
 
+# --- Constants ---
+# Path to the folder containing TSPLIB .tsp files and optional .opt.tour files
+TSP_FOLDER_PATH = Path('../verifications/tsplib95')
+
+# Tolerance for floating point comparisons
+FLOAT_COMPARISON_TOLERANCE = 1e-12
+
+# Maximum number of subplots in the tour visualization
+MAX_SUBPLOTS_IN_PLOT = 25
+
 # --- Configuration Parameters ---
 # This dictionary holds parameters that control the behavior of the Lin-Kernighan heuristic,
 # such as search depth, breadth at various stages, and time limits.
@@ -57,11 +67,6 @@ LK_CONFIG = {
     "BREADTH_D": 1,  # Search breadth for t7 in alternate_step()
     "TIME_LIMIT": 1.0,  # Default time limit for chained_lin_kernighan in seconds
 }
-
-# --- Constants ---
-FLOAT_COMPARISON_TOLERANCE = 1e-12  # Tolerance for floating point comparisons
-# Maximum number of subplots in the tour visualization
-MAX_SUBPLOTS_IN_PLOT = 25
 
 
 class Tour:
@@ -889,21 +894,21 @@ def plot_all_tours(results_data: List[Dict[str, Any]]) -> None:
 
 
 if __name__ == '__main__':
-    # Set your TSPLIB path here
+    # Set your TSPLIB path here - Now using the constant TSP_FOLDER_PATH
     # tsp_folder_path = Path('../TSPLIB95/tsp')
     # tsp_folder_path = Path('../tsp')
-    tsp_folder_path = Path('../verifications/tsplib95')
+    # tsp_folder_path = Path('../verifications/tsplib95') # Replaced by constant
     all_results = []
 
     # Iterate over Path objects
-    for tsp_file_candidate in sorted(tsp_folder_path.iterdir()):
+    for tsp_file_candidate in sorted(TSP_FOLDER_PATH.iterdir()):
         if tsp_file_candidate.suffix.lower() != '.tsp':
             continue
 
         problem_base_name = tsp_file_candidate.stem
 
         # Construct path for optional .opt.tour file
-        opt_tour_file_path = tsp_folder_path / \
+        opt_tour_file_path = TSP_FOLDER_PATH / \
             (problem_base_name + '.opt.tour')
         try:
             instance_result = process_single_instance(

@@ -7,16 +7,20 @@ is based on the descriptions and algorithms presented in "The Traveling Salesman
 A Computational Study" by Applegate, Bixby, Chvátal, and Cook, and "An Effective
 Implementation of the Lin-Kernighan Traveling Salesman Heuristic" by K. Helsgaun.
 
-The script processes TSP instances from the TSPLIB format, computes heuristic solutions
-using a chained version of the LK algorithm, compares them against known optimal
-solutions (if available), and displays a summary table and plots of the tours.
+The script processes TSP instances from the TSPLIB format. It computes heuristic solutions
+using a chained version of the LK algorithm. If a corresponding optimal tour file
+(e.g., problem_name.opt.tour) is found, the script compares the heuristic solution
+against the known optimal solution and calculates the percentage gap. If no optimal
+tour file is available, the instance is still processed, but no gap calculation is
+performed for it. The script displays a summary table and plots of the tours.
 
 Usage:
   1. Ensure all dependencies are installed:
      pip install numpy matplotlib scipy tsplib95
 
-  2. Place your TSPLIB .tsp files and corresponding .opt.tour files (if available)
-     in a designated folder (e.g., '../TSPLIB95/tsp').
+  2. Place your TSPLIB .tsp files in a designated folder (e.g., '../TSPLIB95/tsp').
+     Optionally, place corresponding .opt.tour files (if available) in the same
+       folder.
 
   3. Update the `tsp_folder_path` variable in the `if __name__ == '__main__':`
      block at the bottom of this script to point to your TSPLIB folder.
@@ -24,21 +28,23 @@ Usage:
   4. Run the script from the command line:
      python lin_kernighan_tsp_solver.py
 
-The script will then process each EUC_2D TSP instance found, print progress
-and results to the console, and finally display a plot of all processed tours
-(optimal vs. heuristic). Configuration parameters for the LK algorithm can be
-adjusted in the `LK_CONFIG` dictionary within this script.
+The script will then process each EUC_2D TSP instance found. It prints progress
+and results to the console. For instances with an optimal tour, the gap is shown.
+For instances without an optimal tour, "N/A" is displayed for optimal length and gap.
+Finally, a plot of all processed tours is displayed (showing both optimal and heuristic
+tours if the optimal is available, otherwise just the heuristic tour). Configuration
+parameters for the LK algorithm can be adjusted in the `LK_CONFIG` dictionary
+within this script.
 """
-import os
 import time
-from itertools import combinations 
-from pathlib import Path         
+from itertools import combinations
+from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Any, Iterable
 
 import matplotlib.pyplot as plt
-import numpy as np             
-import tsplib95                
+import numpy as np
 from scipy.spatial import Delaunay
+from matplotlib.lines import Line2D
 
 # --- Configuration Parameters ---
 # This dictionary holds parameters that control the behavior of the Lin-Kernighan heuristic,
@@ -53,7 +59,9 @@ LK_CONFIG = {
 }
 
 # --- Constants ---
-FLOAT_COMPARISON_TOLERANCE = 1e-12 # Tolerance for floating point comparisons
+FLOAT_COMPARISON_TOLERANCE = 1e-12  # Tolerance for floating point comparisons
+# Maximum number of subplots in the tour visualization
+MAX_SUBPLOTS_IN_PLOT = 25
 
 
 class Tour:
@@ -70,6 +78,7 @@ class Tour:
         pos (np.ndarray): Inverse mapping: pos[v] gives index of vertex v in order[].
         cost (float or None): Cost of the tour under current permutation, if initialized.
     """
+
     def __init__(self, order: Iterable[int], D: Optional[np.ndarray] = None) -> None:
         """
         Initializes the tour data structure from a given vertex ordering.
@@ -78,10 +87,12 @@ class Tour:
             order (Iterable[int]): Sequence of vertices defining the tour.
             D (Optional[np.ndarray]): Distance/cost matrix to initialize tour cost.
         """
-        self.n: int = len(list(order)) # Ensure order can be sized, convert to list if iterator
+        self.n: int = len(
+            list(order))  # Ensure order can be sized, convert to list if iterator
         self.order: np.ndarray = np.array(list(order), dtype=np.int32)
         self.pos: np.ndarray = np.empty(self.n, dtype=np.int32)
-        for i, v_node in enumerate(self.order): # Renamed v to v_node for clarity
+        # Renamed v to v_node for clarity
+        for i, v_node in enumerate(self.order):
             self.pos[v_node] = i
         self.cost: Optional[float] = None
         if D is not None:
@@ -98,7 +109,7 @@ class Tour:
         for i in range(self.n):
             a = self.order[i]
             b = self.order[(i + 1) % self.n]
-            c += float(D[a, b]) # Explicit cast
+            c += float(D[a, b])  # Explicit cast
         self.cost = c
 
     def next(self, v: int) -> int:
@@ -199,6 +210,7 @@ class Tour:
         self.cost += delta
         return delta
 
+
 def build_distance_matrix(coords: np.ndarray) -> np.ndarray:
     """
     Computes the full distance (cost) matrix for the given coordinates.
@@ -210,6 +222,7 @@ def build_distance_matrix(coords: np.ndarray) -> np.ndarray:
         np.ndarray: Symmetric matrix of pairwise Euclidean distances.
     """
     return np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
+
 
 def delaunay_neighbors(coords: np.ndarray) -> List[List[int]]:
     """
@@ -230,8 +243,9 @@ def delaunay_neighbors(coords: np.ndarray) -> List[List[int]]:
             neigh[v].add(u)
     return [sorted(neigh[i]) for i in range(len(coords))]
 
-def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray, 
-         neigh: List[List[int]], flip_seq: List[Tuple[int, int]], 
+
+def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
+         neigh: List[List[int]], flip_seq: List[Tuple[int, int]],
          start_cost: float, best_cost: float, deadline: float) -> Tuple[bool, Optional[List[Tuple[int, int]]]]:
     """
     Recursively explores possible sequences of flips to find improved tours,
@@ -259,47 +273,55 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
     candidates = []
 
     # Standard flips (u-steps):
-    for a_candidate_node in neigh[s1]: # Renamed 'a' to 'a_candidate_node' for clarity
+    # Renamed 'a' to 'a_candidate_node' for clarity
+    for a_candidate_node in neigh[s1]:
         is_invalid_node = a_candidate_node in (base, s1)
-        
+
         # Gain from breaking edge (base,s1) and making edge (s1,a_candidate_node)
         # This is G_i in some notations if this is the i-th edge pair considered.
         gain_first_exchange = D[base, s1] - D[s1, a_candidate_node]
-        
+
         # Pruning: if the first exchange doesn't offer positive gain, skip.
         # (Helsgaun's paper suggests G_i > 0, so D[t_2i-1, t_2i] - D[t_2i, x_i] > 0)
-        if is_invalid_node or gain_first_exchange <= FLOAT_COMPARISON_TOLERANCE: # Check for strictly positive
+        if is_invalid_node or gain_first_exchange <= FLOAT_COMPARISON_TOLERANCE:  # Check for strictly positive
             continue
 
-        probe_node = tour.prev(a_candidate_node) # This is t_2i+1 in some notations
-        
+        # This is t_2i+1 in some notations
+        probe_node = tour.prev(a_candidate_node)
+
         # Gain from breaking edge (probe_node, base) and making edge (probe_node, a_candidate_node)
         # This completes a 2-opt or is part of a 3-opt.
-        gain_second_exchange = D[probe_node, a_candidate_node] - D[probe_node, base]
-        
+        gain_second_exchange = D[probe_node,
+                                 a_candidate_node] - D[probe_node, base]
+
         total_gain_for_this_move = gain_first_exchange + gain_second_exchange
-        
+
         # Pruning condition: current accumulated gain (delta) + gain from this first new edge must be positive.
         # This ensures that the sequence of choices so far maintains a positive cumulative gain.
-        if delta + gain_first_exchange > FLOAT_COMPARISON_TOLERANCE: # Check for strictly positive
-            candidates.append(('flip', a_candidate_node, probe_node, total_gain_for_this_move))
+        if delta + gain_first_exchange > FLOAT_COMPARISON_TOLERANCE:  # Check for strictly positive
+            candidates.append(
+                ('flip', a_candidate_node, probe_node, total_gain_for_this_move))
 
     # Mak-Morton flips:
-    for a_candidate_node in neigh[base]: # Renamed 'a' to 'a_candidate_node'
-        if a_candidate_node in (tour.next(base), tour.prev(base), base): continue
-        
+    for a_candidate_node in neigh[base]:  # Renamed 'a' to 'a_candidate_node'
+        if a_candidate_node in (tour.next(base), tour.prev(base), base):
+            continue
+
         # Gain calculation for Mak-Morton move
         gain_mak_morton = (D[base, s1] - D[base, a_candidate_node]) + \
-                          (D[a_candidate_node, tour.next(a_candidate_node)] - D[tour.next(a_candidate_node), s1])
-        
+                          (D[a_candidate_node, tour.next(a_candidate_node)
+                             ] - D[tour.next(a_candidate_node), s1])
+
         # Pruning condition similar to standard flips
-        if delta + (D[base, s1] - D[base, a_candidate_node]) > FLOAT_COMPARISON_TOLERANCE: # Check for strictly positive
-            candidates.append(('makmorton', a_candidate_node, None, gain_mak_morton))
+        # Check for strictly positive
+        if delta + (D[base, s1] - D[base, a_candidate_node]) > FLOAT_COMPARISON_TOLERANCE:
+            candidates.append(
+                ('makmorton', a_candidate_node, None, gain_mak_morton))
 
     candidates.sort(key=lambda x: -x[3])
     count = 0
     for typ, a, probe, g in candidates:
-        if time.time() >= deadline or count >= b: # Enforce time and search breadth limits
+        if time.time() >= deadline or count >= b:  # Enforce time and search breadth limits
             break
         new_delta = delta + g
         if typ == 'flip':
@@ -309,11 +331,13 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
             if start_cost - new_delta < best_cost:
                 return True, flip_seq.copy()
             if level < LK_CONFIG["MAX_LEVEL"]:
-                ok, seq = step(level + 1, new_delta, base, tour, D, neigh, flip_seq, start_cost, best_cost, deadline)
-                if ok: return True, seq
-            tour.flip(y, x) # Backtrack: undo the flip
+                ok, seq = step(level + 1, new_delta, base, tour, D,
+                               neigh, flip_seq, start_cost, best_cost, deadline)
+                if ok:
+                    return True, seq
+            tour.flip(y, x)  # Backtrack: undo the flip
             flip_seq.pop()
-        else: # 'makmorton'
+        else:  # 'makmorton'
             x, y = tour.next(a), base
             tour.flip(x, y)
             flip_seq.append((x, y))
@@ -321,14 +345,17 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
                 return True, flip_seq.copy()
             new_base = tour.next(a)
             if level < LK_CONFIG["MAX_LEVEL"]:
-                ok, seq = step(level + 1, new_delta, new_base, tour, D, neigh, flip_seq, start_cost, best_cost, deadline)
-                if ok: return True, seq
+                ok, seq = step(level + 1, new_delta, new_base, tour,
+                               D, neigh, flip_seq, start_cost, best_cost, deadline)
+                if ok:
+                    return True, seq
             tour.flip(y, x)
             flip_seq.pop()
         count += 1
     return False, None
 
-def alternate_step(base: int, tour: Tour, D: np.ndarray, neigh: List[List[int]], 
+
+def alternate_step(base: int, tour: Tour, D: np.ndarray, neigh: List[List[int]],
                    deadline: float) -> Tuple[bool, Optional[List[Tuple[int, int]]]]:
     """
     Implements the alternative first step of LK (Algorithm 15.2), providing extra
@@ -351,37 +378,43 @@ def alternate_step(base: int, tour: Tour, D: np.ndarray, neigh: List[List[int]],
     for a in neigh[s1]:
         is_invalid_node = a in (base, s1)
         # Check if swapping edge (base,s1) for (s1,a) offers non-positive immediate gain
-        offers_no_gain = (D[base, s1] - D[s1, a]) <= 0 
+        offers_no_gain = (D[base, s1] - D[s1, a]) <= 0
         if is_invalid_node or offers_no_gain:
             continue
         probe = tour.prev(a)
         A.append((D[probe, a] - D[s1, a], a, probe))
     A.sort(reverse=True)
     for _, a, probe in A[:LK_CONFIG["BREADTH_A"]]:
-        if time.time() >= deadline: return False, None
+        if time.time() >= deadline:
+            return False, None
         a1 = tour.next(a)
         B = []
         for b in neigh[a1]:
-            if b in (base, s1, a): continue
+            if b in (base, s1, a):
+                continue
             b1 = tour.next(b)
             B.append((D[b1, b] - D[a1, b], b, b1))
         B.sort(reverse=True)
         for _, b, b1 in B[:LK_CONFIG["BREADTH_B"]]:
-            if time.time() >= deadline: return False, None
+            if time.time() >= deadline:
+                return False, None
             if tour.sequence(s1, b, a):
                 return True, [(s1, b), (b, a)]
             C = []
             for d in neigh[b1]:
-                if d in (base, s1, a, a1, b): continue
+                if d in (base, s1, a, a1, b):
+                    continue
                 d1 = tour.next(d)
                 C.append((D[d1, d] - D[b1, d], d, d1))
             C.sort(reverse=True)
             for _, d, d1 in C[:LK_CONFIG["BREADTH_D"]]:
-                if time.time() >= deadline: return False, None
+                if time.time() >= deadline:
+                    return False, None
                 return True, [(s1, d), (d, a), (a1, d1)]
     return False, None
 
-def lk_search(v: int, tour: Tour, D: np.ndarray, neigh: List[List[int]], 
+
+def lk_search(v: int, tour: Tour, D: np.ndarray, neigh: List[List[int]],
               deadline: float) -> Optional[List[Tuple[int, int]]]:
     """
     Top-level Lin-Kernighan search (Algorithm 15.3).
@@ -402,7 +435,8 @@ def lk_search(v: int, tour: Tour, D: np.ndarray, neigh: List[List[int]],
     temp_tour = Tour(tour.get_tour(), D)
     current_start_cost = temp_tour.cost
     assert current_start_cost is not None, "Tour cost should be initialized when D is provided."
-    ok, seq = step(1, 0, v, temp_tour, D, neigh, [], current_start_cost, current_start_cost, deadline)
+    ok, seq = step(1, 0, v, temp_tour, D, neigh, [],
+                   current_start_cost, current_start_cost, deadline)
     if ok:
         return seq
     if time.time() >= deadline:
@@ -410,7 +444,8 @@ def lk_search(v: int, tour: Tour, D: np.ndarray, neigh: List[List[int]],
     ok, seq = alternate_step(v, tour, D, neigh, deadline)
     return seq if ok else None
 
-def lin_kernighan(coords: np.ndarray, init: List[int], D: np.ndarray, 
+
+def lin_kernighan(coords: np.ndarray, init: List[int], D: np.ndarray,
                   neigh: List[List[int]], deadline: float) -> Tuple[Tour, float]:
     """
     The main Lin-Kernighan heuristic (Algorithm 15.4).
@@ -429,23 +464,24 @@ def lin_kernighan(coords: np.ndarray, init: List[int], D: np.ndarray,
         (Tour, float): Improved tour object and its cost.
     """
     n = len(coords)
-    current_tour_obj = Tour(init, D) 
+    current_tour_obj = Tour(init, D)
     current_global_best_cost = current_tour_obj.cost
     assert current_global_best_cost is not None, "Initial tour cost should be set."
-    
+
     marked = set(range(n))
     while marked:
         if time.time() >= deadline:
             break
-        
+
         v_start_node = marked.pop()
-        
+
         tour_order_before_lk_call = current_tour_obj.get_tour()
-        cost_before_lk_call = current_tour_obj.cost 
+        cost_before_lk_call = current_tour_obj.cost
         assert cost_before_lk_call is not None
 
-        improving_sequence = lk_search(v_start_node, current_tour_obj, D, neigh, deadline) 
-        
+        improving_sequence = lk_search(
+            v_start_node, current_tour_obj, D, neigh, deadline)
+
         if improving_sequence:
             made_improvement_this_iteration = False
             cost_after_lk_call = current_tour_obj.cost
@@ -453,19 +489,19 @@ def lin_kernighan(coords: np.ndarray, init: List[int], D: np.ndarray,
 
             if cost_after_lk_call < cost_before_lk_call - FLOAT_COMPARISON_TOLERANCE:
                 current_global_best_cost = cost_after_lk_call
-                marked = set(range(n)) 
+                marked = set(range(n))
                 made_improvement_this_iteration = True
             else:
                 current_tour_obj = Tour(tour_order_before_lk_call, D)
                 for x_flip, y_flip in improving_sequence:
                     current_tour_obj.flip_and_update_cost(x_flip, y_flip, D)
-                
+
                 new_cost_after_step_flips = current_tour_obj.cost
                 assert new_cost_after_step_flips is not None
 
                 if new_cost_after_step_flips < cost_before_lk_call - FLOAT_COMPARISON_TOLERANCE:
                     current_global_best_cost = new_cost_after_step_flips
-                    marked = set(range(n)) 
+                    marked = set(range(n))
                     made_improvement_this_iteration = True
 
             if not made_improvement_this_iteration:
@@ -473,16 +509,18 @@ def lin_kernighan(coords: np.ndarray, init: List[int], D: np.ndarray,
                 # cost_before_lk_call is already asserted not None.
                 assert current_tour_obj.cost is not None, "Cost must be defined for this check (improving_sequence path)"
                 if abs(current_tour_obj.cost - cost_before_lk_call) > FLOAT_COMPARISON_TOLERANCE and \
-                   current_tour_obj.cost >= cost_before_lk_call - FLOAT_COMPARISON_TOLERANCE :
-                    current_tour_obj = Tour(tour_order_before_lk_call, D) 
-        
-        else: # This replaces 'elif' and handles 'not improving_sequence'. Error for line 465 was in the original elif condition.
+                   current_tour_obj.cost >= cost_before_lk_call - FLOAT_COMPARISON_TOLERANCE:
+                    current_tour_obj = Tour(tour_order_before_lk_call, D)
+
+        else:  # This replaces 'elif' and handles 'not improving_sequence'. Error for line 465 was in the original elif condition.
             # cost_before_lk_call is asserted not None earlier in the loop.
             assert current_tour_obj.cost is not None, "Cost must be defined for this check (no improving_sequence path)"
             if abs(current_tour_obj.cost - cost_before_lk_call) > FLOAT_COMPARISON_TOLERANCE:
-                 current_tour_obj = Tour(tour_order_before_lk_call, D)
+                current_tour_obj = Tour(tour_order_before_lk_call, D)
 
     return current_tour_obj, current_global_best_cost
+
+
 def double_bridge(order: List[int]) -> List[int]:
     """
     Applies the "double-bridge" 4-opt move (see Figure 15.7),
@@ -504,8 +542,9 @@ def double_bridge(order: List[int]) -> List[int]:
     s4 = order[d:]
     return s0 + s2 + s1 + s3 + s4
 
-def chained_lin_kernighan(coords: np.ndarray, init: List[int], 
-                          opt_len: Optional[float] = None, 
+
+def chained_lin_kernighan(coords: np.ndarray, init: List[int],
+                          opt_len: Optional[float] = None,
                           time_limit: Optional[float] = None) -> Tuple[List[int], float]:
     """
     Chained Lin-Kernighan metaheuristic (Algorithm 15.5).
@@ -536,7 +575,8 @@ def chained_lin_kernighan(coords: np.ndarray, init: List[int],
         t2_obj, l2 = lin_kernighan(coords, cand, D, neigh, deadline)
         if l2 < best_cost:
             tour_obj, best_cost = t2_obj, l2
-            if opt_len is not None and abs(best_cost - opt_len) < FLOAT_COMPARISON_TOLERANCE: # Use named constant
+            # Use named constant
+            if opt_len is not None and abs(best_cost - opt_len) < FLOAT_COMPARISON_TOLERANCE:
                 # Early exit if optimal solution found
                 break
     # Final cost recompute
@@ -544,37 +584,18 @@ def chained_lin_kernighan(coords: np.ndarray, init: List[int],
     for i in range(tour_obj.n):
         x = tour_obj.order[i]
         y = tour_obj.order[(i + 1) % tour_obj.n]
-        true_cost += float(D[x, y]) # Explicit cast
-    tour_obj.cost = true_cost # Now true_cost is float
+        true_cost += float(D[x, y])  # Explicit cast
+    tour_obj.cost = true_cost  # Now true_cost is float
     best_cost = true_cost     # And best_cost is float
     return tour_obj.get_tour(), best_cost
 
 
-def read_tsp(path: str) -> np.ndarray:
-    """Reads TSPLIB instance from file and returns the coordinates array."""
-    try:
-        prob = tsplib95.load(path)
-    except FileNotFoundError:
-        print(f"Error: TSP file not found at {path}")
-        raise # Or return None / handle as appropriate
-    except Exception as e: # Catch other tsplib95 load errors
-        print(f"Error loading TSP file {path}: {e}")
-        raise # Or return None
-
-    coords_map = dict(prob.node_coords) # type: ignore # If prob.node_coords is problematic for Pylance
-    nodes = sorted(coords_map.keys())
-    
-    # Explicitly create a list of lists of floats
-    coords_list: List[List[float]] = []
-    for i in nodes:
-        node_coord_data = coords_map[i]
-        coords_list.append([float(val) for val in node_coord_data])
-    
-    return np.array(coords_list, dtype=float)
-
-def read_opt_tour(path: str) -> List[int]:
-    """Reads an optimal tour from a .opt.tour file in TSPLIB format."""
-    tour, reading = [], False
+def read_opt_tour(path: str) -> Optional[List[int]]:
+    """Reads an optimal tour from a .opt.tour file in TSPLIB format.
+    Returns None if the file is not found or cannot be parsed.
+    """
+    tour: List[int] = []
+    reading = False
     try:
         with open(path) as f:
             for line in f:
@@ -590,71 +611,135 @@ def read_opt_tour(path: str) -> List[int]:
                         break
                     try:
                         idx = int(p)
-                    except ValueError: # More specific exception
-                        print(f"Warning: Could not parse token '{p}' as integer in {path}")
+                    except ValueError:
+                        print(
+                            f"Warning: Could not parse token '{p}' as integer in {path}")
                         continue
                     if idx > 0:
                         tour.append(idx - 1)
                 if not reading:
                     break
+        if not tour:  # If tour section was found but no nodes, or section not found
+            return None
     except FileNotFoundError:
-        print(f"Error: Optimal tour file not found at {path}")
-        raise # Or return empty list / handle as appropriate
+        # print(f"Info: Optimal tour file not found at {path}")  # Optional: less verbose
+        return None
+    except Exception as e:
+        print(f"Error reading optimal tour file {path}: {e}")
+        return None
     return tour
 
 
-def process_single_instance(tsp_file_path: str, opt_tour_path: str) -> Dict[str, Any]:
+def read_tsp(path: str) -> np.ndarray:
     """
-    Processes a single TSP instance by loading its data and optimal tour,
-    running the Lin-Kernighan heuristic, and calculating performance statistics.
+    Reads a TSPLIB formatted TSP file and returns the coordinates as a numpy array.
+    Only supports EUC_2D instances.
 
     Args:
-        tsp_file_path (str): The file path to the .tsp problem instance.
-        opt_tour_path (str): The file path to the .opt.tour file containing the optimal tour.
+        path (str): Path to the .tsp file
 
     Returns:
-        dict: A dictionary containing the results for the instance, including:
-            'name' (str): The name of the problem instance.
-            'coords' (np.ndarray): The coordinates of the cities.
-            'opt_tour' (list): The optimal tour as a list of node indices.
-            'heu_tour' (list): The heuristic tour found by LK.
-            'opt_len' (float): The length of the optimal tour.
-            'heu_len' (float): The length of the heuristic tour.
-            'gap' (float): The percentage gap between heuristic and optimal length.
-            'time' (float): The time taken by the heuristic in seconds.
+        np.ndarray: Array of shape (n, 2) containing the coordinates
     """
-    problem_name = os.path.basename(tsp_file_path)[:-4]
+    coords_dict = {}  # {node_id: [x, y]}
+    reading_nodes = False
+
+    try:
+        with open(path, 'r') as f:
+            for line in f:
+                line = line.strip()
+
+                # Skip empty lines
+                if not line:
+                    continue
+
+                # Check if we're starting to read node coordinates
+                if line.startswith("NODE_COORD_SECTION"):
+                    reading_nodes = True
+                    continue
+
+                # Stop reading when we reach EOF
+                if line == "EOF":
+                    break
+
+                # Read node coordinates
+                if reading_nodes:
+                    parts = line.split()
+                    if len(parts) >= 3:  # node_id x y
+                        try:
+                            node_id = int(parts[0])
+                            x = float(parts[1])
+                            y = float(parts[2])
+                            coords_dict[node_id] = [x, y]
+                        except ValueError:
+                            print(f"Warning: Could not parse line: '{line}' in {path}")
+
+        if not coords_dict:
+            print(f"Warning: No coordinates found in {path}")
+            return np.array([], dtype=float)
+
+        # Sort by node ID to ensure consistent order
+        sorted_nodes = sorted(coords_dict.keys())
+        coords_list = [coords_dict[node_id] for node_id in sorted_nodes]
+
+        return np.array(coords_list, dtype=float)
+
+    except FileNotFoundError:
+        print(f"Error: TSP file not found at {path}")
+        raise
+    except Exception as e:
+        print(f"Error reading TSP file {path}: {e}")
+        raise
+
+
+def process_single_instance(tsp_file_path: str, opt_tour_file_path: str) -> Dict[str, Any]:
+    """
+    Processes a single TSP instance by loading its data, optionally its optimal tour,
+    running the Lin-Kernighan heuristic, and calculating performance statistics.
+    """
+    problem_name = Path(tsp_file_path).stem  # Use Path.stem for consistency
     print(f"Processing {problem_name} (EUC_2D)...")
 
     coords = read_tsp(tsp_file_path)
     D_matrix = build_distance_matrix(coords)
-    
-    opt_tour_nodes = read_opt_tour(opt_tour_path)
-    opt_len = 0.0
-    for i in range(len(opt_tour_nodes)):
-        a = opt_tour_nodes[i]
-        b = opt_tour_nodes[(i + 1) % len(opt_tour_nodes)]
-        opt_len += D_matrix[a, b]
-    print(f"  Optimal length: {opt_len:.2f}")
+
+    opt_tour_nodes = read_opt_tour(opt_tour_file_path)
+    opt_len: Optional[float] = None  # Initialize opt_len as Optional
+    gap: Optional[float] = None     # Initialize gap as Optional
+
+    if opt_tour_nodes is not None:  # Check if opt_tour_nodes is a list
+        current_opt_len = 0.0
+        # These lines (642-644 in your error report) are now inside the 'if' block
+        for i in range(len(opt_tour_nodes)):
+            a = opt_tour_nodes[i]
+            b = opt_tour_nodes[(i + 1) % len(opt_tour_nodes)]
+            current_opt_len += D_matrix[a, b]
+        opt_len = current_opt_len
+        print(f"  Optimal length: {opt_len:.2f}")
+    else:
+        print(f"  Optimal tour not available or not found for {problem_name}.")
 
     initial_tour = list(range(len(coords)))
     start_time = time.time()
-    
+
+    # Pass opt_len (which might be None) to chained_lin_kernighan
     heuristic_tour, heuristic_len = chained_lin_kernighan(
         coords, initial_tour, opt_len=opt_len
     )
     elapsed_time = time.time() - start_time
-    
-    if opt_len > 0:
+
+    if opt_len is not None and opt_len > FLOAT_COMPARISON_TOLERANCE:
         gap_percentage = 100.0 * (heuristic_len - opt_len) / opt_len
-    else:
-        # Handle cases where opt_len is zero (e.g., single node problem or undefined)
-        gap_percentage = float('inf') if heuristic_len > 0 else 0.0 
-    gap = max(0.0, gap_percentage)
-    
+        gap = max(0.0, gap_percentage)
+    elif opt_len is not None and abs(opt_len) <= FLOAT_COMPARISON_TOLERANCE:
+        gap = float(
+            'inf') if heuristic_len > FLOAT_COMPARISON_TOLERANCE else 0.0
+    # If opt_len is None, gap remains None
+
     print(
         f"  Heuristic length: {heuristic_len:.2f}  "
-        f"Gap: {gap:.2f}%  Time: {elapsed_time:.2f}s"
+        f"Gap: {gap:.2f}%  Time: {elapsed_time:.2f}s" if gap is not None
+        else f"  Heuristic length: {heuristic_len:.2f}  Time: {elapsed_time:.2f}s"
     )
 
     return {
@@ -686,29 +771,37 @@ def display_summary_table(results_data: List[Dict[str, Any]]) -> None:
     print("-" * len(header))
 
     for r_item in results_data:
+        opt_len_str = f"{r_item['opt_len']:>8.2f}" if r_item['opt_len'] is not None else "   N/A  "
+        gap_str = f"{r_item['gap']:>8.2f}" if r_item['gap'] is not None else "   N/A  "
         print(
-            f"{r_item['name']:<10s} {r_item['opt_len']:>8.2f} "
-            f"{r_item['heu_len']:>8.2f} {r_item['gap']:>8.2f} "
+            f"{r_item['name']:<10s} {opt_len_str} "
+            f"{r_item['heu_len']:>8.2f} {gap_str} "
             f"{r_item['time']:>8.2f}"
         )
-    
+
     if results_data:
         print("-" * len(header))
-        num_items = len(results_data)
-        
-        # Calculate sums for lengths
-        total_opt_len = sum(r_item['opt_len'] for r_item in results_data)
-        total_heu_len = sum(r_item['heu_len'] for r_item in results_data)
-        
-        # Keep averages for gap and time
-        avg_gap = sum(r_item['gap'] for r_item in results_data) / num_items
-        avg_time = sum(r_item['time'] for r_item in results_data) / num_items
-        
-        # Update the label and print statement for the summary line
-        # The label "SUMMARY" can encompass both sums and averages
+        num_total_items = len(results_data)
+
+        # Calculate sums and averages carefully, considering None values
+        valid_opt_lens = [r['opt_len']
+                          for r in results_data if r['opt_len'] is not None]
+        valid_gaps = [r['gap'] for r in results_data if r['gap'] is not None]
+
+        total_opt_len_sum = sum(valid_opt_lens) if valid_opt_lens else None
+        # Heu_len should always exist
+        total_heu_len_sum = sum(r_item['heu_len'] for r_item in results_data)
+
+        avg_gap_val = sum(valid_gaps) / len(valid_gaps) if valid_gaps else None
+        avg_time_val = sum(r_item['time'] for r_item in results_data) / \
+            num_total_items if num_total_items > 0 else 0.0
+
+        total_opt_len_str = f"{total_opt_len_sum:>8.2f}" if total_opt_len_sum is not None else "   N/A  "
+        avg_gap_str = f"{avg_gap_val:>8.2f}" if avg_gap_val is not None else "   N/A  "
+
         print(
-            f"{'SUMMARY':<10s} {total_opt_len:>8.2f} {total_heu_len:>8.2f} "
-            f"{avg_gap:>8.2f} {avg_time:>8.2f}"
+            f"{'SUMMARY':<10s} {total_opt_len_str} {total_heu_len_sum:>8.2f} "
+            f"{avg_gap_str} {avg_time_val:>8.2f}"
         )
     print("Done.")
 
@@ -716,82 +809,109 @@ def display_summary_table(results_data: List[Dict[str, Any]]) -> None:
 def plot_all_tours(results_data: List[Dict[str, Any]]) -> None:
     """
     Plots the optimal and heuristic tours for all processed instances.
+    Shows subplot borders, hides grid, ticks, and coordinate numbers.
+    Subplots are square. A single legend is displayed for the entire figure.
+    Limits the number of subplots to a maximum of MAX_SUBPLOTS_IN_PLOT.
     """
-    num_results = len(results_data) # Renamed n to num_results
-    if num_results == 0:
+    num_results_total = len(results_data)
+
+    if num_results_total == 0:
+        print("No results to plot.")
         return
 
-    import math # Keep import local if only used here
+    if num_results_total > MAX_SUBPLOTS_IN_PLOT:  # Use the global constant
+        print(
+            f"Warning: Plotting only the first {MAX_SUBPLOTS_IN_PLOT} of {num_results_total} results due to limit.")
+        results_data_to_plot = results_data[:MAX_SUBPLOTS_IN_PLOT]
+    else:
+        results_data_to_plot = results_data
+
+    num_results = len(results_data_to_plot)
+
+    import math
     cols = int(math.ceil(math.sqrt(num_results)))
     rows = int(math.ceil(num_results / cols))
-    
-    fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 4 * rows))
-    axes_list = axes.flatten() if hasattr(axes, 'flatten') else [axes] # Handle single plot case
 
-    for ax, r_item in zip(axes_list, results_data): # Renamed r to r_item
+    fig, axes = plt.subplots(rows, cols, figsize=(
+        4 * cols, 4 * rows), squeeze=False)
+    axes_list = axes.flatten()
+
+    plotted_heuristic = False
+    plotted_optimal = False
+
+    for i, r_item in enumerate(results_data_to_plot):
+        ax = axes_list[i]
         coords = r_item['coords']
-        # Ensure tour lists are closed for plotting
-        opt_plot_tour = r_item['opt_tour'] + [r_item['opt_tour'][0]]
-        heu_plot_tour = r_item['heu_tour'] + [r_item['heu_tour'][0]]
-        
-        ax.plot(coords[heu_plot_tour, 0], coords[heu_plot_tour, 1], '-', label='Heuristic')
-        ax.plot(coords[opt_plot_tour, 0], coords[opt_plot_tour, 1], ':', label='Optimal')
-        ax.set_title(f"{r_item['name']} gap={r_item['gap']:.2f}%")
-        ax.axis('equal')
-        ax.grid(True)
-        # Simplified legend call: matplotlib handles it well if labels are provided.
-        ax.legend() 
+
+        if r_item['heu_tour']:
+            heu_plot_tour = r_item['heu_tour'] + [r_item['heu_tour'][0]]
+            ax.plot(coords[heu_plot_tour, 0], coords[heu_plot_tour,
+                    1], '-', label='Heuristic', zorder=1, color='C0')
+            plotted_heuristic = True
+
+        if r_item['opt_tour'] is not None:
+            opt_plot_tour = r_item['opt_tour'] + [r_item['opt_tour'][0]]
+            ax.plot(coords[opt_plot_tour, 0], coords[opt_plot_tour,
+                    1], ':', label='Optimal', zorder=2, color='C1')
+            plotted_optimal = True
+
+        title = f"{r_item['name']}"
+        if r_item['gap'] is not None:
+            title += f" gap={r_item['gap']:.2f}%"
+        # If gap is None, nothing is added to the title regarding "Opt N/A"
+        ax.set_title(title)
+
+        # Keep borders, remove ticks and labels
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_aspect('equal', adjustable='box')  # Make subplot square
+
     # Turn off unused subplots
     for i in range(num_results, len(axes_list)):
-        axes_list[i].axis('off')
-    
+        axes_list[i].set_axis_off()  # Turn off unused subplots completely
+
     plt.tight_layout()
+
+    legend_elements = []
+    if plotted_heuristic:
+        legend_elements.append(
+            Line2D([0], [0], color='C0', linestyle='-', label='Heuristic'))
+    if plotted_optimal:
+        legend_elements.append(
+            Line2D([0], [0], color='C1', linestyle=':', label='Optimal'))
+
+    if legend_elements:
+        fig.legend(handles=legend_elements, loc='upper center',
+                   ncol=len(legend_elements), bbox_to_anchor=(0.5, 1.0))
+        fig.subplots_adjust(top=(0.95 if num_results > cols else 0.90))  # Adjust for legend
+
     plt.show()
 
 
 if __name__ == '__main__':
     # Set your TSPLIB path here
-    # tsp_folder_path = Path('../TSPLIB95/tsp') # Use Path object
-    tsp_folder_path = Path('../tsp') # Use Path object
+    # tsp_folder_path = Path('../TSPLIB95/tsp')
+    # tsp_folder_path = Path('../tsp')
+    tsp_folder_path = Path('../verifications/tsplib95')
     all_results = []
 
-    for tsp_file_candidate in sorted(tsp_folder_path.iterdir()): # Iterate over Path objects
+    # Iterate over Path objects
+    for tsp_file_candidate in sorted(tsp_folder_path.iterdir()):
         if tsp_file_candidate.suffix.lower() != '.tsp':
             continue
-        
-        problem_base_name = tsp_file_candidate.stem # .stem gets filename without suffix
-        # tsp_file_full_path is tsp_file_candidate itself
-        
-        opt_tour_file_path = tsp_folder_path / (problem_base_name + '.opt.tour') # Path concatenation
 
-        if not opt_tour_file_path.exists(): # Use Path.exists()
-            print(
-                f"Optimal tour file not found for {problem_base_name}, skipping."
-            )
-            continue
-        
-        try:
-            # tsplib95.load can take a Path object directly or its string representation
-            problem_instance = tsplib95.load(tsp_file_candidate) 
-        except Exception as e:
-            print(f"Error loading TSP file {tsp_file_candidate}: {e}. Skipping.")
-            continue
+        problem_base_name = tsp_file_candidate.stem
 
-        edge_weight_type = getattr(problem_instance, 'edge_weight_type', '')
-        if edge_weight_type.upper() != 'EUC_2D':
-            print(
-                f"Skipping non-EUC_2D instance: {problem_base_name} "
-                f"(type: {edge_weight_type})"
-            )
-            continue
-        
+        # Construct path for optional .opt.tour file
+        opt_tour_file_path = tsp_folder_path / \
+            (problem_base_name + '.opt.tour')
         try:
             instance_result = process_single_instance(
-                str(tsp_file_candidate), str(opt_tour_file_path) # Pass strings if functions expect them
+                str(tsp_file_candidate), str(opt_tour_file_path)
             )
-            if instance_result: 
+            if instance_result:  # Ensure instance_result is not None if process_single_instance can return None
                 all_results.append(instance_result)
-        except Exception as e:
+        except Exception as e:  # Catch errors from process_single_instance or file operations
             print(f"Error processing {problem_base_name}: {e}")
 
     display_summary_table(all_results)

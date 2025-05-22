@@ -33,12 +33,12 @@ import os
 import time
 from itertools import combinations 
 from pathlib import Path         
+from typing import List, Dict, Tuple, Optional, Any, Iterable
 
 import matplotlib.pyplot as plt
 import numpy as np             
 import tsplib95                
 from scipy.spatial import Delaunay
-from typing import List, Dict, Tuple, Optional, Any, Iterable
 
 # --- Configuration Parameters ---
 # This dictionary holds parameters that control the behavior of the Lin-Kernighan heuristic,
@@ -751,7 +751,8 @@ def plot_all_tours(results_data: List[Dict[str, Any]]) -> None:
 
 if __name__ == '__main__':
     # Set your TSPLIB path here
-    tsp_folder_path = Path('../TSPLIB95/tsp') # Use Path object
+    # tsp_folder_path = Path('../TSPLIB95/tsp') # Use Path object
+    tsp_folder_path = Path('../tsp') # Use Path object
     all_results = []
 
     for tsp_file_candidate in sorted(tsp_folder_path.iterdir()): # Iterate over Path objects

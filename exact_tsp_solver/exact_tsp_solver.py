@@ -1,9 +1,38 @@
+"""
+Exact Brute-Force Traveling Salesperson Problem (TSP) Solver.
+
+This script implements a brute-force algorithm to find the exact optimal solution
+for the Traveling Salesperson Problem. It is suitable for small problem instances
+due to its factorial time complexity.
+
+The script includes functions to:
+- Compute a pairwise Euclidean distance matrix from city coordinates.
+- Calculate the total length of a given tour, with an option for early abandoning
+  if the current partial tour length exceeds a known best.
+- Solve the TSP using a brute-force approach by checking all permutations of
+  cities (fixing the starting city to reduce redundant permutations).
+- Plot the TSP tour using Matplotlib.
+- Save the generated TSP problem instance in TSPLIB .tsp format.
+- Save the found optimal tour in TSPLIB .opt.tour format.
+
+When run as a script, it generates a random TSP instance with a specified number
+of cities, solves it using the brute-force method, saves the problem and its
+optimal tour to files, prints the optimal tour and its length, and displays a
+plot of the tour. The output files are saved in a 'tsp' subdirectory relative
+to this script's parent directory.
+"""
 import itertools
-import time
-import numpy as np
-import matplotlib.pyplot as plt
 import os
+import time
+
+import matplotlib.pyplot as plt
+import numpy as np
 # Instance saving without tsplib95 to ensure compatibility
+
+# --- Constants for script execution ---
+N_CITIES = 11  # Number of cities for the generated TSP instance
+RANDOM_SEED = 42  # Seed for random number generation
+OUTPUT_SUBDIRECTORY = "tsp"  # Subdirectory for saving TSP and tour files
 
 
 # Precompute pairwise Euclidean distances between all city coordinates
@@ -69,17 +98,18 @@ def save_tour(tour, filepath, name):
 
 
 if __name__ == "__main__":
-    n = 11
-    np.random.seed(42)
-    coords = np.random.randint(1, 1001, size=(n, 2))  # integer coords in range [1,1000]
+    np.random.seed(RANDOM_SEED)
+    coords = np.random.randint(1, 1001, size=(N_CITIES, 2))  # integer coords in range [1,1000]
 
     # Create output directory
-    out_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "tsp"))
+    # Construct the path relative to the script's parent directory
+    script_parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    out_dir = os.path.join(script_parent_dir, OUTPUT_SUBDIRECTORY)
     os.makedirs(out_dir, exist_ok=True)
 
     # File names
-    tsp_fname = f"rand{n}.tsp"
-    tour_fname = f"rand{n}.opt.tour"
+    tsp_fname = f"rand{N_CITIES}.tsp"
+    tour_fname = f"rand{N_CITIES}.opt.tour"
     tsp_path = os.path.join(out_dir, tsp_fname)
     tour_path = os.path.join(out_dir, tour_fname)
 
@@ -87,8 +117,8 @@ if __name__ == "__main__":
     with open(tsp_path, 'w') as f:
         f.write(f"NAME: {os.path.splitext(tsp_fname)[0]}\n")
         f.write("TYPE: TSP\n")
-        f.write(f"COMMENT: Random instance with {n} nodes\n")
-        f.write(f"DIMENSION: {n}\n")
+        f.write(f"COMMENT: Random instance with {N_CITIES} nodes\n")
+        f.write(f"DIMENSION: {N_CITIES}\n")
         f.write("EDGE_WEIGHT_TYPE: EUC_2D\n")
         f.write("NODE_COORD_SECTION\n")
         for i, (x, y) in enumerate(coords, start=1):
@@ -97,7 +127,7 @@ if __name__ == "__main__":
     print(f"Saved TSPLIB instance to {tsp_path}")
 
     # Solve brute-force
-    print(f"Running brute-force TSP for {n} cities...")
+    print(f"Running brute-force TSP for {N_CITIES} cities...")
     start = time.time()
     tour, length = tsp_brute_force(coords)
     duration = time.time() - start

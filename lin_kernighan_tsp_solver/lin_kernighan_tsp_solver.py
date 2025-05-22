@@ -10,13 +10,15 @@ from scipy.spatial import Delaunay
 from typing import List, Dict, Tuple, Optional, Set, Any, Iterable
 
 # --- Configuration Parameters ---
+# This dictionary holds parameters that control the behavior of the Lin-Kernighan heuristic,
+# such as search depth, breadth at various stages, and time limits.
 LK_CONFIG = {
     "MAX_LEVEL": 12,  # Max recursion depth for k-opt moves in step()
     "BREADTH": [5, 5] + [1] * 20,  # Search breadth at each level in step()
     "BREADTH_A": 5,  # Search breadth for t3 in alternate_step()
     "BREADTH_B": 5,  # Search breadth for t5 in alternate_step()
     "BREADTH_D": 1,  # Search breadth for t7 in alternate_step()
-    "TIME_LIMIT": 5.0,  # Default time limit for chained_lin_kernighan in seconds
+    "TIME_LIMIT": 1.0,  # Default time limit for chained_lin_kernighan in seconds
 }
 
 # --- Constants ---
@@ -226,26 +228,42 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
     candidates = []
 
     # Standard flips (u-steps):
-    for a in neigh[s1]:
-        is_invalid_node = a in (base, s1)
-        # Check if swapping edge (base,s1) for (s1,a) offers non-positive immediate gain
-        offers_no_gain = (D[base, s1] - D[s1, a]) <= 0 
-        if is_invalid_node or offers_no_gain:
-            continue
-        probe = tour.prev(a)
-        g = (D[base, s1] - D[s1, a]) + (D[probe, a] - D[probe, base]) # Overall gain for this 2-opt/3-opt component
+    for a_candidate_node in neigh[s1]: # Renamed 'a' to 'a_candidate_node' for clarity
+        is_invalid_node = a_candidate_node in (base, s1)
         
-        # Check if the immediate gain from swapping edge (base,s1) for (s1,a) is positive enough
-        if delta + (D[base, s1] - D[s1, a]) > 0: # Ensures current segment of improvement is positive
-            candidates.append(('flip', a, probe, g))
+        # Gain from breaking edge (base,s1) and making edge (s1,a_candidate_node)
+        # This is G_i in some notations if this is the i-th edge pair considered.
+        gain_first_exchange = D[base, s1] - D[s1, a_candidate_node]
+        
+        # Pruning: if the first exchange doesn't offer positive gain, skip.
+        # (Helsgaun's paper suggests G_i > 0, so D[t_2i-1, t_2i] - D[t_2i, x_i] > 0)
+        if is_invalid_node or gain_first_exchange <= FLOAT_COMPARISON_TOLERANCE: # Check for strictly positive
+            continue
 
-    # Mak-Morton flips: flip(next(a), base)
-    for a in neigh[base]:
-        if a in (tour.next(base), tour.prev(base), base): continue
-        g = (D[base, s1] - D[base, a]) + (D[a, tour.next(a)] - D[tour.next(a), s1])
-        # Similar pruning condition (G_i > 0) for this type of move.
-        if delta + (D[base, s1] - D[base, a]) > 0: 
-            candidates.append(('makmorton', a, None, g))
+        probe_node = tour.prev(a_candidate_node) # This is t_2i+1 in some notations
+        
+        # Gain from breaking edge (probe_node, base) and making edge (probe_node, a_candidate_node)
+        # This completes a 2-opt or is part of a 3-opt.
+        gain_second_exchange = D[probe_node, a_candidate_node] - D[probe_node, base]
+        
+        total_gain_for_this_move = gain_first_exchange + gain_second_exchange
+        
+        # Pruning condition: current accumulated gain (delta) + gain from this first new edge must be positive.
+        # This ensures that the sequence of choices so far maintains a positive cumulative gain.
+        if delta + gain_first_exchange > FLOAT_COMPARISON_TOLERANCE: # Check for strictly positive
+            candidates.append(('flip', a_candidate_node, probe_node, total_gain_for_this_move))
+
+    # Mak-Morton flips:
+    for a_candidate_node in neigh[base]: # Renamed 'a' to 'a_candidate_node'
+        if a_candidate_node in (tour.next(base), tour.prev(base), base): continue
+        
+        # Gain calculation for Mak-Morton move
+        gain_mak_morton = (D[base, s1] - D[base, a_candidate_node]) + \
+                          (D[a_candidate_node, tour.next(a_candidate_node)] - D[tour.next(a_candidate_node), s1])
+        
+        # Pruning condition similar to standard flips
+        if delta + (D[base, s1] - D[base, a_candidate_node]) > FLOAT_COMPARISON_TOLERANCE: # Check for strictly positive
+            candidates.append(('makmorton', a_candidate_node, None, gain_mak_morton))
 
     candidates.sort(key=lambda x: -x[3])
     count = 0

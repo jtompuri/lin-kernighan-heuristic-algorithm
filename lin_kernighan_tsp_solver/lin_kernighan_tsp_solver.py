@@ -1,3 +1,34 @@
+"""
+Lin-Kernighan Heuristic for the Traveling Salesperson Problem (TSP).
+
+This script implements the Lin-Kernighan (LK) heuristic, a powerful local search
+algorithm for finding high-quality approximate solutions to the TSP. The implementation
+is based on the descriptions and algorithms presented in "The Traveling Salesman Problem:
+A Computational Study" by Applegate, Bixby, Chvátal, and Cook, and "An Effective
+Implementation of the Lin-Kernighan Traveling Salesman Heuristic" by K. Helsgaun.
+
+The script processes TSP instances from the TSPLIB format, computes heuristic solutions
+using a chained version of the LK algorithm, compares them against known optimal
+solutions (if available), and displays a summary table and plots of the tours.
+
+Usage:
+  1. Ensure all dependencies are installed:
+     pip install numpy matplotlib scipy tsplib95
+
+  2. Place your TSPLIB .tsp files and corresponding .opt.tour files (if available)
+     in a designated folder (e.g., '../TSPLIB95/tsp').
+
+  3. Update the `tsp_folder_path` variable in the `if __name__ == '__main__':`
+     block at the bottom of this script to point to your TSPLIB folder.
+
+  4. Run the script from the command line:
+     python lin_kernighan_tsp_solver.py
+
+The script will then process each EUC_2D TSP instance found, print progress
+and results to the console, and finally display a plot of all processed tours
+(optimal vs. heuristic). Configuration parameters for the LK algorithm can be
+adjusted in the `LK_CONFIG` dictionary within this script.
+"""
 import os
 import time
 from itertools import combinations 

@@ -894,10 +894,6 @@ def plot_all_tours(results_data: List[Dict[str, Any]]) -> None:
 
 
 if __name__ == '__main__':
-    # Set your TSPLIB path here - Now using the constant TSP_FOLDER_PATH
-    # tsp_folder_path = Path('../TSPLIB95/tsp')
-    # tsp_folder_path = Path('../tsp')
-    # tsp_folder_path = Path('../verifications/tsplib95') # Replaced by constant
     all_results = []
 
     # Iterate over Path objects

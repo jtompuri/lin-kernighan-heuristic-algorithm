@@ -1,10 +1,10 @@
-# Lin-Kernighan Heuristic for the Traveling Salesperson Problem (TSP).
+# Lin-Kernighan Heuristic for the Traveling Salesperson Problem (TSP)
 
 This script implements the Lin-Kernighan (LK) heuristic, a powerful local search
 algorithm for finding high-quality approximate solutions to the TSP. The implementation
-is based on the descriptions and algorithms presented in "The Traveling Salesman Problem:
-A Computational Study" by Applegate, Bixby, Chvátal, and Cook, and "An Effective
-Implementation of the Lin-Kernighan Traveling Salesman Heuristic" by K. Helsgaun.
+is based on the descriptions and algorithms presented in _The Traveling Salesman Problem:
+A Computational Study_"_ by Applegate, Bixby, Chvátal & Cook, and "An Effective Heuristic 
+Algorithm for the Traveling-Salesman Problem" by Lin & Kernighan.
 
 The script processes TSP instances from the TSPLIB format. It computes heuristic solutions
 using a chained version of the LK algorithm. If a corresponding optimal tour file
@@ -41,3 +41,6 @@ within this script.
 - [Viikkoraportti 1](/reports/weekly_report_1.md)
 - [Viikkoraportti 2](/reports/weekly_report_2.md)
 
+[^1]: Applegate, David L. & Bixby, Robert E. & Chvtal,  Vaek & Cook, William J. (2006): *The Traveling Salesman Problem : A Computational Study*, Princeton University Press.
+
+[^2]: Lin, Shen & Kernighan, Brian W. (1973): ”An Effective Heuristic Algorithm for the Traveling-Salesman Problem”, Operations Research, Vol. 21, No. 2, s. 498–516.

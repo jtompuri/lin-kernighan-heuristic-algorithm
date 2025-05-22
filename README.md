@@ -1,20 +1,43 @@
-# Lin-Kernighan-heuristinen algoritmi
+# Lin-Kernighan Heuristic for the Traveling Salesperson Problem (TSP).
 
-Tämä on kurssityö Helsingin yliopiston Tietojenkäsittelytieteen laitoksen kurssille _Tekoäly ja algoritmit_ (5-6/2025). Kurssityö koostuu Lin-Kernighan-heuristisen algoritmin toteuksesta kirjan *The Traveling Salesman Problem : A Computational Study* mallitoteutusta noudattaen. 
+This script implements the Lin-Kernighan (LK) heuristic, a powerful local search
+algorithm for finding high-quality approximate solutions to the TSP. The implementation
+is based on the descriptions and algorithms presented in "The Traveling Salesman Problem:
+A Computational Study" by Applegate, Bixby, Chvátal, and Cook, and "An Effective
+Implementation of the Lin-Kernighan Traveling Salesman Heuristic" by K. Helsgaun.
 
-Lin-Kernighan-heuristinen algoritmi (_Lin-Kernighan Heuristic Algorithm_) on tehokas algoritmi symmetrisen kauppamatkustajan ongelman (_Traveling Salesperson Problem_) likimääräiseen ratkaisuun keskimääräisellä aikavaativuudella $O(n^2)$. Lin-Kernighan heuristinen algoritmi ei anna aina parasta ratkaisua ja se voi jäädä jumiin paikalliseen minimiin. LK esiteltiin Shen Linin ja Brian W. Kernighanin artikkelissa ”An Effective Heuristic Algorithm for the Traveling-Salesman Problem” vuonna 1973[^1]. 
+The script processes TSP instances from the TSPLIB format. It computes heuristic solutions
+using a chained version of the LK algorithm. If a corresponding optimal tour file
+(e.g., problem_name.opt.tour) is found, the script compares the heuristic solution
+against the known optimal solution and calculates the percentage gap. If no optimal
+tour file is available, the instance is still processed, but no gap calculation is
+performed for it. The script displays a summary table and plots of the tours.
 
-## Dokumentaatio
+## Usage:
+  1. Ensure all dependencies are installed:
+     pip install numpy matplotlib scipy
+
+  2. Place your TSPLIB .tsp files in a designated folder.
+     Optionally, place corresponding .opt.tour files (if available) in the same
+       folder.
+
+  3. Update the `TSP_FOLDER_PATH` constant at the top of this script
+     (in the "--- Constants ---" section) to point to your TSPLIB folder.
+
+  4. Run the script from the command line:
+     python lin_kernighan_tsp_solver.py
+
+The script will then process each EUC_2D TSP instance found. It prints progress
+and results to the console. For instances with an optimal tour, the gap is shown.
+For instances without an optimal tour, nothing is displayed for optimal length and gap.
+Finally, a plot of all processed tours is displayed (showing both optimal and heuristic
+tours if the optimal is available, otherwise just the heuristic tour). Configuration
+parameters for the LK algorithm can be adjusted in the `LK_CONFIG` dictionary
+within this script.
+
+## Course documentation (in Finnish)
 
 - [Määrittelydokumentti](/documentation/requirements_specification.md)
 - [Viikkoraportti 1](/reports/weekly_report_1.md)
 - [Viikkoraportti 2](/reports/weekly_report_2.md)
-
-
-[^1]: Lin, Shen & Kernighan, Brian W. (1973): ”An Effective Heuristic Algorithm for the Traveling-Salesman Problem”, Operations Research, Vol. 21, No. 2, s. 498–516.
-
-[^2]: Mulder, Samuel A. & Wunsch II, Donald C. (2003): ”Million city traveling salesman problem solution by divide and conquer clustering with adaptive resonance neural networks”, Neural Networks 16, s. 827–832.
-
-[^3]: Applegate, David L. & Bixby, Robert E. & Chvtal,  Vaek & Cook, William J. (2006): *The Traveling Salesman Problem : A Computational Study*, Princeton University Press.
-
 

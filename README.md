@@ -3,8 +3,8 @@
 This script implements the Lin-Kernighan (LK) heuristic, a powerful local search
 algorithm for finding high-quality approximate solutions to the TSP. The implementation
 is based on the descriptions and algorithms presented in _The Traveling Salesman Problem:
-A Computational Study_"_ by Applegate, Bixby, Chvátal & Cook, and "An Effective Heuristic 
-Algorithm for the Traveling-Salesman Problem" by Lin & Kernighan.
+A Computational Study_"_ by Applegate, Bixby, Chvátal & Cook [^1] and "An Effective Heuristic 
+Algorithm for the Traveling-Salesman Problem" by Lin & Kernighan [^2].
 
 The script processes TSP instances from the TSPLIB format. It computes heuristic solutions
 using a chained version of the LK algorithm. If a corresponding optimal tour file

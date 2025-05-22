@@ -11,6 +11,7 @@ def compute_distance_matrix(coords):
     diff = coords[:, np.newaxis] - coords[np.newaxis, :]
     return np.linalg.norm(diff, axis=2)
 
+
 # Compute the total length of a tour using a distance matrix with early abandoning
 def total_distance(tour, D, best_so_far=float('inf')):
     total = 0.0
@@ -20,6 +21,7 @@ def total_distance(tour, D, best_so_far=float('inf')):
         if total > best_so_far:
             return float('inf')
     return total
+
 
 # Brute-force TSP solver (fixing city 0)
 def tsp_brute_force(coords):
@@ -35,19 +37,23 @@ def tsp_brute_force(coords):
             best_tour, best_length = tour, length
     return best_tour, best_length
 
+
 # Plot the TSP tour
 def plot_tour(coords, tour, length=None):
     path = tour + [tour[0]]
     coords = np.array(coords)
     x, y = coords[path, 0], coords[path, 1]
-    plt.figure(figsize=(4,4))
+    plt.figure(figsize=(4, 4))
     plt.plot(x, y, 'o-')
     if length is not None:
         plt.title(f"TSP tour (length: {length:.2f})")
     plt.xlabel("X")
     plt.ylabel("Y")
-    plt.axis('equal'); plt.grid(True); plt.tight_layout()
+    plt.axis('equal')
+    plt.grid(True)
+    plt.tight_layout()
     plt.show()
+
 
 # Save optimal tour manually in TSPLIB .tour format
 def save_tour(tour, filepath, name):
@@ -57,9 +63,10 @@ def save_tour(tour, filepath, name):
         f.write(f"DIMENSION: {len(tour)}\n")
         f.write("TOUR_SECTION\n")
         for node in tour:
-            f.write(f"{node+1}\n")
+            f.write(f"{node + 1}\n")
         f.write("-1\n")
         f.write("EOF\n")
+
 
 if __name__ == "__main__":
     n = 11

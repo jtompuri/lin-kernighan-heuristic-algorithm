@@ -31,6 +31,7 @@ BREADTHB = 5          # alternate-step B-ordering breadth
 BREADTHD = 1          # alternate-step D-ordering breadth
 TIME_LIMIT = 5.0      # time limit (s) for chained LK
 
+
 # Tour data structure with incremental cost and consistency checks
 class Tour:
     def __init__(self, order, D=None):
@@ -65,21 +66,39 @@ class Tour:
             return ia < ib <= ic
         return ia < ib or ib <= ic
 
-    def get_tour(self):
-        return list(self.order)
-
     def flip(self, a, b):
-        # Reverse the segment between a and b inclusive
+        """Reverse the segment between nodes a and b (including both)."""
         ia, ib = self.pos[a], self.pos[b]
-        if ia <= ib:
-            self.order[ia:ib+1] = self.order[ia:ib+1][::-1]
-        else:
-            seg = np.concatenate((self.order[ia:], self.order[:ib+1]))[::-1]
-            self.order[ia:] = seg[:self.n - ia]
-            self.order[:ib+1] = seg[self.n - ia:]
-        # update positions
+        
+        # Collect indices in the segment (handling wrap-around correctly)
+        indices = []
+        i = ia
+        while True:
+            indices.append(i)
+            if i == ib:
+                break
+            i = (i + 1) % self.n
+        
+        # Get the segment and reverse it
+        segment = [self.order[i] for i in indices]
+        segment.reverse()
+        
+        # Put the reversed segment back
+        for i, idx in enumerate(indices):
+            self.order[idx] = segment[i]
+        
+        # Update positions dictionary
         for i, v in enumerate(self.order):
             self.pos[v] = i
+    
+    def get_tour(self):
+        """Return the tour, always starting at node 0."""
+        zero_pos = self.pos[0]
+        if zero_pos == 0:
+            return list(self.order)
+        else:
+            # Return tour rotated to start at node 0
+            return list(np.concatenate((self.order[zero_pos:], self.order[:zero_pos])))
 
     def flip_and_update_cost(self, a, b, D):
         # Compute cost delta
@@ -140,7 +159,7 @@ def step(level, delta, base, tour, D, neigh, flip_seq, start_c, best_c):
             if level<MAX_LEVEL:
                 ok,seq = step(level+1,new_delta,base,tour,D,neigh,flip_seq,start_c,best_c)
                 if ok: return True, seq
-            tour.flip(x,y); flip_seq.pop()
+            tour.flip(y,x); flip_seq.pop()
         else:
             x,y = tour.next(a),base
             tour.flip(x,y); flip_seq.append((x,y))
@@ -149,7 +168,7 @@ def step(level, delta, base, tour, D, neigh, flip_seq, start_c, best_c):
             if level<MAX_LEVEL:
                 ok,seq = step(level+1,new_delta,newbase,tour,D,neigh,flip_seq,start_c,best_c)
                 if ok: return True, seq
-            tour.flip(x,y); flip_seq.pop()
+            tour.flip(y,x); flip_seq.pop()
         cnt+=1
     return False,None
 

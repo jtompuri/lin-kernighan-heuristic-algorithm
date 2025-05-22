@@ -6,17 +6,35 @@ import tsplib95
 from scipy.spatial import Delaunay
 from itertools import combinations
 
-# --- Algorithm Parameters (from book) ---
-MAX_LEVEL = 12        # recursion depth (maximum k)
-BREADTH = [5, 5] + [1] * 20  # breadth(k): breadth(1)=5, breadth(2)=5, breadth(k)=1 for k>2
-BREADTH_A = 5  # breadthA (alternate first step)
-BREADTH_B = 5  # breadthB (alternate first step)
-BREADTH_D = 1  # breadthD (alternate first step)
+MAX_LEVEL = 12
+BREADTH = [5, 5] + [1] * 20
+BREADTH_A = 5
+BREADTH_B = 5
+BREADTH_D = 1
 TIME_LIMIT = 20.0
 
-# --- Tour Data Structure (per section 15.2) ---
 class Tour:
+    """
+    Abstract tour data structure for the Lin-Kernighan heuristic.
+
+    Maintains a permutation of the vertices and supports efficient flip operations,
+    as well as access to next/previous neighbors. This structure follows the
+    requirements set in Applegate et al., Section 15.2.
+
+    Attributes:
+        n (int): Number of vertices in the tour.
+        order (np.ndarray): Current permutation representing the tour.
+        pos (np.ndarray): Inverse mapping: pos[v] gives index of vertex v in order[].
+        cost (float or None): Cost of the tour under current permutation, if initialized.
+    """
     def __init__(self, order, D=None):
+        """
+        Initializes the tour data structure from a given vertex ordering.
+
+        Args:
+            order (iterable): Sequence of vertices defining the tour.
+            D (np.ndarray, optional): Distance/cost matrix to initialize tour cost.
+        """
         self.n = len(order)
         self.order = np.array(order, dtype=np.int32)
         self.pos = np.empty(self.n, dtype=np.int32)
@@ -25,23 +43,71 @@ class Tour:
         self.cost = None
         if D is not None:
             self.init_cost(D)
+
     def init_cost(self, D):
+        """
+        Computes and stores the total tour cost from the cost matrix D.
+
+        Args:
+            D (np.ndarray): Distance/cost matrix.
+        """
         c = 0.0
         for i in range(self.n):
             a = self.order[i]
             b = self.order[(i + 1) % self.n]
             c += D[a, b]
         self.cost = c
+
     def next(self, v):
+        """
+        Returns the vertex immediately after v in the current tour.
+
+        Args:
+            v (int): Vertex label.
+
+        Returns:
+            int: Next vertex after v.
+        """
         return self.order[(self.pos[v] + 1) % self.n]
+
     def prev(self, v):
+        """
+        Returns the vertex immediately before v in the current tour.
+
+        Args:
+            v (int): Vertex label.
+
+        Returns:
+            int: Previous vertex before v.
+        """
         return self.order[(self.pos[v] - 1) % self.n]
+
     def sequence(self, a, b, c):
+        """
+        Determines if vertex b appears between a and c (inclusive of endpoints)
+        on the current tour, following the orientation.
+
+        Args:
+            a (int): Start vertex.
+            b (int): Test vertex.
+            c (int): End vertex.
+
+        Returns:
+            bool: True if b is in the segment from a to c, otherwise False.
+        """
         ia, ib, ic = self.pos[a], self.pos[b], self.pos[c]
         if ia <= ic:
             return ia < ib <= ic
         return ia < ib or ib <= ic
+
     def flip(self, a, b):
+        """
+        Inverts (reverses) the segment of the tour from a to b (inclusive).
+
+        Args:
+            a (int): Start vertex.
+            b (int): End vertex.
+        """
         ia, ib = self.pos[a], self.pos[b]
         indices = []
         i = ia
@@ -55,13 +121,32 @@ class Tour:
             self.order[idx] = segment[i]
         for i, v in enumerate(self.order):
             self.pos[v] = i
+
     def get_tour(self):
+        """
+        Returns the current tour as a list, starting from vertex 0.
+
+        Returns:
+            list: Ordered list of vertex indices representing the tour.
+        """
         zero_pos = self.pos[0]
         if zero_pos == 0:
             return list(self.order)
         else:
             return list(np.concatenate((self.order[zero_pos:], self.order[:zero_pos])))
+
     def flip_and_update_cost(self, a, b, D):
+        """
+        Performs flip(a, b) and efficiently updates the tour cost using the change in edge weights.
+
+        Args:
+            a (int): Start vertex.
+            b (int): End vertex.
+            D (np.ndarray): Distance/cost matrix.
+
+        Returns:
+            float: The cost delta resulting from the flip.
+        """
         pa = self.prev(a)
         nb = self.next(b)
         removed = D[pa, a] + D[b, nb]
@@ -71,11 +156,29 @@ class Tour:
         self.cost += delta
         return delta
 
-# --- Utility routines ---
 def build_distance_matrix(coords):
+    """
+    Computes the full distance (cost) matrix for the given coordinates.
+
+    Args:
+        coords (np.ndarray): Array of vertex coordinates.
+
+    Returns:
+        np.ndarray: Symmetric matrix of pairwise Euclidean distances.
+    """
     return np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
 
 def delaunay_neighbors(coords):
+    """
+    Builds a list of neighbors for each vertex using Delaunay triangulation.
+    This is used to restrict candidate moves as in the LK algorithm.
+
+    Args:
+        coords (np.ndarray): Array of vertex coordinates.
+
+    Returns:
+        list of list: For each vertex, a list of neighbor vertex indices.
+    """
     tri = Delaunay(coords)
     neigh = {i: set() for i in range(len(coords))}
     for simplex in tri.simplices:
@@ -84,29 +187,47 @@ def delaunay_neighbors(coords):
             neigh[v].add(u)
     return [sorted(neigh[i]) for i in range(len(coords))]
 
-# --- Algorithm 15.1: step(level, delta) ---
 def step(level, delta, base, tour, D, neigh, flip_seq, start_cost, best_cost, deadline):
+    """
+    Recursively explores possible sequences of flips to find improved tours,
+    using both standard and Mak-Morton moves as per Algorithm 15.1 in the book.
+
+    Args:
+        level (int): Current recursion level (corresponds to k in variable k-opt).
+        delta (float): Current accumulated gain (total reduction in tour cost).
+        base (int): The current base vertex for moves.
+        tour (Tour): The current tour object.
+        D (np.ndarray): Distance/cost matrix.
+        neigh (list): List of neighbor lists for each vertex.
+        flip_seq (list): Current sequence of flip operations.
+        start_cost (float): Cost of the original tour at start of search.
+        best_cost (float): Best cost found so far.
+        deadline (float): Timestamp for time limit.
+
+    Returns:
+        (bool, list): (True, flip_seq) if an improved tour is found, else (False, None).
+    """
     if time.time() >= deadline:
         return False, None
     b = BREADTH[min(level - 1, len(BREADTH) - 1)]
     s1 = tour.next(base)
     candidates = []
 
-    # Usual flip: flip(s1, probe)
+    # Standard flips: flip(s1, probe)
     for a in neigh[s1]:
         if a in (base, s1, tour.prev(s1)): continue
-        # probe = prev(a)
         probe = tour.prev(a)
         g = (D[base, s1] - D[s1, a]) + (D[probe, a] - D[probe, base])
         if delta + D[base, s1] - D[s1, a] > 0:
             candidates.append(('flip', a, probe, g))
-    # Mak-Morton flip: flip(next(a), base)
+
+    # Mak-Morton flips: flip(next(a), base)
     for a in neigh[base]:
         if a in (tour.next(base), tour.prev(base), base): continue
         g = (D[base, s1] - D[base, a]) + (D[a, tour.next(a)] - D[tour.next(a), s1])
         if delta + D[base, s1] - D[base, a] > 0:
             candidates.append(('makmorton', a, None, g))
-    # Sort by gain descending
+
     candidates.sort(key=lambda x: -x[3])
     count = 0
     for typ, a, probe, g in candidates:
@@ -125,7 +246,6 @@ def step(level, delta, base, tour, D, neigh, flip_seq, start_cost, best_cost, de
             tour.flip(y, x)
             flip_seq.pop()
         else:
-            # Mak-Morton: flip(next(a), base)
             x, y = tour.next(a), base
             tour.flip(x, y)
             flip_seq.append((x, y))
@@ -140,12 +260,24 @@ def step(level, delta, base, tour, D, neigh, flip_seq, start_cost, best_cost, de
         count += 1
     return False, None
 
-# --- Algorithm 15.2: alternate_step(base, ...) ---
 def alternate_step(base, tour, D, neigh, deadline):
+    """
+    Implements the alternative first step of LK (Algorithm 15.2), providing extra
+    breadth in the initial search for improved moves, as described in the book.
+
+    Args:
+        base (int): The current base vertex.
+        tour (Tour): The tour object.
+        D (np.ndarray): Distance/cost matrix.
+        neigh (list): List of neighbor lists for each vertex.
+        deadline (float): Timestamp for time limit.
+
+    Returns:
+        (bool, list): (True, flip_seq) if an improved tour is found, else (False, None).
+    """
     if time.time() >= deadline:
         return False, None
     s1 = tour.next(base)
-    # A-ordering
     A = []
     for a in neigh[s1]:
         if a in (base, s1) or D[base, s1] - D[s1, a] <= 0: continue
@@ -155,7 +287,6 @@ def alternate_step(base, tour, D, neigh, deadline):
     for _, a, probe in A[:BREADTH_A]:
         if time.time() >= deadline: return False, None
         a1 = tour.next(a)
-        # B-ordering
         B = []
         for b in neigh[a1]:
             if b in (base, s1, a): continue
@@ -166,7 +297,6 @@ def alternate_step(base, tour, D, neigh, deadline):
             if time.time() >= deadline: return False, None
             if tour.sequence(s1, b, a):
                 return True, [(s1, b), (b, a)]
-            # D-ordering
             C = []
             for d in neigh[b1]:
                 if d in (base, s1, a, a1, b): continue
@@ -178,8 +308,21 @@ def alternate_step(base, tour, D, neigh, deadline):
                 return True, [(s1, d), (d, a), (a1, d1)]
     return False, None
 
-# --- Algorithm 15.3: lk_search(v, T) ---
 def lk_search(v, tour, D, neigh, deadline):
+    """
+    Top-level Lin-Kernighan search (Algorithm 15.3).
+    Attempts to find an improving flip sequence starting at vertex v.
+
+    Args:
+        v (int): Starting vertex for the search.
+        tour (Tour): The current tour object.
+        D (np.ndarray): Distance/cost matrix.
+        neigh (list): List of neighbor lists for each vertex.
+        deadline (float): Timestamp for time limit.
+
+    Returns:
+        list or None: List of flip operations if an improved tour is found, else None.
+    """
     if time.time() >= deadline:
         return None
     temp_tour = Tour(tour.get_tour(), D)
@@ -192,8 +335,23 @@ def lk_search(v, tour, D, neigh, deadline):
     ok, seq = alternate_step(v, tour, D, neigh, deadline)
     return seq if ok else None
 
-# --- Algorithm 15.4: lin_kernighan(T) ---
 def lin_kernighan(coords, init, D, neigh, deadline):
+    """
+    The main Lin-Kernighan heuristic (Algorithm 15.4).
+
+    Iteratively applies lk_search() to all vertices, making
+    improvements and marking/unmarking as described in the book.
+
+    Args:
+        coords (np.ndarray): Vertex coordinates (not directly used, for interface consistency).
+        init (list): Initial tour permutation.
+        D (np.ndarray): Distance/cost matrix.
+        neigh (list): List of neighbor lists for each vertex.
+        deadline (float): Timestamp for time limit.
+
+    Returns:
+        (Tour, float): Improved tour object and its cost.
+    """
     n = len(coords)
     tour = Tour(init, D)
     best_cost = tour.cost
@@ -215,8 +373,17 @@ def lin_kernighan(coords, init, D, neigh, deadline):
             marked = set(range(n))  # re-mark all as per original LK
     return tour, best_cost
 
-# --- Algorithm 15.5: chained_lin_kernighan(S) ---
 def double_bridge(order):
+    """
+    Applies the "double-bridge" 4-opt move (see Figure 15.7),
+    used for generating kicks in Chained Lin-Kernighan.
+
+    Args:
+        order (list): Current tour order.
+
+    Returns:
+        list: New tour after applying the double-bridge move.
+    """
     n = len(order)
     if n <= 4:
         return list(order)
@@ -227,6 +394,22 @@ def double_bridge(order):
     return s0 + s2 + s1 + s3 + s4
 
 def chained_lin_kernighan(coords, init, opt_len=None, time_limit=None):
+    """
+    Chained Lin-Kernighan metaheuristic (Algorithm 15.5).
+
+    Repeatedly applies Lin-Kernighan with double-bridge kicks
+    to escape local minima, stopping either at the time limit or
+    as soon as the known optimum is found.
+
+    Args:
+        coords (np.ndarray): Vertex coordinates.
+        init (list): Initial tour order.
+        opt_len (float, optional): Known optimal tour length (for early stopping).
+        time_limit (float, optional): Maximum time (seconds) to run the algorithm.
+
+    Returns:
+        (list, float): The best tour found and its length.
+    """
     if time_limit is None:
         time_limit = TIME_LIMIT
     t_start = time.time()
@@ -240,7 +423,7 @@ def chained_lin_kernighan(coords, init, opt_len=None, time_limit=None):
         if l2 < best_cost:
             tour_obj, best_cost = t2_obj, l2
             if opt_len is not None and abs(best_cost - opt_len) < 1e-8:
-                # Found optimal tour, exit early!
+                # Early exit if optimal solution found
                 break
     # Final cost recompute
     true_cost = 0.0
@@ -252,14 +435,31 @@ def chained_lin_kernighan(coords, init, opt_len=None, time_limit=None):
     best_cost = true_cost
     return tour_obj.get_tour(), best_cost
 
-# --- TSPLIB Utilities ---
 def read_tsp(path):
+    """
+    Reads TSPLIB instance from file and returns the coordinates array.
+
+    Args:
+        path (str): Path to the .tsp file.
+
+    Returns:
+        np.ndarray: Coordinates of the cities.
+    """
     prob = tsplib95.load(path)
     coords_map = dict(prob.node_coords)
     nodes = sorted(coords_map.keys())
     return np.array([coords_map[i] for i in nodes], float)
 
 def read_opt_tour(path):
+    """
+    Reads an optimal tour from a .opt.tour file in TSPLIB format.
+
+    Args:
+        path (str): Path to the .opt.tour file.
+
+    Returns:
+        list: Ordered list of vertex indices for the optimal tour.
+    """
     tour, reading = [], False
     with open(path) as f:
         for line in f:
@@ -275,7 +475,7 @@ def read_opt_tour(path):
                     break
                 try:
                     idx = int(p)
-                except:
+                except Exception:
                     continue
                 if idx > 0:
                     tour.append(idx - 1)
@@ -283,18 +483,22 @@ def read_opt_tour(path):
                 break
     return tour
 
-# --- Batch & Plot ---
 if __name__ == '__main__':
+    # Set your TSPLIB path here
     folder = '../TSPLIB95/tsp'
     results = []
     for fn in sorted(os.listdir(folder)):
-        if not fn.lower().endswith('.tsp'): continue
+        if not fn.lower().endswith('.tsp'):
+            continue
         base = fn[:-4]
         tsp_path = os.path.join(folder, fn)
         opt_path = os.path.join(folder, base + '.opt.tour')
-        if not os.path.exists(opt_path): continue
+        if not os.path.exists(opt_path):
+            continue
         problem = tsplib95.load(tsp_path)
-        if getattr(problem, 'edge_weight_type', '').upper() != 'EUC_2D': continue
+        if getattr(problem, 'edge_weight_type', '').upper() != 'EUC_2D':
+            continue
+
         print(f"Processing {base} (EUC_2D)...")
         coords = read_tsp(tsp_path)
         D = build_distance_matrix(coords)
@@ -305,16 +509,26 @@ if __name__ == '__main__':
             b = opt_tour[(i + 1) % len(opt_tour)]
             opt_len += D[a, b]
         print(f"  Optimal length: {opt_len:.2f}")
+
         init = list(range(len(coords)))
         start = time.time()
         heu_tour, heu_len = chained_lin_kernighan(coords, init, opt_len=opt_len, time_limit=TIME_LIMIT)
         elapsed = time.time() - start
         gap = max(0.0, 100.0 * (heu_len - opt_len) / opt_len)
         print(f"  Heuristic length: {heu_len:.2f}  Gap: {gap:.2f}%  Time: {elapsed:.2f}s")
-        results.append({'name': base, 'coords': coords, 'opt_tour': opt_tour,
-                        'heu_tour': heu_tour, 'opt_len': opt_len,
-                        'heu_len': heu_len, 'gap': gap, 'time': elapsed})
 
+        results.append({
+            'name': base,
+            'coords': coords,
+            'opt_tour': opt_tour,
+            'heu_tour': heu_tour,
+            'opt_len': opt_len,
+            'heu_len': heu_len,
+            'gap': gap,
+            'time': elapsed
+        })
+
+    # Print summary
     print("Configuration parameters:")
     print(f"  MAX_LEVEL   = {MAX_LEVEL}")
     print(f"  BREADTH     = {BREADTH}")

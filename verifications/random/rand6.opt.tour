@@ -1,0 +1,12 @@
+NAME: rand6.opt
+TYPE: TOUR
+DIMENSION: 6
+TOUR_SECTION
+1
+3
+5
+4
+2
+6
+-1
+EOF

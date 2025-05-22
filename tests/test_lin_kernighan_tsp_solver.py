@@ -1,5 +1,14 @@
-import pytest
+"""
+Unit tests for the Tour class in the Lin-Kernighan TSP solver.
+
+This module contains a suite of pytest tests designed to verify the correctness
+of the Tour data structure, which is a core component of the Lin-Kernighan
+heuristic implementation. Tests cover initialization, neighbor finding (next/prev),
+sequence checking (both wrapping and non-wrapping segments), and the critical
+flip operation for various scenarios.
+"""
 from lin_kernighan_tsp_solver import Tour
+
 
 def test_init_and_get_tour():
     # Basic initialization and round-trip
@@ -49,9 +58,9 @@ def test_flip_wrap():
     # Expect: [0,4,3,2,1]
     assert t.get_tour() == [0, 4, 3, 2, 1]
 
+
 def test_flip_idempotence():
     # Flipping the same segment twice returns to original
-    import copy
     order = [0, 1, 2, 3, 4, 5]
     t = Tour(order)
     original = t.get_tour()

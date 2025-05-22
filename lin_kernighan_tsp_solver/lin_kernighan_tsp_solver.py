@@ -11,7 +11,7 @@ BREADTH = [5, 5] + [1] * 20
 BREADTH_A = 5
 BREADTH_B = 5
 BREADTH_D = 1
-TIME_LIMIT = 20.0
+TIME_LIMIT = 120.0
 
 class Tour:
     """
@@ -213,12 +213,13 @@ def step(level, delta, base, tour, D, neigh, flip_seq, start_cost, best_cost, de
     s1 = tour.next(base)
     candidates = []
 
-    # Standard flips: flip(s1, probe)
+    # Standard flips (u-steps):
     for a in neigh[s1]:
         if a in (base, s1, tour.prev(s1)): continue
         probe = tour.prev(a)
-        g = (D[base, s1] - D[s1, a]) + (D[probe, a] - D[probe, base])
-        if delta + D[base, s1] - D[s1, a] > 0:
+        g = (D[base, s1] - D[s1, a]) + (D[probe, a] - D[probe, base]) # Gain for this 2-opt/3-opt component
+        # Check if adding edge (s1,a) is an improvement over (base,s1) considering current delta
+        if delta + D[base, s1] - D[s1, a] > 0: # Corresponds to G_i > 0 check
             candidates.append(('flip', a, probe, g))
 
     # Mak-Morton flips: flip(next(a), base)
@@ -231,7 +232,7 @@ def step(level, delta, base, tour, D, neigh, flip_seq, start_cost, best_cost, de
     candidates.sort(key=lambda x: -x[3])
     count = 0
     for typ, a, probe, g in candidates:
-        if time.time() >= deadline or count >= b:
+        if time.time() >= deadline or count >= b: # Enforce time and search breadth limits
             break
         new_delta = delta + g
         if typ == 'flip':
@@ -243,7 +244,7 @@ def step(level, delta, base, tour, D, neigh, flip_seq, start_cost, best_cost, de
             if level < MAX_LEVEL:
                 ok, seq = step(level + 1, new_delta, base, tour, D, neigh, flip_seq, start_cost, best_cost, deadline)
                 if ok: return True, seq
-            tour.flip(y, x)
+            tour.flip(y, x) # Backtrack: undo the flip
             flip_seq.pop()
         else:
             x, y = tour.next(a), base
@@ -357,9 +358,9 @@ def lin_kernighan(coords, init, D, neigh, deadline):
     best_cost = tour.cost
     marked = set(range(n))
     while marked:
-        v = marked.pop()
+        v = marked.pop() # Select an unmarked node to start a search
         seq = lk_search(v, tour, D, neigh, deadline)
-        if not seq:
+        if not seq: # No improvement found starting from v
             continue
         temp = Tour(tour.get_tour(), D)
         for x, y in seq:
@@ -370,7 +371,7 @@ def lin_kernighan(coords, init, D, neigh, deadline):
                 marked.add(x)
                 marked.add(y)
             best_cost = tour.cost
-            marked = set(range(n))  # re-mark all as per original LK
+            marked = set(range(n))  # Improvement found, re-mark all nodes for further search (LK strategy)
     return tour, best_cost
 
 def double_bridge(order):
@@ -387,6 +388,7 @@ def double_bridge(order):
     n = len(order)
     if n <= 4:
         return list(order)
+    # Apply a 4-opt double-bridge move to perturb the tour
     a, b, c, d = sorted(np.random.choice(range(1, n), 4, replace=False))
     s0, s1 = order[:a], order[a:b]
     s2, s3 = order[b:c], order[c:d]

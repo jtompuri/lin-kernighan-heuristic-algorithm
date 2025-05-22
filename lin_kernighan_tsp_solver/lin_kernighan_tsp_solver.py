@@ -129,112 +129,162 @@ def delaunay_neighbors(coords):
     return [sorted(neigh[i]) for i in range(len(coords))]
 
 # Lin–Kernighan subroutines
-def step(level, delta, base, tour, D, neigh, flip_seq, start_c, best_c):
+def step(level, delta, base, tour, D, neigh, flip_seq, start_c, best_c, deadline_timestamp): # Added deadline_timestamp
+    if time.time() >= deadline_timestamp:
+        return False, None
+
     breadth = [BREADTH1, BREADTH2] + [BREADTH_K] * (MAX_LEVEL - 2)
     b = breadth[min(level - 1, len(breadth) - 1)]
     s1 = tour.next(base)
     cand = []
     # u-step
-    for a in neigh[s1]:
-        if a in (base, s1, tour.prev(s1)): continue
-        if delta + D[base,s1] - D[s1,a] <= 0: continue
-        probe = tour.prev(a)
-        gain = (D[base,s1] - D[s1,a]) + (D[probe,a] - D[probe,base])
-        cand.append(('u',a,probe,gain))
+    for a_node in neigh[s1]: # Renamed 'a' to 'a_node' to avoid conflict with flip_seq elements
+        if a_node in (base, s1, tour.prev(s1)): continue
+        if delta + D[base,s1] - D[s1,a_node] <= 0: continue
+        probe = tour.prev(a_node)
+        gain = (D[base,s1] - D[s1,a_node]) + (D[probe,a_node] - D[probe,base])
+        cand.append(('u',a_node,probe,gain))
     # m-step
-    for a in neigh[base]:
-        if a in (tour.next(base),tour.prev(base),base): continue
-        if delta + D[base,s1] - D[base,a] <=0: continue
-        gain = (D[base,s1]-D[base,a])+(D[a,tour.next(a)]-D[tour.next(a),s1])
-        cand.append(('m',a,None,gain))
+    for a_node in neigh[base]: # Renamed 'a' to 'a_node'
+        if a_node in (tour.next(base),tour.prev(base),base): continue
+        if delta + D[base,s1] - D[base,a_node] <=0: continue
+        gain = (D[base,s1]-D[base,a_node])+(D[a_node,tour.next(a_node)]-D[tour.next(a_node),s1])
+        cand.append(('m',a_node,None,gain))
     cand.sort(key=lambda x:-x[3])
     cnt = 0
-    for typ,a,probe,gain in cand:
+    for typ,a_cand,probe_cand,gain_cand in cand: # Renamed loop variables
+        if time.time() >= deadline_timestamp: # Check before processing each candidate
+            break 
+
         if cnt>=b: break
-        new_delta = delta+gain
+        new_delta = delta+gain_cand
+        
         if typ=='u':
-            x,y = s1,probe
+            x,y = s1,probe_cand
             tour.flip(x,y); flip_seq.append((x,y))
+
             if start_c-new_delta<best_c: return True, flip_seq.copy()
+            
             if level<MAX_LEVEL:
-                ok,seq = step(level+1,new_delta,base,tour,D,neigh,flip_seq,start_c,best_c)
+                ok,seq = step(level+1,new_delta,base,tour,D,neigh,flip_seq,start_c,best_c, deadline_timestamp)
                 if ok: return True, seq
+            
             tour.flip(y,x); flip_seq.pop()
-        else:
-            x,y = tour.next(a),base
+        else: # 'm'-step
+            x,y = tour.next(a_cand),base # Use a_cand
             tour.flip(x,y); flip_seq.append((x,y))
+
             if start_c-new_delta<best_c: return True, flip_seq.copy()
-            newbase = tour.next(a)
+            
+            newbase = tour.next(a_cand) # Use a_cand
             if level<MAX_LEVEL:
-                ok,seq = step(level+1,new_delta,newbase,tour,D,neigh,flip_seq,start_c,best_c)
+                ok,seq = step(level+1,new_delta,newbase,tour,D,neigh,flip_seq,start_c,best_c, deadline_timestamp)
                 if ok: return True, seq
+            
             tour.flip(y,x); flip_seq.pop()
         cnt+=1
     return False,None
 
 
-def alternate_step(base,tour,D,neigh):
+def alternate_step(base,tour,D,neigh, deadline_timestamp): # Added deadline_timestamp
+    if time.time() >= deadline_timestamp:
+        return False, None
+
     s1 = tour.next(base)
     A=[]
-    for a in neigh[s1]:
-        if a in (base,s1) or D[base,s1]-D[s1,a]<=0: continue
-        probe=tour.prev(a)
-        A.append((D[probe,a]-D[s1,a],a,probe))
+    for a_node in neigh[s1]: # Renamed 'a' to 'a_node'
+        if a_node in (base,s1) or D[base,s1]-D[s1,a_node]<=0: continue
+        probe=tour.prev(a_node)
+        A.append((D[probe,a_node]-D[s1,a_node],a_node,probe))
     A.sort(reverse=True)
-    for _,a,probe in A[:BREADTHA]:
-        a1 = tour.next(a)
+
+    for _,a_cand,probe_cand in A[:BREADTHA]: # Renamed loop variables
+        if time.time() >= deadline_timestamp: return False, None
+
+        a1 = tour.next(a_cand)
         B=[]
-        for b in neigh[a1]:
-            if b in (base,s1,a): continue
-            b1=tour.next(b)
-            B.append((D[b1,b]-D[a1,b],b,b1))
+        for b_node in neigh[a1]: # Renamed 'b' to 'b_node'
+            if b_node in (base,s1,a_cand): continue # Use a_cand
+            b1=tour.next(b_node)
+            B.append((D[b1,b_node]-D[a1,b_node],b_node,b1))
         B.sort(reverse=True)
-        for _,b,b1 in B[:BREADTHB]:
-            if tour.sequence(s1,b,a):
-                return True, [(s1,b),(b,a)]
+
+        for _,b_cand,b1_cand in B[:BREADTHB]: # Renamed loop variables
+            if time.time() >= deadline_timestamp: return False, None
+
+            if tour.sequence(s1,b_cand,a_cand): # Use a_cand, b_cand
+                return True, [(s1,b_cand),(b_cand,a_cand)]
+            
             C=[]
-            for d in neigh[b1]:
-                if d in (base,s1,a,a1,b): continue
-                d1=tour.next(d)
-                C.append((D[d1,d]-D[b1,d],d,d1))
+            for d_node in neigh[b1_cand]: # Renamed 'd' to 'd_node', use b1_cand
+                if d_node in (base,s1,a_cand,a1,b_cand): continue # Use a_cand, b_cand
+                d1=tour.next(d_node)
+                C.append((D[d1,d_node]-D[b1_cand,d_node],d_node,d1)) # Use b1_cand
             C.sort(reverse=True)
-            for _,d,d1 in C[:BREADTHD]:
-                return True, [(s1,d),(d,a),(a1,d1)]
+
+            for _,d_cand,d1_cand in C[:BREADTHD]: # Renamed loop variables
+                if time.time() >= deadline_timestamp: return False, None
+                return True, [(s1,d_cand),(d_cand,a_cand),(a1,d1_cand)] # Use a_cand, d_cand, d1_cand
     return False,None
 
 
-def lk_search(v,tour,D,neigh):
-    T0 = Tour(tour.get_tour(), D)
+def lk_search(v,tour,D,neigh, deadline_timestamp): # Added deadline_timestamp
+    if time.time() >= deadline_timestamp:
+        return None
+
+    T0 = Tour(tour.get_tour(), D) # Work on a copy
     start_c = T0.cost
-    ok,seq = step(1,0,v,T0,D,neigh,[],start_c,start_c)
+    
+    ok,seq = step(1,0,v,T0,D,neigh,[],start_c,start_c, deadline_timestamp)
     if ok: return seq
-    ok,seq = alternate_step(v,tour,D,neigh)
+    
+    if time.time() >= deadline_timestamp: # Check again before alternate_step
+        return None
+        
+    # alternate_step does not modify the tour, it returns a sequence.
+    # It should operate on the original tour passed to lk_search, as per original logic.
+    ok,seq = alternate_step(v,tour,D,neigh, deadline_timestamp) 
     return seq if ok else None
 
 # Algorithm 15.4: Lin-Kernighan with safety and final cost check
-def lin_kernighan(coords, init):
+def lin_kernighan(coords, init, D_matrix, neigh_list, deadline_timestamp): # Added D_matrix, neigh_list, deadline_timestamp
     n = len(coords)
-    D = build_distance_matrix(coords)
-    neigh = delaunay_neighbors(coords)
-    tour = Tour(init, D)
+    # D = build_distance_matrix(coords) # Use D_matrix
+    # neigh = delaunay_neighbors(coords) # Use neigh_list
+    tour = Tour(init, D_matrix) # Use D_matrix
     best_len = tour.cost
-    improved = True
+    
+    if time.time() >= deadline_timestamp: # Check at entry
+        return tour, best_len
 
+    improved = True
     while improved:
+        if time.time() >= deadline_timestamp: # Check before starting a full pass
+            break 
         improved = False
-        for v in range(n):
-            seq = lk_search(v, tour, D, neigh)
+        # The original code iterates v from 0 to n-1, implying v is a node index/label.
+        for v_node_idx in range(n): 
+            if time.time() >= deadline_timestamp: # Check before each lk_search
+                break
+            
+            # lk_search expects a node (v), not necessarily its index in the current tour.order
+            # Assuming nodes are 0 to n-1.
+            current_start_node = v_node_idx 
+            seq = lk_search(current_start_node, tour, D_matrix, neigh_list, deadline_timestamp)
+            
             if not seq:
                 continue
-            temp = Tour(tour.get_tour(), D)
-            for a,b in seq:
-                temp.flip_and_update_cost(a,b,D)
+            
+            temp = Tour(tour.get_tour(), D_matrix) # Create copy
+            for a,b_node in seq: # Renamed b to b_node
+                temp.flip_and_update_cost(a,b_node,D_matrix)
+            
             if temp.cost + 1e-12 < best_len:
-                for a,b in seq:
-                    tour.flip_and_update_cost(a,b,D)
-                best_len = temp.cost
+                for a,b_node in seq: # Renamed b to b_node
+                    tour.flip_and_update_cost(a,b_node,D_matrix)
+                best_len = tour.cost # Update best_len from the main tour
                 improved = True
-                break
+                break 
     return tour, best_len
 
 # Algorithm 15.5: Chained LK with final cost recompute
@@ -254,20 +304,35 @@ def double_bridge(order):
 def chained_lin_kernighan(coords, init, time_limit=None):
     if time_limit is None:
         time_limit = TIME_LIMIT
-    tour_obj, bl = lin_kernighan(coords, init)
-    start = time.time()
-    while time.time() - start < time_limit:
+    
+    overall_start_time = time.time()
+    deadline_timestamp = overall_start_time + time_limit
+
+    # Precompute D and neigh
+    D_matrix = build_distance_matrix(coords)
+    neigh_list = delaunay_neighbors(coords)
+
+    tour_obj, bl = lin_kernighan(coords, init, D_matrix, neigh_list, deadline_timestamp)
+    
+    loop_start_time = time.time()
+    while loop_start_time < deadline_timestamp:
         cand = double_bridge(tour_obj.get_tour())
-        t2_obj, l2 = lin_kernighan(coords, cand)
+        # Pass the same overall deadline
+        t2_obj, l2 = lin_kernighan(coords, cand, D_matrix, neigh_list, deadline_timestamp)
+        
         if l2 < bl:
             tour_obj, bl = t2_obj, l2
-    # Final full-tour cost recompute to eliminate drift
-    D = build_distance_matrix(coords)
+        
+        # Update loop_start_time for the next check
+        loop_start_time = time.time() 
+    
+    # Final full-tour cost recompute
+    # D_matrix is already computed
     true_cost = 0.0
     for i in range(tour_obj.n):
         x = tour_obj.order[i]
         y = tour_obj.order[(i+1)%tour_obj.n]
-        true_cost += D[x,y]
+        true_cost += D_matrix[x,y] # Use D_matrix
     tour_obj.cost = true_cost
     bl = true_cost
     return tour_obj.get_tour(), bl

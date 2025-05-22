@@ -6,12 +6,18 @@ import tsplib95
 from scipy.spatial import Delaunay
 from itertools import combinations
 
-MAX_LEVEL = 12
-BREADTH = [5, 5] + [1] * 20
-BREADTH_A = 5
-BREADTH_B = 5
-BREADTH_D = 1
-TIME_LIMIT = 120.0
+# --- Configuration Parameters ---
+LK_CONFIG = {
+    "MAX_LEVEL": 12,  # Max recursion depth for k-opt moves in step()
+    "BREADTH": [5, 5] + [1] * 20,  # Search breadth at each level in step()
+    "BREADTH_A": 5,  # Search breadth for t3 in alternate_step()
+    "BREADTH_B": 5,  # Search breadth for t5 in alternate_step()
+    "BREADTH_D": 1,  # Search breadth for t7 in alternate_step()
+    "TIME_LIMIT": 5.0,  # Default time limit for chained_lin_kernighan in seconds
+}
+
+# --- Constants ---
+FLOAT_COMPARISON_TOLERANCE = 1e-12 # Tolerance for floating point comparisons
 
 class Tour:
     """
@@ -209,7 +215,7 @@ def step(level, delta, base, tour, D, neigh, flip_seq, start_cost, best_cost, de
     """
     if time.time() >= deadline:
         return False, None
-    b = BREADTH[min(level - 1, len(BREADTH) - 1)]
+    b = LK_CONFIG["BREADTH"][min(level - 1, len(LK_CONFIG["BREADTH"]) - 1)]
     s1 = tour.next(base)
     candidates = []
 
@@ -241,19 +247,19 @@ def step(level, delta, base, tour, D, neigh, flip_seq, start_cost, best_cost, de
             flip_seq.append((x, y))
             if start_cost - new_delta < best_cost:
                 return True, flip_seq.copy()
-            if level < MAX_LEVEL:
+            if level < LK_CONFIG["MAX_LEVEL"]:
                 ok, seq = step(level + 1, new_delta, base, tour, D, neigh, flip_seq, start_cost, best_cost, deadline)
                 if ok: return True, seq
             tour.flip(y, x) # Backtrack: undo the flip
             flip_seq.pop()
-        else:
+        else: # 'makmorton'
             x, y = tour.next(a), base
             tour.flip(x, y)
             flip_seq.append((x, y))
             if start_cost - new_delta < best_cost:
                 return True, flip_seq.copy()
             new_base = tour.next(a)
-            if level < MAX_LEVEL:
+            if level < LK_CONFIG["MAX_LEVEL"]:
                 ok, seq = step(level + 1, new_delta, new_base, tour, D, neigh, flip_seq, start_cost, best_cost, deadline)
                 if ok: return True, seq
             tour.flip(y, x)
@@ -285,7 +291,7 @@ def alternate_step(base, tour, D, neigh, deadline):
         probe = tour.prev(a)
         A.append((D[probe, a] - D[s1, a], a, probe))
     A.sort(reverse=True)
-    for _, a, probe in A[:BREADTH_A]:
+    for _, a, probe in A[:LK_CONFIG["BREADTH_A"]]:
         if time.time() >= deadline: return False, None
         a1 = tour.next(a)
         B = []
@@ -294,7 +300,7 @@ def alternate_step(base, tour, D, neigh, deadline):
             b1 = tour.next(b)
             B.append((D[b1, b] - D[a1, b], b, b1))
         B.sort(reverse=True)
-        for _, b, b1 in B[:BREADTH_B]:
+        for _, b, b1 in B[:LK_CONFIG["BREADTH_B"]]:
             if time.time() >= deadline: return False, None
             if tour.sequence(s1, b, a):
                 return True, [(s1, b), (b, a)]
@@ -304,7 +310,7 @@ def alternate_step(base, tour, D, neigh, deadline):
                 d1 = tour.next(d)
                 C.append((D[d1, d] - D[b1, d], d, d1))
             C.sort(reverse=True)
-            for _, d, d1 in C[:BREADTH_D]:
+            for _, d, d1 in C[:LK_CONFIG["BREADTH_D"]]:
                 if time.time() >= deadline: return False, None
                 return True, [(s1, d), (d, a), (a1, d1)]
     return False, None
@@ -365,7 +371,7 @@ def lin_kernighan(coords, init, D, neigh, deadline):
         temp = Tour(tour.get_tour(), D)
         for x, y in seq:
             temp.flip_and_update_cost(x, y, D)
-        if temp.cost + 1e-12 < best_cost:
+        if temp.cost + FLOAT_COMPARISON_TOLERANCE < best_cost: # Use named constant
             for x, y in seq:
                 tour.flip_and_update_cost(x, y, D)
                 marked.add(x)
@@ -413,7 +419,7 @@ def chained_lin_kernighan(coords, init, opt_len=None, time_limit=None):
         (list, float): The best tour found and its length.
     """
     if time_limit is None:
-        time_limit = TIME_LIMIT
+        time_limit = LK_CONFIG["TIME_LIMIT"] # Use LK_CONFIG for default TIME_LIMIT
     t_start = time.time()
     deadline = t_start + time_limit
     D = build_distance_matrix(coords)
@@ -424,7 +430,7 @@ def chained_lin_kernighan(coords, init, opt_len=None, time_limit=None):
         t2_obj, l2 = lin_kernighan(coords, cand, D, neigh, deadline)
         if l2 < best_cost:
             tour_obj, best_cost = t2_obj, l2
-            if opt_len is not None and abs(best_cost - opt_len) < 1e-8:
+            if opt_len is not None and abs(best_cost - opt_len) < FLOAT_COMPARISON_TOLERANCE: # Use named constant
                 # Early exit if optimal solution found
                 break
     # Final cost recompute
@@ -514,7 +520,7 @@ if __name__ == '__main__':
 
         init = list(range(len(coords)))
         start = time.time()
-        heu_tour, heu_len = chained_lin_kernighan(coords, init, opt_len=opt_len, time_limit=TIME_LIMIT)
+        heu_tour, heu_len = chained_lin_kernighan(coords, init, opt_len=opt_len) # Relies on default in function
         elapsed = time.time() - start
         gap = max(0.0, 100.0 * (heu_len - opt_len) / opt_len)
         print(f"  Heuristic length: {heu_len:.2f}  Gap: {gap:.2f}%  Time: {elapsed:.2f}s")
@@ -532,12 +538,12 @@ if __name__ == '__main__':
 
     # Print summary
     print("Configuration parameters:")
-    print(f"  MAX_LEVEL   = {MAX_LEVEL}")
-    print(f"  BREADTH     = {BREADTH}")
-    print(f"  BREADTH_A   = {BREADTH_A}")
-    print(f"  BREADTH_B   = {BREADTH_B}")
-    print(f"  BREADTH_D   = {BREADTH_D}")
-    print(f"  TIME_LIMIT  = {TIME_LIMIT:.2f}s\n")
+    print(f"  MAX_LEVEL   = {LK_CONFIG['MAX_LEVEL']}")
+    print(f"  BREADTH     = {LK_CONFIG['BREADTH']}")
+    print(f"  BREADTH_A   = {LK_CONFIG['BREADTH_A']}")
+    print(f"  BREADTH_B   = {LK_CONFIG['BREADTH_B']}")
+    print(f"  BREADTH_D   = {LK_CONFIG['BREADTH_D']}")
+    print(f"  TIME_LIMIT  = {LK_CONFIG['TIME_LIMIT']:.2f}s\n")
 
     print("Instance   OptLen   HeuLen   Gap(%)   Time(s)")
     for r in results:

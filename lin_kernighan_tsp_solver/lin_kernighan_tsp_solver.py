@@ -1,11 +1,12 @@
 import os
 import time
-import numpy as np
+from itertools import combinations 
+from pathlib import Path         
+
 import matplotlib.pyplot as plt
-import tsplib95
+import numpy as np             
+import tsplib95                
 from scipy.spatial import Delaunay
-from itertools import combinations
-from pathlib import Path # Add to imports
 
 # --- Configuration Parameters ---
 LK_CONFIG = {

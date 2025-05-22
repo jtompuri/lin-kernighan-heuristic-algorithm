@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np             
 import tsplib95                
 from scipy.spatial import Delaunay
-from typing import List, Dict, Tuple, Optional, Set, Any, Iterable
+from typing import List, Dict, Tuple, Optional, Any, Iterable
 
 # --- Configuration Parameters ---
 # This dictionary holds parameters that control the behavior of the Lin-Kernighan heuristic,

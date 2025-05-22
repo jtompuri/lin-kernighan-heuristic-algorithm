@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import tsplib95
 from scipy.spatial import Delaunay
 from itertools import combinations
+from pathlib import Path # Add to imports
 
 # --- Configuration Parameters ---
 LK_CONFIG = {
@@ -650,29 +651,29 @@ def plot_all_tours(results_data):
 
 if __name__ == '__main__':
     # Set your TSPLIB path here
-    tsp_folder = '../TSPLIB95/tsp'
+    tsp_folder_path = Path('../TSPLIB95/tsp') # Use Path object
     all_results = []
 
-    for filename in sorted(os.listdir(tsp_folder)):
-        if not filename.lower().endswith('.tsp'):
+    for tsp_file_candidate in sorted(tsp_folder_path.iterdir()): # Iterate over Path objects
+        if tsp_file_candidate.suffix.lower() != '.tsp':
             continue
         
-        problem_base_name = filename[:-4]
-        tsp_file_full_path = os.path.join(tsp_folder, filename)
+        problem_base_name = tsp_file_candidate.stem # .stem gets filename without suffix
+        # tsp_file_full_path is tsp_file_candidate itself
         
-        opt_tour_filename = problem_base_name + '.opt.tour'
-        opt_tour_file_path = os.path.join(tsp_folder, opt_tour_filename)
+        opt_tour_file_path = tsp_folder_path / (problem_base_name + '.opt.tour') # Path concatenation
 
-        if not os.path.exists(opt_tour_file_path):
+        if not opt_tour_file_path.exists(): # Use Path.exists()
             print(
                 f"Optimal tour file not found for {problem_base_name}, skipping."
             )
             continue
         
         try:
-            problem_instance = tsplib95.load(tsp_file_full_path)
+            # tsplib95.load can take a Path object directly or its string representation
+            problem_instance = tsplib95.load(tsp_file_candidate) 
         except Exception as e:
-            print(f"Error loading TSP file {tsp_file_full_path}: {e}. Skipping.")
+            print(f"Error loading TSP file {tsp_file_candidate}: {e}. Skipping.")
             continue
 
         edge_weight_type = getattr(problem_instance, 'edge_weight_type', '')
@@ -685,9 +686,9 @@ if __name__ == '__main__':
         
         try:
             instance_result = process_single_instance(
-                tsp_file_full_path, opt_tour_file_path
+                str(tsp_file_candidate), str(opt_tour_file_path) # Pass strings if functions expect them
             )
-            if instance_result: # Ensure result is not None if process_single_instance can return None
+            if instance_result: 
                 all_results.append(instance_result)
         except Exception as e:
             print(f"Error processing {problem_base_name}: {e}")

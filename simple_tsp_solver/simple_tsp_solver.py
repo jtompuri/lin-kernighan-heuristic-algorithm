@@ -22,8 +22,8 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D  # ADDED
 
 # --- Constants ---
-FOLDER_PATH = '../verifications/random'  # Path to the folder containing TSPLIB .tsp files
-TIME_LIMIT = 20.0  # Default time limit for the solver in seconds
+TSP_FOLDER_PATH = '../verifications/tsplib95'  # Path to the folder containing TSPLIB .tsp files
+TIME_LIMIT = 1.0  # Default time limit for the solver in seconds
 MAX_SUBPLOTS = 25  # ADDED: Maximum number of subplots in the tour visualization
 
 
@@ -246,7 +246,7 @@ def read_opt_tour(path):
 if __name__ == '__main__':
 
     # Change to your TSPLIB path
-    folder = FOLDER_PATH  # MODIFIED: Use constant
+    folder = TSP_FOLDER_PATH  # MODIFIED: Use constant
     results = []
 
     for fn in sorted(os.listdir(folder)):
@@ -302,15 +302,46 @@ if __name__ == '__main__':
                         'opt_len': opt_len, 'heu_len': heu_len,
                         'gap': gap, 'time': elapsed})
 
-    print("\nInstance   OptLen   HeuLen   Gap(%)   Time(s)")
-    for r in results:
-        print(f"{r['name']:10s} {r['opt_len']:8.2f} {r['heu_len']:8.2f} {r['gap']:8.2f} {r['time']:8.2f}")
+    # MODIFIED Summary Printing Block
+    print("\n" + "-" * 50)  # Separator
+    header = "Instance   OptLen   HeuLen   Gap(%)   Time(s)"
+    print(header)
+    print("\n" + "-" * 50)  # Separator
+
+    for r_item in results:
+        opt_len_str = f"{r_item['opt_len']:>8.2f}" if r_item['opt_len'] is not None else "   N/A  "
+        gap_str = f"{r_item['gap']:>8.2f}" if r_item['gap'] is not None else "   N/A  "
+        # heu_len and time are assumed to always exist
+        print(
+            f"{r_item['name']:<10s} {opt_len_str} "
+            f"{r_item['heu_len']:>8.2f} {gap_str} "
+            f"{r_item['time']:>8.2f}"
+        )
+
     if results:
-        avg_opt = sum(r['opt_len'] for r in results) / len(results)
-        avg_heu = sum(r['heu_len'] for r in results) / len(results)
-        avg_gap = sum(r['gap'] for r in results) / len(results)
-        avg_time = sum(r['time'] for r in results) / len(results)
-        print(f"{'AVERAGE':10s} {avg_opt:8.2f} {avg_heu:8.2f} {avg_gap:8.2f} {avg_time:8.2f}")
+        print("\n" + "-" * 50)  # Separator
+        num_total_items = len(results)
+
+        valid_opt_lens = [r['opt_len']
+                          for r in results if r['opt_len'] is not None]
+        valid_gaps = [r['gap'] for r in results if r['gap'] is not None]
+
+        total_opt_len_sum = sum(valid_opt_lens) if valid_opt_lens else None
+        # heu_len should always exist and be a float
+        total_heu_len_sum = sum(r_item['heu_len'] for r_item in results)
+
+        avg_gap_val = sum(valid_gaps) / len(valid_gaps) if valid_gaps else None
+        # time should always exist and be a float
+        avg_time_val = sum(r_item['time'] for r_item in results) / \
+            num_total_items if num_total_items > 0 else 0.0
+
+        total_opt_len_str = f"{total_opt_len_sum:>8.2f}" if total_opt_len_sum is not None else "   N/A  "
+        avg_gap_str = f"{avg_gap_val:>8.2f}" if avg_gap_val is not None else "   N/A  "
+
+        print(
+            f"{'SUMMARY':<10s} {total_opt_len_str} {total_heu_len_sum:>8.2f} "
+            f"{avg_gap_str} {avg_time_val:>8.2f}"
+        )
     print("Done.")
 
     # Plot tours

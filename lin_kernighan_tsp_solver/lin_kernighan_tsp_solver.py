@@ -48,7 +48,7 @@ from matplotlib.lines import Line2D
 
 # --- Constants ---
 # Path to the folder containing TSPLIB .tsp files and optional .opt.tour files
-TSP_FOLDER_PATH = Path('../verifications/tsplib95')
+TSP_FOLDER_PATH = Path('..') / "verifications" / "tsplib95"
 
 # Tolerance for floating point comparisons
 FLOAT_COMPARISON_TOLERANCE = 1e-12
@@ -65,7 +65,7 @@ LK_CONFIG = {
     "BREADTH_A": 5,  # Search breadth for t3 in alternate_step()
     "BREADTH_B": 5,  # Search breadth for t5 in alternate_step()
     "BREADTH_D": 1,  # Search breadth for t7 in alternate_step()
-    "TIME_LIMIT": 1.0,  # Default time limit for chained_lin_kernighan in seconds
+    "TIME_LIMIT": 1800.0,  # Default time limit for chained_lin_kernighan in seconds
 }
 
 

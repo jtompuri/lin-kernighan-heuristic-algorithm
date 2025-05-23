@@ -161,25 +161,40 @@ class Tour:
 
     def flip(self, a: int, b: int) -> None:
         """
-        Inverts (reverses) the segment of the tour from a to b (inclusive).
+        Inverts (reverses) the segment of the tour from vertex a to vertex b (inclusive).
+        Updates self.order and self.pos efficiently.
 
         Args:
-            a (int): Start vertex.
-            b (int): End vertex.
+            a (int): Start vertex of the segment to flip.
+            b (int): End vertex of the segment to flip.
         """
-        ia, ib = self.pos[a], self.pos[b]
-        indices = []
-        i = ia
+        idx_a_in_order, idx_b_in_order = self.pos[a], self.pos[b]
+
+        # Collect the array indices in self.order that form the segment
+        # from node a to node b, following the tour's current direction.
+        current_segment_indices_in_order = []
+        current_idx = idx_a_in_order
         while True:
-            indices.append(i)
-            if i == ib:
+            current_segment_indices_in_order.append(current_idx)
+            if current_idx == idx_b_in_order:
                 break
-            i = (i + 1) % self.n
-        segment = [self.order[i] for i in indices][::-1]
-        for i, idx in enumerate(indices):
-            self.order[idx] = segment[i]
-        for i, v in enumerate(self.order):
-            self.pos[v] = i
+            current_idx = (current_idx + 1) % self.n
+
+        # Extract the vertex values (nodes) in the segment
+        segment_nodes = [self.order[i] for i in current_segment_indices_in_order]
+
+        # Reverse the segment nodes
+        reversed_segment_nodes = segment_nodes[::-1]
+
+        # Place the reversed segment back into self.order at the collected indices
+        # and simultaneously update self.pos for these nodes.
+        for i in range(len(current_segment_indices_in_order)):
+            array_idx_to_update = current_segment_indices_in_order[i]
+            node_to_place_in_order = reversed_segment_nodes[i]
+
+            self.order[array_idx_to_update] = node_to_place_in_order
+            # Update the position of the node we just placed in self.order
+            self.pos[node_to_place_in_order] = array_idx_to_update
 
     def get_tour(self) -> List[int]:
         """
@@ -194,26 +209,45 @@ class Tour:
         else:
             return list(np.concatenate((self.order[zero_pos:], self.order[:zero_pos])))
 
-    def flip_and_update_cost(self, a: int, b: int, D: np.ndarray) -> float:
+    def flip_and_update_cost(self, segment_start_node: int, segment_end_node: int, D: np.ndarray) -> float:
         """
-        Performs flip(a, b) and efficiently updates the tour cost using the change in edge weights.
+        Performs flip(segment_start_node, segment_end_node) and efficiently updates the tour cost
+        by calculating the change in edge weights.
 
         Args:
-            a (int): Start vertex.
-            b (int): End vertex.
+            segment_start_node (int): The first vertex of the tour segment to be reversed.
+            segment_end_node (int): The last vertex of the tour segment to be reversed.
             D (np.ndarray): Distance/cost matrix.
 
         Returns:
-            float: The cost delta resulting from the flip.
+            float: The change in tour cost (delta). A negative delta indicates improvement.
         """
-        pa = self.prev(a)
-        nb = self.next(b)
-        removed = D[pa, a] + D[b, nb]
-        added = D[pa, b] + D[a, nb]
-        delta = added - removed
-        self.flip(a, b)
-        self.cost += delta
-        return delta
+        # Identify the nodes just outside the segment to be flipped.
+        # These are involved in the edges that will be broken and reformed.
+        node_before_segment = self.prev(segment_start_node)
+        node_after_segment = self.next(segment_end_node)
+
+        # Calculate the cost of the two edges being removed from the tour
+        cost_removed_edges = D[node_before_segment, segment_start_node] + D[segment_end_node, node_after_segment]
+
+        # Calculate the cost of the two new edges being added to the tour
+        # After the flip, node_before_segment connects to segment_end_node,
+        # and segment_start_node connects to node_after_segment.
+        cost_added_edges = D[node_before_segment, segment_end_node] + D[segment_start_node, node_after_segment]
+
+        # Calculate the net change in tour cost
+        delta_cost = cost_added_edges - cost_removed_edges
+
+        # Perform the flip operation on the tour structure
+        self.flip(segment_start_node, segment_end_node)
+
+        # Update the stored tour cost, if it has been initialized
+        if self.cost is not None:
+            self.cost += delta_cost
+        # If self.cost was None (e.g., Tour initialized without D), it remains None.
+        # The method still returns the calculated delta_cost.
+
+        return delta_cost
 
 
 def build_distance_matrix(coords: np.ndarray) -> np.ndarray:
@@ -253,7 +287,7 @@ def delaunay_neighbors(coords: np.ndarray) -> List[List[int]]:
         return all_neighbors
 
     triangulation = Delaunay(coords)
-    
+
     # Initialize a dictionary to store sets of neighbors for each vertex
     # to automatically handle duplicate edges from different simplices.
     neighbor_sets: Dict[int, set[int]] = {i: set() for i in range(num_vertices)}
@@ -264,10 +298,10 @@ def delaunay_neighbors(coords: np.ndarray) -> List[List[int]]:
         for u_vertex, v_vertex in combinations(simplex_indices, 2):
             neighbor_sets[u_vertex].add(v_vertex)
             neighbor_sets[v_vertex].add(u_vertex)
-            
+
     # Convert the sets of neighbors to sorted lists
     neighbor_lists: List[List[int]] = [sorted(list(neighbor_sets[i])) for i in range(num_vertices)]
-    
+
     return neighbor_lists
 
 
@@ -744,7 +778,7 @@ def chained_lin_kernighan(coords: np.ndarray, initial_tour_order: List[int],
     # Before returning, ensure the cost stored in the tour object is accurate
     # and matches the returned best_cost. This is a safeguard.
     final_recomputed_cost = 0.0
-    final_tour_order = current_best_tour_obj.get_tour() # Get order before potentially modifying cost
+    final_tour_order = current_best_tour_obj.get_tour()  # Get order before potentially modifying cost
     for i in range(current_best_tour_obj.n):
         node1 = final_tour_order[i]
         node2 = final_tour_order[(i + 1) % current_best_tour_obj.n]

@@ -137,7 +137,7 @@ class Tour:
             # The next node in the tour, wrapping around to the start for the last segment
             node2 = self.order[(i + 1) % self.n]
             current_total_cost += float(D[node1, node2])  # Explicit cast to float
-        
+
         self.cost = current_total_cost
 
     def next(self, v: int) -> int:
@@ -763,15 +763,10 @@ def double_bridge(order: List[int]) -> List[int]:
         list: New tour order after applying the perturbation.
     """
     n = len(order)
-    if n <= 4:
-        # Not enough nodes to perform four distinct cuts meaningfully.
-        # Return a copy of the original order.
+    if n <= 4:  # <--- THIS IS THE CONDITION
         return list(order)
 
     # Choose 4 distinct random indices (cut points) from range [1, n-1].
-    # These indices define the start of segments S1, S2, S3, and S4 respectively.
-    # Node 0 is implicitly the start of segment S0.
-    # Using range(1, n) ensures cut_point1 is at least 1.
     cut_points = sorted(np.random.choice(range(1, n), 4, replace=False))
     cut_point1, cut_point2, cut_point3, cut_point4 = cut_points[0], cut_points[1], cut_points[2], cut_points[3]
 
@@ -859,45 +854,70 @@ def chained_lin_kernighan(coords: np.ndarray, initial_tour_order: List[int],
 
 def read_opt_tour(path: str) -> Optional[List[int]]:
     """Reads an optimal tour from a .opt.tour file in TSPLIB format.
-    Returns None if the file is not found or cannot be parsed.
+    Returns None if the file is not found or cannot be parsed correctly,
+    including if the TOUR_SECTION is not properly terminated by -1.
     """
     tour: List[int] = []
-    reading = False
+    in_tour_section = False
+    found_minus_one_terminator = False  # Flag to track if -1 was seen
+
     try:
         with open(path) as f:
             for line in f:
                 tok = line.strip()
                 if tok.upper().startswith('TOUR_SECTION'):
-                    reading = True
+                    in_tour_section = True
                     continue
-                if not reading:
+
+                if not in_tour_section:
                     continue
-                for p in tok.split():
-                    if p in ('-1', 'EOF'):
-                        reading = False
-                        break
+
+                # We are in the TOUR_SECTION
+                for p_token in tok.split():
+                    if p_token == '-1':
+                        found_minus_one_terminator = True
+                        in_tour_section = False  # Stop reading tour nodes
+                        break  # Break from inner token loop
+
+                    # If EOF token is encountered before -1, stop reading tour nodes.
+                    # The validity will be checked later using found_minus_one_terminator.
+                    if p_token == 'EOF':
+                        in_tour_section = False  # Stop reading tour nodes
+                        break  # Break from inner token loop
+
                     try:
-                        idx = int(p)
+                        node_val = int(p_token)
+                        tour.append(node_val - 1)
                     except ValueError:
-                        print(
-                            f"Warning: Could not parse token '{p}' as integer in {path}")
-                        continue
-                    if idx > 0:
-                        tour.append(idx - 1)
-                if not reading:
-                    break
-        if not tour:  # If tour section was found but no nodes, or section not found
+                        print(f"Warning: Could not parse token '{p_token}' as integer in {path}")
+                        return None  # Invalid token
+
+                if not in_tour_section:  # If -1 or EOF token caused break from inner loop
+                    break  # Break from outer line loop
+
+        # After processing all lines:
+        # If no tour nodes were parsed at all.
+        if not tour:
             return None
+
+        # If tour nodes were parsed, but the TOUR_SECTION was not properly terminated by -1.
+        if tour and not found_minus_one_terminator:
+            # This means we read some nodes, but either an EOF token was hit
+            # or the file ended before a -1 was encountered.
+            # print(f"Warning: TOUR_SECTION in {path} did not end with -1.")  # Optional warning
+            return None
+
     except FileNotFoundError:
-        # print(f"Info: Optimal tour file not found at {path}")  # Optional: less verbose
         return None
     except Exception as e:
         print(f"Error reading optimal tour file {path}: {e}")
         return None
+
+    # Only return the tour if it's non-empty AND was properly terminated by -1
     return tour
 
 
-def read_tsp(path: str) -> np.ndarray:
+def read_tsp_file(path: str) -> np.ndarray:
     """
     Reads a TSPLIB formatted TSP file and returns the coordinates as a numpy array.
     Only supports EUC_2D instances.
@@ -967,7 +987,7 @@ def process_single_instance(tsp_file_path: str, opt_tour_file_path: str) -> Dict
     problem_name = Path(tsp_file_path).stem  # Use Path.stem for consistency
     print(f"Processing {problem_name} (EUC_2D)...")
 
-    coords = read_tsp(tsp_file_path)
+    coords = read_tsp_file(tsp_file_path)
     D_matrix = build_distance_matrix(coords)
 
     opt_tour_nodes = read_opt_tour(opt_tour_file_path)

@@ -232,21 +232,43 @@ def build_distance_matrix(coords: np.ndarray) -> np.ndarray:
 def delaunay_neighbors(coords: np.ndarray) -> List[List[int]]:
     """
     Builds a list of neighbors for each vertex using Delaunay triangulation.
-    This is used to restrict candidate moves as in the LK algorithm.
+    The neighbors for each vertex are sorted. This list is used to restrict
+    candidate moves in the Lin-Kernighan algorithm.
 
     Args:
-        coords (np.ndarray): Array of vertex coordinates.
+        coords (np.ndarray): Array of vertex coordinates, shape (n, 2).
 
     Returns:
-        list of list: For each vertex, a list of neighbor vertex indices.
+        List[List[int]]: A list where the i-th element is a sorted list
+                         of neighbor vertex indices for vertex i.
     """
-    tri = Delaunay(coords)
-    neigh = {i: set() for i in range(len(coords))}
-    for simplex in tri.simplices:
-        for u, v in combinations(simplex, 2):
-            neigh[u].add(v)
-            neigh[v].add(u)
-    return [sorted(neigh[i]) for i in range(len(coords))]
+    num_vertices = len(coords)
+    if num_vertices < 3:
+        # Delaunay triangulation requires at least 3 points to form a simplex.
+        # For < 3 points, all points are neighbors of each other (excluding self).
+        all_neighbors: List[List[int]] = []
+        for i in range(num_vertices):
+            vertex_neighbors = [j for j in range(num_vertices) if i != j]
+            all_neighbors.append(sorted(vertex_neighbors))
+        return all_neighbors
+
+    triangulation = Delaunay(coords)
+    
+    # Initialize a dictionary to store sets of neighbors for each vertex
+    # to automatically handle duplicate edges from different simplices.
+    neighbor_sets: Dict[int, set[int]] = {i: set() for i in range(num_vertices)}
+
+    # Iterate over each simplex (triangle) in the triangulation
+    for simplex_indices in triangulation.simplices:
+        # For each pair of vertices in the simplex, they are neighbors
+        for u_vertex, v_vertex in combinations(simplex_indices, 2):
+            neighbor_sets[u_vertex].add(v_vertex)
+            neighbor_sets[v_vertex].add(u_vertex)
+            
+    # Convert the sets of neighbors to sorted lists
+    neighbor_lists: List[List[int]] = [sorted(list(neighbor_sets[i])) for i in range(num_vertices)]
+    
+    return neighbor_lists
 
 
 def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
@@ -627,31 +649,47 @@ def lin_kernighan(coords: np.ndarray, init: List[int], D: np.ndarray,
 
 def double_bridge(order: List[int]) -> List[int]:
     """
-    Applies the "double-bridge" 4-opt move (see Figure 15.7),
-    used for generating kicks in Chained Lin-Kernighan.
+    Applies a "double-bridge" style perturbation to the tour, used for
+    generating kicks in Chained Lin-Kernighan. This specific implementation
+    performs a 3-opt move by selecting four cut points to define five segments
+    (S0, S1, S2, S3, S4) and reorders them as S0-S2-S1-S3-S4,
+    effectively swapping the positions of segments S1 and S2.
 
     Args:
         order (list): Current tour order.
 
     Returns:
-        list: New tour after applying the double-bridge move.
+        list: New tour order after applying the perturbation.
     """
     n = len(order)
     if n <= 4:
+        # Not enough nodes to perform four distinct cuts meaningfully.
+        # Return a copy of the original order.
         return list(order)
-    # Apply a 4-opt double-bridge move to perturb the tour
-    a, b, c, d = sorted(np.random.choice(range(1, n), 4, replace=False))
-    s0, s1 = order[:a], order[a:b]
-    s2, s3 = order[b:c], order[c:d]
-    s4 = order[d:]
+
+    # Choose 4 distinct random indices (cut points) from range [1, n-1].
+    # These indices define the start of segments S1, S2, S3, and S4 respectively.
+    # Node 0 is implicitly the start of segment S0.
+    # Using range(1, n) ensures cut_point1 is at least 1.
+    cut_points = sorted(np.random.choice(range(1, n), 4, replace=False))
+    cut_point1, cut_point2, cut_point3, cut_point4 = cut_points[0], cut_points[1], cut_points[2], cut_points[3]
+
+    # Define the five segments based on the cut points:
+    s0 = order[:cut_point1]
+    s1 = order[cut_point1:cut_point2]
+    s2 = order[cut_point2:cut_point3]
+    s3 = order[cut_point3:cut_point4]
+    s4 = order[cut_point4:]
+
+    # Reassemble the tour by swapping segments S1 and S2: S0-S2-S1-S3-S4
     return s0 + s2 + s1 + s3 + s4
 
 
-def chained_lin_kernighan(coords: np.ndarray, init: List[int],
-                          opt_len: Optional[float] = None,
-                          time_limit: Optional[float] = None) -> Tuple[List[int], float]:
+def chained_lin_kernighan(coords: np.ndarray, initial_tour_order: List[int],
+                          known_optimal_length: Optional[float] = None,
+                          time_limit_seconds: Optional[float] = None) -> Tuple[List[int], float]:
     """
-    Chained Lin-Kernighan metaheuristic (Algorithm 15.5).
+    Chained Lin-Kernighan metaheuristic (Algorithm 15.5 in Applegate et al.).
 
     Repeatedly applies Lin-Kernighan with double-bridge kicks
     to escape local minima, stopping either at the time limit or
@@ -659,39 +697,63 @@ def chained_lin_kernighan(coords: np.ndarray, init: List[int],
 
     Args:
         coords (np.ndarray): Vertex coordinates.
-        init (list): Initial tour order.
-        opt_len (float, optional): Known optimal tour length (for early stopping).
-        time_limit (float, optional): Maximum time (seconds) to run the algorithm.
+        initial_tour_order (list): Initial tour order.
+        known_optimal_length (float, optional): Known optimal tour length for early stopping.
+        time_limit_seconds (float, optional): Maximum time (seconds) to run the algorithm.
+                                            Defaults to LK_CONFIG["TIME_LIMIT"].
 
     Returns:
-        (list, float): The best tour found and its length.
+        (list, float): The best tour order found and its cost.
     """
-    if time_limit is None:
-        time_limit = LK_CONFIG["TIME_LIMIT"]
-    assert time_limit is not None, "time_limit should be a float at this point."
-    t_start = time.time()
-    deadline = t_start + time_limit
-    D = build_distance_matrix(coords)
-    neigh = delaunay_neighbors(coords)
-    tour_obj, best_cost = lin_kernighan(coords, init, D, neigh, deadline)
+    if time_limit_seconds is None:
+        time_limit_seconds = LK_CONFIG["TIME_LIMIT"]
+    assert time_limit_seconds is not None, "time_limit_seconds should be a float at this point."
+
+    start_time = time.time()
+    deadline = start_time + time_limit_seconds
+
+    distance_matrix = build_distance_matrix(coords)
+    neighbor_list = delaunay_neighbors(coords)
+
+    # Perform an initial Lin-Kernighan search
+    current_best_tour_obj, current_best_cost = lin_kernighan(
+        coords, initial_tour_order, distance_matrix, neighbor_list, deadline
+    )
+    assert current_best_tour_obj.cost is not None and abs(current_best_tour_obj.cost - current_best_cost) < FLOAT_COMPARISON_TOLERANCE
+
+    # Main loop: apply kicks and re-run Lin-Kernighan
     while time.time() < deadline:
-        cand = double_bridge(tour_obj.get_tour())
-        t2_obj, l2 = lin_kernighan(coords, cand, D, neigh, deadline)
-        if l2 < best_cost:
-            tour_obj, best_cost = t2_obj, l2
-            # Use named constant
-            if opt_len is not None and abs(best_cost - opt_len) < FLOAT_COMPARISON_TOLERANCE:
-                # Early exit if optimal solution found
+        # Apply a double-bridge kick to the current best tour
+        kicked_tour_order = double_bridge(current_best_tour_obj.get_tour())
+
+        # Run Lin-Kernighan on the perturbed tour
+        lk_result_tour_obj, lk_result_cost = lin_kernighan(
+            coords, kicked_tour_order, distance_matrix, neighbor_list, deadline
+        )
+
+        # If the new result is better, update the overall best
+        if lk_result_cost < current_best_cost - FLOAT_COMPARISON_TOLERANCE:
+            current_best_tour_obj = lk_result_tour_obj
+            current_best_cost = lk_result_cost
+
+            # Early exit if a known optimal solution is found
+            if known_optimal_length is not None and \
+               abs(current_best_cost - known_optimal_length) < FLOAT_COMPARISON_TOLERANCE:
                 break
-    # Final cost recompute
-    true_cost = 0.0
-    for i in range(tour_obj.n):
-        x = tour_obj.order[i]
-        y = tour_obj.order[(i + 1) % tour_obj.n]
-        true_cost += float(D[x, y])  # Explicit cast
-    tour_obj.cost = true_cost  # Now true_cost is float
-    best_cost = true_cost     # And best_cost is float
-    return tour_obj.get_tour(), best_cost
+
+    # Before returning, ensure the cost stored in the tour object is accurate
+    # and matches the returned best_cost. This is a safeguard.
+    final_recomputed_cost = 0.0
+    final_tour_order = current_best_tour_obj.get_tour() # Get order before potentially modifying cost
+    for i in range(current_best_tour_obj.n):
+        node1 = final_tour_order[i]
+        node2 = final_tour_order[(i + 1) % current_best_tour_obj.n]
+        final_recomputed_cost += float(distance_matrix[node1, node2])
+
+    current_best_tour_obj.cost = final_recomputed_cost
+    current_best_cost = final_recomputed_cost
+
+    return final_tour_order, current_best_cost
 
 
 def read_opt_tour(path: str) -> Optional[List[int]]:
@@ -828,7 +890,7 @@ def process_single_instance(tsp_file_path: str, opt_tour_file_path: str) -> Dict
 
     # Pass opt_len (which might be None) to chained_lin_kernighan
     heuristic_tour, heuristic_len = chained_lin_kernighan(
-        coords, initial_tour, opt_len=opt_len
+        coords, initial_tour, known_optimal_length=opt_len
     )
     elapsed_time = time.time() - start_time
 

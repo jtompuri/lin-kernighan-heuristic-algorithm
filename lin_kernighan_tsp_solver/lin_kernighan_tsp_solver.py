@@ -126,7 +126,15 @@ class Tour:
 
         Returns:
             int: Next vertex after v.
+
+        Raises:
+            IndexError: If the tour is empty (self.n == 0).
         """
+        if self.n == 0:
+            raise IndexError("Cannot get next node from an empty tour.")
+        # self.pos[v] gives the index of vertex v in the self.order array.
+        # Adding 1 and taking modulo self.n gives the index of the next vertex.
+        # self.order[...] then retrieves the label of that next vertex.
         return int(self.order[(self.pos[v] + 1) % self.n])
 
     def prev(self, v: int) -> int:
@@ -138,26 +146,48 @@ class Tour:
 
         Returns:
             int: Previous vertex before v.
+
+        Raises:
+            IndexError: If the tour is empty (self.n == 0).
         """
+        if self.n == 0:
+            raise IndexError("Cannot get previous node from an empty tour.")
+        # self.pos[v] gives the index of vertex v in the self.order array.
+        # Subtracting 1 and taking modulo self.n handles wrap-around for the previous vertex.
+        # self.order[...] then retrieves the label of that previous vertex.
         return int(self.order[(self.pos[v] - 1) % self.n])
 
-    def sequence(self, a: int, b: int, c: int) -> bool:
+    def sequence(self, node_a: int, node_b: int, node_c: int) -> bool:
         """
-        Determines if vertex b appears between a and c (inclusive of endpoints)
-        on the current tour, following the orientation.
+        Determines if vertex `node_b` is on the path from `node_a` to `node_c`
+        (inclusive of `node_a` and `node_c`) when traversing the tour in its
+        current orientation.
 
         Args:
-            a (int): Start vertex.
-            b (int): Test vertex.
-            c (int): End vertex.
+            node_a (int): Start vertex of the segment.
+            node_b (int): Vertex to check.
+            node_c (int): End vertex of the segment.
 
         Returns:
-            bool: True if b is in the segment from a to c, otherwise False.
+            bool: True if `node_b` is on the segment from `node_a` to `node_c`
+                  (inclusive), otherwise False. Returns False for an empty tour.
         """
-        ia, ib, ic = self.pos[a], self.pos[b], self.pos[c]
-        if ia <= ic:
-            return ia < ib <= ic
-        return ia < ib or ib <= ic
+        if self.n == 0:
+            return False  # Or raise an error, depending on desired behavior for empty tours
+
+        # Get the positions (indices) of the nodes in the self.order array
+        idx_a = self.pos[node_a]
+        idx_b = self.pos[node_b]
+        idx_c = self.pos[node_c]
+
+        # Case 1: The segment from node_a to node_c does not wrap around the end of the order array.
+        if idx_a <= idx_c:
+            return idx_a <= idx_b <= idx_c
+        # Case 2: The segment from node_a to node_c wraps around.
+        # (e.g., order = [..., node_a, ..., node_n-1, node_0, ..., node_c, ...])
+        # node_b is on the segment if it's from node_a to the end OR from the start to node_c.
+        else:  # idx_a > idx_c
+            return idx_a <= idx_b or idx_b <= idx_c
 
     def flip(self, a: int, b: int) -> None:
         """

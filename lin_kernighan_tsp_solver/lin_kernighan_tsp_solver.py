@@ -548,77 +548,81 @@ def lk_search(start_node_for_search: int, current_tour_obj: Tour, D: np.ndarray,
 def lin_kernighan(coords: np.ndarray, init: List[int], D: np.ndarray,
                   neigh: List[List[int]], deadline: float) -> Tuple[Tour, float]:
     """
-    The main Lin-Kernighan heuristic (Algorithm 15.4).
+    The main Lin-Kernighan heuristic (Algorithm 15.4 in Applegate et al.).
 
-    Iteratively applies lk_search() to all vertices, making
-    improvements and marking/unmarking as described in the book.
+    Iteratively applies lk_search() to all vertices. If an improving sequence
+    of flips is found, it's applied, and all vertices are marked for re-checking.
+    The process continues until no marked vertices remain or the time limit is reached.
 
     Args:
-        coords (np.ndarray): Vertex coordinates (not directly used, for interface consistency).
+        coords (np.ndarray): Vertex coordinates. Used to determine 'n'.
         init (list): Initial tour permutation.
         D (np.ndarray): Distance/cost matrix.
         neigh (list): List of neighbor lists for each vertex.
         deadline (float): Timestamp for time limit.
 
     Returns:
-        (Tour, float): Improved tour object and its cost.
+        (Tour, float): The best tour object found and its cost.
     """
     n = len(coords)
-    current_tour_obj = Tour(init, D)
-    current_global_best_cost = current_tour_obj.cost
-    assert current_global_best_cost is not None, "Initial tour cost should be set."
+    current_best_tour_obj = Tour(init, D)
+    current_best_tour_cost = current_best_tour_obj.cost
+    assert current_best_tour_cost is not None, "Initial tour cost should be set."
 
-    marked = set(range(n))
-    while marked:
+    # 'marked' contains nodes from which an lk_search might lead to an improvement.
+    # Initially, all nodes are marked.
+    marked_nodes = set(range(n))
+
+    while marked_nodes:  # Continue as long as there are nodes to explore for improvements
         if time.time() >= deadline:
             break
 
-        v_start_node = marked.pop()
+        # Select a node from which to start the search for an improving sequence.
+        # The order of selection from 'marked_nodes' can vary; here, pop() is used.
+        start_node_for_lk = marked_nodes.pop()
 
-        tour_order_before_lk_call = current_tour_obj.get_tour()
-        cost_before_lk_call = current_tour_obj.cost
-        assert cost_before_lk_call is not None
+        # Store the state of the tour before calling lk_search.
+        # lk_search might explore modifications, but we only commit if an actual
+        # improvement is found relative to this pre-search state.
+        tour_order_before_lk = current_best_tour_obj.get_tour()
+        cost_before_lk = current_best_tour_obj.cost
+        assert cost_before_lk is not None, "Cost before lk_search must be defined."
 
+        # Call lk_search. Note: lk_search itself uses a copy for its 'step' part,
+        # and 'alternate_step' operates on the passed tour.
+        # The 'current_best_tour_obj' is passed here, but its state is preserved
+        # by 'tour_order_before_lk' and 'cost_before_lk' for comparison.
         improving_sequence = lk_search(
-            v_start_node, current_tour_obj, D, neigh, deadline)
+            start_node_for_lk, current_best_tour_obj, D, neigh, deadline)
 
         if improving_sequence:
-            made_improvement_this_iteration = False
-            cost_after_lk_call = current_tour_obj.cost
-            assert cost_after_lk_call is not None
+            # An improving sequence was found by lk_search.
+            # Apply this sequence to a fresh tour object based on the state *before* lk_search.
+            candidate_tour_obj = Tour(tour_order_before_lk, D)
+            for x_flip, y_flip in improving_sequence:
+                candidate_tour_obj.flip_and_update_cost(x_flip, y_flip, D)
 
-            if cost_after_lk_call < cost_before_lk_call - FLOAT_COMPARISON_TOLERANCE:
-                current_global_best_cost = cost_after_lk_call
-                marked = set(range(n))
-                made_improvement_this_iteration = True
-            else:
-                current_tour_obj = Tour(tour_order_before_lk_call, D)
-                for x_flip, y_flip in improving_sequence:
-                    current_tour_obj.flip_and_update_cost(x_flip, y_flip, D)
+            cost_of_candidate_tour = candidate_tour_obj.cost
+            assert cost_of_candidate_tour is not None, "Cost of candidate tour must be defined."
 
-                new_cost_after_step_flips = current_tour_obj.cost
-                assert new_cost_after_step_flips is not None
+            # Check if this candidate tour is genuinely better than the tour before lk_search.
+            if cost_of_candidate_tour < cost_before_lk - FLOAT_COMPARISON_TOLERANCE:
+                # Yes, an improvement was made. Update the current best tour and cost.
+                current_best_tour_obj = candidate_tour_obj
+                current_best_tour_cost = cost_of_candidate_tour
+                # Since an improvement was made, all nodes are marked again for potential further improvements.
+                marked_nodes = set(range(n))
+            # else: The sequence returned by lk_search, when applied, did not result in a
+            #       better tour than 'cost_before_lk'. No change to 'current_best_tour_obj'
+            #       or 'marked_nodes' (beyond the pop() at the start of the loop).
+            #       The 'current_best_tour_obj' effectively remains as it was before this lk_search call.
 
-                if new_cost_after_step_flips < cost_before_lk_call - FLOAT_COMPARISON_TOLERANCE:
-                    current_global_best_cost = new_cost_after_step_flips
-                    marked = set(range(n))
-                    made_improvement_this_iteration = True
+        # else: No improving sequence was found by lk_search starting from 'start_node_for_lk'.
+        #       'current_best_tour_obj' and 'marked_nodes' remain as they are (except for the pop).
 
-            if not made_improvement_this_iteration:
-
-                # cost_before_lk_call is already asserted not None.
-                assert current_tour_obj.cost is not None, "Cost must be defined for this check (improving_sequence path)"
-                if abs(current_tour_obj.cost - cost_before_lk_call) > FLOAT_COMPARISON_TOLERANCE and \
-                   current_tour_obj.cost >= cost_before_lk_call - FLOAT_COMPARISON_TOLERANCE:
-                    current_tour_obj = Tour(tour_order_before_lk_call, D)
-
-        else:
-            # cost_before_lk_call is asserted not None earlier in the loop.
-            assert current_tour_obj.cost is not None, "Cost must be defined for this check (no improving_sequence path)"
-            if abs(current_tour_obj.cost - cost_before_lk_call) > FLOAT_COMPARISON_TOLERANCE:
-                current_tour_obj = Tour(tour_order_before_lk_call, D)
-
-    return current_tour_obj, current_global_best_cost
+    # After the loop finishes (no more marked nodes or time limit reached),
+    # return the best tour found.
+    return current_best_tour_obj, current_best_tour_cost
 
 
 def double_bridge(order: List[int]) -> List[int]:

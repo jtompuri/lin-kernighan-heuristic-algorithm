@@ -278,12 +278,10 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
     candidates = []
 
     # Standard flips (u-steps):
-    # Renamed 'a' to 'a_candidate_node' for clarity
     for a_candidate_node in neigh[s1]:
         is_invalid_node = a_candidate_node in (base, s1)
 
         # Gain from breaking edge (base,s1) and making edge (s1,a_candidate_node)
-        # This is G_i in some notations if this is the i-th edge pair considered.
         gain_first_exchange = D[base, s1] - D[s1, a_candidate_node]
 
         # Pruning: if the first exchange doesn't offer positive gain, skip.
@@ -296,16 +294,14 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
 
         # Gain from breaking edge (probe_node, base) and making edge (probe_node, a_candidate_node)
         # This completes a 2-opt or is part of a 3-opt.
-        gain_second_exchange = D[probe_node,
-                                 a_candidate_node] - D[probe_node, base]
+        gain_second_exchange = D[probe_node, a_candidate_node] - D[probe_node, base]
 
         total_gain_for_this_move = gain_first_exchange + gain_second_exchange
 
         # Pruning condition: current accumulated gain (delta) + gain from this first new edge must be positive.
         # This ensures that the sequence of choices so far maintains a positive cumulative gain.
         if delta + gain_first_exchange > FLOAT_COMPARISON_TOLERANCE:  # Check for strictly positive
-            candidates.append(
-                ('flip', a_candidate_node, probe_node, total_gain_for_this_move))
+            candidates.append(('flip', a_candidate_node, probe_node, total_gain_for_this_move))
 
     # Mak-Morton flips:
     for a_candidate_node in neigh[base]:  # Renamed 'a' to 'a_candidate_node'
@@ -360,14 +356,24 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
     return False, None
 
 
-def alternate_step(base: int, tour: Tour, D: np.ndarray, neigh: List[List[int]],
+def alternate_step(base_node: int, tour: Tour, D: np.ndarray, neigh: List[List[int]],
                    deadline: float) -> Tuple[bool, Optional[List[Tuple[int, int]]]]:
     """
-    Implements the alternative first step of LK (Algorithm 15.2), providing extra
-    breadth in the initial search for improved moves, as described in the book.
+    Implements the alternative first step of LK (similar to Algorithm 15.2 in
+    Applegate et al.), providing extra breadth in the initial search for specific
+    3-opt or 5-opt moves.
+
+    Notation guide (approximate mapping to Applegate et al. for context):
+    - base_node (int): The current base vertex (t1).
+    - t2 (int): tour.next(base_node).
+    - y1, y2, y3 (int): Candidates for nodes to connect to, chosen from neighbors.
+    - t3 (int): tour.prev(y1).
+    - t4 (int): tour.next(y1).
+    - t6 (int): tour.next(y2).
+    - node_after_y3 (int): tour.next(y3).
 
     Args:
-        base (int): The current base vertex.
+        base_node (int): The current base vertex (t1).
         tour (Tour): The tour object.
         D (np.ndarray): Distance/cost matrix.
         neigh (list): List of neighbor lists for each vertex.
@@ -375,47 +381,89 @@ def alternate_step(base: int, tour: Tour, D: np.ndarray, neigh: List[List[int]],
 
     Returns:
         (bool, list): (True, flip_seq) if an improved tour is found, else (False, None).
+                      flip_seq is a list of (segment_start, segment_end) tuples for tour.flip().
     """
     if time.time() >= deadline:
         return False, None
-    s1 = tour.next(base)
-    A = []
-    for a in neigh[s1]:
-        is_invalid_node = a in (base, s1)
-        # Check if swapping edge (base,s1) for (s1,a) offers non-positive immediate gain
-        offers_no_gain = (D[base, s1] - D[s1, a]) <= 0
-        if is_invalid_node or offers_no_gain:
+
+    t1 = base_node
+    t2 = tour.next(t1)
+
+    # Find candidate y1
+    candidates_for_y1 = []
+    for y1_candidate in neigh[t2]:
+        # Ensure y1_candidate is a valid choice
+        if y1_candidate in (t1, t2):
             continue
-        probe = tour.prev(a)
-        A.append((D[probe, a] - D[s1, a], a, probe))
-    A.sort(reverse=True)
-    for _, a, probe in A[:LK_CONFIG["BREADTH_A"]]:
+
+        # Check G1 = c(t1,t2) - c(t2,y1_candidate). We need G1 > 0.
+        gain_G1 = D[t1, t2] - D[t2, y1_candidate]
+        if gain_G1 <= FLOAT_COMPARISON_TOLERANCE:  # Must be a strict improvement potential
+            continue
+
+        t3 = tour.prev(y1_candidate)
+        # Heuristic metric for sorting y1 candidates: D[t3,y1] - D[t2,y1]
+        # Prioritizes y1 where t3 is "far" from y1 and t2 is "close" to y1 (if D are distances)
+        # or where the edge (t3,y1) is more costly than (t2,y1).
+        sort_metric_y1 = D[t3, y1_candidate] - D[t2, y1_candidate]
+        candidates_for_y1.append((sort_metric_y1, y1_candidate, t3))
+
+    candidates_for_y1.sort(reverse=True)  # Sort by metric, descending
+
+    for _, y1_chosen, t3_of_y1 in candidates_for_y1[:LK_CONFIG["BREADTH_A"]]:
         if time.time() >= deadline:
             return False, None
-        a1 = tour.next(a)
-        B = []
-        for b in neigh[a1]:
-            if b in (base, s1, a):
+
+        t4 = tour.next(y1_chosen)
+
+        # Find candidate y2
+        candidates_for_y2 = []
+        for y2_candidate in neigh[t4]:
+            if y2_candidate in (t1, t2, y1_chosen):
                 continue
-            b1 = tour.next(b)
-            B.append((D[b1, b] - D[a1, b], b, b1))
-        B.sort(reverse=True)
-        for _, b, b1 in B[:LK_CONFIG["BREADTH_B"]]:
+
+            t6 = tour.next(y2_candidate)
+            # Heuristic metric for sorting y2 candidates: D[t6,y2] - D[t4,y2]
+            sort_metric_y2 = D[t6, y2_candidate] - D[t4, y2_candidate]
+            candidates_for_y2.append((sort_metric_y2, y2_candidate, t6))
+
+        candidates_for_y2.sort(reverse=True)
+
+        for _, y2_chosen, t6_of_y2 in candidates_for_y2[:LK_CONFIG["BREADTH_B"]]:
             if time.time() >= deadline:
                 return False, None
-            if tour.sequence(s1, b, a):
-                return True, [(s1, b), (b, a)]
-            C = []
-            for d in neigh[b1]:
-                if d in (base, s1, a, a1, b):
+
+            # Check for a specific 3-opt move (Type R in Applegate et al.)
+            # If t2 -> y2_chosen -> y1_chosen is a segment in the current tour.
+            if tour.sequence(t2, y2_chosen, y1_chosen):
+                # This 3-opt move breaks (t1,t2), (y1_chosen,t4), (y2_chosen, tour.prev(y2_chosen))
+                # and adds (t1,y1_chosen), (t2,y2_chosen), (t4, tour.prev(y2_chosen)).
+                # The sequence of flips to achieve this is [(t2, y2_chosen), (y2_chosen, y1_chosen)].
+                return True, [(t2, y2_chosen), (y2_chosen, y1_chosen)]
+
+            # Find candidate y3 for a 5-opt move
+            candidates_for_y3 = []
+            # y3_candidate is chosen from neighbors of t6_of_y2
+            for y3_candidate in neigh[t6_of_y2]:
+                if y3_candidate in (t1, t2, y1_chosen, t4, y2_chosen):
                     continue
-                d1 = tour.next(d)
-                C.append((D[d1, d] - D[b1, d], d, d1))
-            C.sort(reverse=True)
-            for _, d, d1 in C[:LK_CONFIG["BREADTH_D"]]:
+
+                node_after_y3 = tour.next(y3_candidate)
+                # Heuristic metric for sorting y3 candidates: D[node_after_y3,y3] - D[t6_of_y2,y3]
+                sort_metric_y3 = D[node_after_y3, y3_candidate] - D[t6_of_y2, y3_candidate]
+                candidates_for_y3.append((sort_metric_y3, y3_candidate, node_after_y3))
+
+            candidates_for_y3.sort(reverse=True)
+
+            for _, y3_chosen, node_after_y3_chosen in candidates_for_y3[:LK_CONFIG["BREADTH_D"]]:
                 if time.time() >= deadline:
                     return False, None
-                return True, [(s1, d), (d, a), (a1, d1)]
+
+                # This is a specific 5-opt move.
+                # The sequence of flips to achieve this is:
+                # [(t2, y3_chosen), (y3_chosen, y1_chosen), (t4, node_after_y3_chosen)]
+                return True, [(t2, y3_chosen), (y3_chosen, y1_chosen), (t4, node_after_y3_chosen)]
+
     return False, None
 
 
@@ -510,14 +558,14 @@ def lin_kernighan(coords: np.ndarray, init: List[int], D: np.ndarray,
                     made_improvement_this_iteration = True
 
             if not made_improvement_this_iteration:
-                # This is where errors for lines 456, 457 occur.
+
                 # cost_before_lk_call is already asserted not None.
                 assert current_tour_obj.cost is not None, "Cost must be defined for this check (improving_sequence path)"
                 if abs(current_tour_obj.cost - cost_before_lk_call) > FLOAT_COMPARISON_TOLERANCE and \
                    current_tour_obj.cost >= cost_before_lk_call - FLOAT_COMPARISON_TOLERANCE:
                     current_tour_obj = Tour(tour_order_before_lk_call, D)
 
-        else:  # This replaces 'elif' and handles 'not improving_sequence'. Error for line 465 was in the original elif condition.
+        else:
             # cost_before_lk_call is asserted not None earlier in the loop.
             assert current_tour_obj.cost is not None, "Cost must be defined for this check (no improving_sequence path)"
             if abs(current_tour_obj.cost - cost_before_lk_call) > FLOAT_COMPARISON_TOLERANCE:

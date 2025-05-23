@@ -389,7 +389,7 @@ def alternate_step(base_node: int, tour: Tour, D: np.ndarray, neigh: List[List[i
     t1 = base_node
     t2 = tour.next(t1)
 
-    # Find candidate y1
+    # --- Stage 1: Find candidate y1 (originally 'a') ---
     candidates_for_y1 = []
     for y1_candidate in neigh[t2]:
         # Ensure y1_candidate is a valid choice
@@ -416,7 +416,7 @@ def alternate_step(base_node: int, tour: Tour, D: np.ndarray, neigh: List[List[i
 
         t4 = tour.next(y1_chosen)
 
-        # Find candidate y2
+        # --- Stage 2: Find candidate y2 (originally 'b') ---
         candidates_for_y2 = []
         for y2_candidate in neigh[t4]:
             if y2_candidate in (t1, t2, y1_chosen):
@@ -441,7 +441,7 @@ def alternate_step(base_node: int, tour: Tour, D: np.ndarray, neigh: List[List[i
                 # The sequence of flips to achieve this is [(t2, y2_chosen), (y2_chosen, y1_chosen)].
                 return True, [(t2, y2_chosen), (y2_chosen, y1_chosen)]
 
-            # Find candidate y3 for a 5-opt move
+            # --- Stage 3: Find candidate y3 (originally 'd') for a 5-opt move ---
             candidates_for_y3 = []
             # y3_candidate is chosen from neighbors of t6_of_y2
             for y3_candidate in neigh[t6_of_y2]:
@@ -467,35 +467,82 @@ def alternate_step(base_node: int, tour: Tour, D: np.ndarray, neigh: List[List[i
     return False, None
 
 
-def lk_search(v: int, tour: Tour, D: np.ndarray, neigh: List[List[int]],
-              deadline: float) -> Optional[List[Tuple[int, int]]]:
+def lk_search(start_node_for_search: int, current_tour_obj: Tour, D: np.ndarray,
+              neigh: List[List[int]], deadline: float) -> Optional[List[Tuple[int, int]]]:
     """
-    Top-level Lin-Kernighan search (Algorithm 15.3).
-    Attempts to find an improving flip sequence starting at vertex v.
+    Top-level Lin-Kernighan search (Algorithm 15.3 in Applegate et al.).
+    Attempts to find an improving flip sequence starting at `start_node_for_search`.
+
+    This function first attempts the standard recursive `step` search.
+    If no improvement is found, it then tries the `alternate_step` search,
+    which looks for specific 3-opt or 5-opt moves.
 
     Args:
-        v (int): Starting vertex for the search.
-        tour (Tour): The current tour object.
+        start_node_for_search (int): The vertex from which to initiate the search.
+        current_tour_obj (Tour): The current tour object. The `step` search will operate
+                                 on a copy, while `alternate_step` may operate on this
+                                 instance directly (as per its design).
         D (np.ndarray): Distance/cost matrix.
         neigh (list): List of neighbor lists for each vertex.
         deadline (float): Timestamp for time limit.
 
     Returns:
-        list or None: List of flip operations if an improved tour is found, else None.
+        Optional[List[Tuple[int, int]]]: A list of (segment_start, segment_end)
+                                         tuples representing the flip sequence if an
+                                         improved tour is found, else None.
     """
     if time.time() >= deadline:
         return None
-    temp_tour = Tour(tour.get_tour(), D)
-    current_start_cost = temp_tour.cost
-    assert current_start_cost is not None, "Tour cost should be initialized when D is provided."
-    ok, seq = step(1, 0, v, temp_tour, D, neigh, [],
-                   current_start_cost, current_start_cost, deadline)
-    if ok:
-        return seq
-    if time.time() >= deadline:
+
+    # --- Attempt 1: Standard Recursive Step Search ---
+    # Create a temporary copy of the tour for the 'step' search to explore flips
+    # without modifying the 'current_tour_obj' prematurely.
+    search_tour_copy = Tour(current_tour_obj.get_tour(), D)
+    cost_at_search_start = search_tour_copy.cost
+    assert cost_at_search_start is not None, "Tour cost must be initialized for search_tour_copy."
+
+    # Call the recursive 'step' procedure.
+    # 'delta' starts at 0, 'level' at 1.
+    # 'best_cost' for 'step' is initialized to 'cost_at_search_start', meaning 'step'
+    # aims to find a sequence of flips that results in a tour cost strictly less than this.
+    found_improvement_step, improving_sequence_step = step(
+        level=1,
+        delta=0.0,
+        base=start_node_for_search,
+        tour=search_tour_copy,  # Operates on the copy
+        D=D,
+        neigh=neigh,
+        flip_seq=[],  # Initial empty flip sequence
+        start_cost=cost_at_search_start,  # Cost of the tour before this 'step' call
+        best_cost=cost_at_search_start,  # Target to beat
+        deadline=deadline
+    )
+
+    if found_improvement_step and improving_sequence_step:
+        # If 'step' found an improving sequence, return it.
+        return improving_sequence_step
+
+    if time.time() >= deadline:  # Check time limit again before alternate_step
         return None
-    ok, seq = alternate_step(v, tour, D, neigh, deadline)
-    return seq if ok else None
+
+    # --- Attempt 2: Alternate Step Search ---
+    # If the standard 'step' search did not find an improvement,
+    # try the 'alternate_step' search.
+    # 'alternate_step' looks for specific 3-opt or 5-opt moves from the
+    # state of 'current_tour_obj'.
+    found_improvement_alt, improving_sequence_alt = alternate_step(
+        base_node=start_node_for_search,
+        tour=current_tour_obj,  # Operates on the original tour object passed to lk_search
+        D=D,
+        neigh=neigh,
+        deadline=deadline
+    )
+
+    if found_improvement_alt and improving_sequence_alt:
+        return improving_sequence_alt
+
+    # No improvement found by either method
+    return None
 
 
 def lin_kernighan(coords: np.ndarray, init: List[int], D: np.ndarray,

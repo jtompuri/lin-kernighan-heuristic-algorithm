@@ -198,16 +198,29 @@ class Tour:
 
     def get_tour(self) -> List[int]:
         """
-        Returns the current tour as a list, starting from vertex 0.
+        Returns the current tour as a list of vertex indices,
+        normalized to start from vertex 0.
 
         Returns:
-            list: Ordered list of vertex indices representing the tour.
+            List[int]: Ordered list of vertex indices representing the tour, starting with 0.
+                       Returns an empty list if the tour is empty (self.n == 0).
         """
-        zero_pos = self.pos[0]
-        if zero_pos == 0:
+        if self.n == 0:
+            return []
+
+        # Find the current index of vertex 0 in the self.order array
+        position_of_vertex_0 = self.pos[0]
+
+        if position_of_vertex_0 == 0:
+            # If vertex 0 is already at the beginning of the self.order array,
+            # no rotation is needed.
             return list(self.order)
         else:
-            return list(np.concatenate((self.order[zero_pos:], self.order[:zero_pos])))
+            # Rotate the self.order array so that vertex 0 is at the beginning.
+            # This is done by concatenating the slice from vertex 0 to the end
+            # with the slice from the beginning up to (but not including) vertex 0.
+            rotated_order = np.concatenate((self.order[position_of_vertex_0:], self.order[:position_of_vertex_0]))
+            return list(rotated_order)
 
     def flip_and_update_cost(self, segment_start_node: int, segment_end_node: int, D: np.ndarray) -> float:
         """

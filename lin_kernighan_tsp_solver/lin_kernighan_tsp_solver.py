@@ -90,18 +90,39 @@ class Tour:
 
         Args:
             order (Iterable[int]): Sequence of vertices defining the tour.
+                                   If it's an iterator, it will be consumed.
             D (Optional[np.ndarray]): Distance/cost matrix to initialize tour cost.
+                                       If provided, init_cost() will be called.
         """
-        self.n: int = len(
-            list(order))  # Ensure order can be sized, convert to list if iterator
-        self.order: np.ndarray = np.array(list(order), dtype=np.int32)
-        self.pos: np.ndarray = np.empty(self.n, dtype=np.int32)
-        # Renamed v to v_node for clarity
-        for i, v_node in enumerate(self.order):
-            self.pos[v_node] = i
-        self.cost: Optional[float] = None
-        if D is not None:
-            self.init_cost(D)
+        # Convert iterable to a list to determine size and allow multiple uses
+        order_list = list(order)
+        self.n: int = len(order_list)
+
+        if self.n == 0:
+            # Handle empty tour initialization
+            self.order: np.ndarray = np.array([], dtype=np.int32)
+            self.pos: np.ndarray = np.array([], dtype=np.int32)
+            self.cost: Optional[float] = 0.0  # Or None, depending on desired state for empty tour
+        else:
+            self.order: np.ndarray = np.array(order_list, dtype=np.int32)
+            # Ensure self.pos is large enough if node labels are not 0 to n-1
+            # However, standard TSP assumes nodes are 0 to n-1.
+            # If node labels can be arbitrary and sparse, self.pos might need to be a dict
+            # or sized based on max(order_list) + 1.
+            # For now, assuming standard 0 to n-1 labels.
+            max_node_label = np.max(self.order) if self.n > 0 else -1
+            # self.pos should be able to hold indices for all actual node labels present.
+            # If node labels are dense (0 to n-1), then max_node_label + 1 == self.n
+            # If node labels are sparse but start from 0 (e.g. 0, 1, 5 for n=3),
+            # then self.pos needs to be of size max_node_label + 1.
+            # Current LK implementation assumes dense 0 to n-1 node labels.
+            self.pos: np.ndarray = np.empty(max_node_label + 1, dtype=np.int32)
+            for i, v_node in enumerate(self.order):
+                self.pos[v_node] = i
+
+            self.cost: Optional[float] = None
+            if D is not None:
+                self.init_cost(D)
 
     def init_cost(self, D: np.ndarray) -> None:
         """
@@ -189,19 +210,20 @@ class Tour:
         else:  # idx_a > idx_c
             return idx_a <= idx_b or idx_b <= idx_c
 
-    def flip(self, a: int, b: int) -> None:
+    def flip(self, segment_start_node: int, segment_end_node: int) -> None:
         """
-        Inverts (reverses) the segment of the tour from vertex a to vertex b (inclusive).
+        Inverts (reverses) the segment of the tour from vertex segment_start_node
+        to vertex segment_end_node (inclusive).
         Updates self.order and self.pos efficiently.
 
         Args:
-            a (int): Start vertex of the segment to flip.
-            b (int): End vertex of the segment to flip.
+            segment_start_node (int): Start vertex of the segment to flip.
+            segment_end_node (int): End vertex of the segment to flip.
         """
-        idx_a_in_order, idx_b_in_order = self.pos[a], self.pos[b]
+        idx_a_in_order, idx_b_in_order = self.pos[segment_start_node], self.pos[segment_end_node]
 
         # Collect the array indices in self.order that form the segment
-        # from node a to node b, following the tour's current direction.
+        # from node segment_start_node to node segment_end_node, following the tour's current direction.
         current_segment_indices_in_order = []
         current_idx = idx_a_in_order
         while True:

@@ -137,7 +137,7 @@ class Tour:
             # The next node in the tour, wrapping around to the start for the last segment
             node2 = self.order[(i + 1) % self.n]
             current_total_cost += float(D[node1, node2])  # Explicit cast to float
-        
+
         self.cost = current_total_cost
 
     def next(self, v: int) -> int:

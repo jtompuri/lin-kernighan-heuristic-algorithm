@@ -30,7 +30,7 @@ import numpy as np
 # Instance saving without tsplib95 to ensure compatibility
 
 # --- Constants for script execution ---
-N_CITIES = 11  # Number of cities for the generated TSP instance
+N_CITIES = 10  # Number of cities for the generated TSP instance
 RANDOM_SEED = 42  # Seed for random number generation
 OUTPUT_SUBDIRECTORY = "tsp"  # Subdirectory for saving TSP and tour files
 
@@ -73,13 +73,13 @@ def plot_tour(coords, tour, length=None):
     coords = np.array(coords)
     x, y = coords[path, 0], coords[path, 1]
     plt.figure(figsize=(4, 4))
-    plt.plot(x, y, 'o-')
+    plt.plot(x, y, '-')
     if length is not None:
         plt.title(f"TSP tour (length: {length:.2f})")
-    plt.xlabel("X")
-    plt.ylabel("Y")
+    plt.xticks([])
+    plt.yticks([])
     plt.axis('equal')
-    plt.grid(True)
+    plt.grid(False)
     plt.tight_layout()
     plt.show()
 

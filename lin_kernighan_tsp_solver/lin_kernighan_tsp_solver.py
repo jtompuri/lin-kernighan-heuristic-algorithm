@@ -106,16 +106,8 @@ class Tour:
         else:
             self.order: np.ndarray = np.array(order_list, dtype=np.int32)
             # Ensure self.pos is large enough if node labels are not 0 to n-1
-            # However, standard TSP assumes nodes are 0 to n-1.
-            # If node labels can be arbitrary and sparse, self.pos might need to be a dict
-            # or sized based on max(order_list) + 1.
-            # For now, assuming standard 0 to n-1 labels.
             max_node_label = np.max(self.order) if self.n > 0 else -1
             # self.pos should be able to hold indices for all actual node labels present.
-            # If node labels are dense (0 to n-1), then max_node_label + 1 == self.n
-            # If node labels are sparse but start from 0 (e.g. 0, 1, 5 for n=3),
-            # then self.pos needs to be of size max_node_label + 1.
-            # Current LK implementation assumes dense 0 to n-1 node labels.
             self.pos: np.ndarray = np.empty(max_node_label + 1, dtype=np.int32)
             for i, v_node in enumerate(self.order):
                 self.pos[v_node] = i
@@ -126,17 +118,27 @@ class Tour:
 
     def init_cost(self, D: np.ndarray) -> None:
         """
-        Computes and stores the total tour cost from the cost matrix D.
+        Computes and stores the total tour cost using the provided distance matrix.
+        This method is typically called during tour initialization if a distance
+        matrix is available. It iterates through the tour segments, sums their
+        costs, and updates `self.cost`.
 
         Args:
-            D (np.ndarray): Distance/cost matrix.
+            D (np.ndarray): The distance (or cost) matrix where D[i, j] is the
+                            cost of the edge between vertex i and vertex j.
         """
-        c = 0.0
+        if self.n == 0:
+            self.cost = 0.0  # Cost of an empty tour is 0
+            return
+
+        current_total_cost = 0.0
         for i in range(self.n):
-            a = self.order[i]
-            b = self.order[(i + 1) % self.n]
-            c += float(D[a, b])  # Explicit cast
-        self.cost = c
+            node1 = self.order[i]
+            # The next node in the tour, wrapping around to the start for the last segment
+            node2 = self.order[(i + 1) % self.n]
+            current_total_cost += float(D[node1, node2])  # Explicit cast to float
+        
+        self.cost = current_total_cost
 
     def next(self, v: int) -> int:
         """

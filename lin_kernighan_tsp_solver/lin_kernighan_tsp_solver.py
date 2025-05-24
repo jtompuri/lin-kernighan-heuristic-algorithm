@@ -65,7 +65,7 @@ LK_CONFIG = {
     "BREADTH_A": 5,  # Search breadth for t3 in alternate_step()
     "BREADTH_B": 5,  # Search breadth for t5 in alternate_step()
     "BREADTH_D": 1,  # Search breadth for t7 in alternate_step()
-    "TIME_LIMIT": 1800.0,  # Default time limit for chained_lin_kernighan in seconds
+    "TIME_LIMIT": 1.0,  # Default time limit for chained_lin_kernighan in seconds
 }
 
 
@@ -402,6 +402,8 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
 
     # Standard flips (u-steps):
     for a_candidate_node in neigh[s1]:
+        if time.time() >= deadline:
+            return False, None
         is_invalid_node = a_candidate_node in (base, s1)
 
         # Gain from breaking edge (base,s1) and making edge (s1,a_candidate_node)
@@ -428,6 +430,8 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
 
     # Mak-Morton flips:
     for a_candidate_node in neigh[base]:  # Renamed 'a' to 'a_candidate_node'
+        if time.time() >= deadline:
+            return False, None
         if a_candidate_node in (tour.next(base), tour.prev(base), base):
             continue
 
@@ -441,7 +445,6 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
         if delta + (D[base, s1] - D[base, a_candidate_node]) > FLOAT_COMPARISON_TOLERANCE:
             candidates.append(
                 ('makmorton', a_candidate_node, None, gain_mak_morton))
-
     candidates.sort(key=lambda x: -x[3])
     count = 0
     for typ, a, probe, g in candidates:
@@ -512,7 +515,7 @@ def alternate_step(base_node: int, tour: Tour, D: np.ndarray, neigh: List[List[i
     t1 = base_node
     t2 = tour.next(t1)
 
-    # --- Stage 1: Find candidate y1 (originally 'a') ---
+    # --- Stage 1: Find candidate y1 ---
     candidates_for_y1 = []
     for y1_candidate in neigh[t2]:
         # Ensure y1_candidate is a valid choice
@@ -539,7 +542,7 @@ def alternate_step(base_node: int, tour: Tour, D: np.ndarray, neigh: List[List[i
 
         t4 = tour.next(y1_chosen)
 
-        # --- Stage 2: Find candidate y2 (originally 'b') ---
+        # --- Stage 2: Find candidate y2 ---
         candidates_for_y2 = []
         for y2_candidate in neigh[t4]:
             if y2_candidate in (t1, t2, y1_chosen):
@@ -564,7 +567,7 @@ def alternate_step(base_node: int, tour: Tour, D: np.ndarray, neigh: List[List[i
                 # The sequence of flips to achieve this is [(t2, y2_chosen), (y2_chosen, y1_chosen)].
                 return True, [(t2, y2_chosen), (y2_chosen, y1_chosen)]
 
-            # --- Stage 3: Find candidate y3 (originally 'd') for a 5-opt move ---
+            # --- Stage 3: Find candidate y3 for a 5-opt move ---
             candidates_for_y3 = []
             # y3_candidate is chosen from neighbors of t6_of_y2
             for y3_candidate in neigh[t6_of_y2]:

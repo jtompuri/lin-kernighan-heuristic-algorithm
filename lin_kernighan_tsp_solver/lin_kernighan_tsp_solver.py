@@ -65,7 +65,7 @@ LK_CONFIG = {
     "BREADTH_A": 5,  # Search breadth for t3 in alternate_step()
     "BREADTH_B": 5,  # Search breadth for t5 in alternate_step()
     "BREADTH_D": 1,  # Search breadth for t7 in alternate_step()
-    "TIME_LIMIT": 1.0,  # Default time limit for chained_lin_kernighan in seconds
+    "TIME_LIMIT": 5.0,  # Default time limit for chained_lin_kernighan in seconds
 }
 
 
@@ -276,44 +276,44 @@ class Tour:
             rotated_order = np.concatenate((self.order[position_of_vertex_0:], self.order[:position_of_vertex_0]))
             return list(rotated_order)
 
-    def flip_and_update_cost(self, segment_start_node: int, segment_end_node: int, D: np.ndarray) -> float:
+    def flip_and_update_cost(self, node_a: int, node_b: int, D: np.ndarray) -> float:
         """
-        Performs flip(segment_start_node, segment_end_node) and efficiently updates the tour cost
-        by calculating the change in edge weights.
-
-        Args:
-            segment_start_node (int): The first vertex of the tour segment to be reversed.
-            segment_end_node (int): The last vertex of the tour segment to be reversed.
-            D (np.ndarray): Distance/cost matrix.
-
-        Returns:
-            float: The change in tour cost (delta). A negative delta indicates improvement.
+        Performs a segment flip from node_a to node_b (inclusive, following tour order)
+        and updates the tour's cost.
+        Returns the change in cost (delta_cost).
         """
-        # Identify the nodes just outside the segment to be flipped.
-        # These are involved in the edges that will be broken and reformed.
-        node_before_segment = self.prev(segment_start_node)
-        node_after_segment = self.next(segment_end_node)
+        if not (0 <= node_a < self.n and 0 <= node_b < self.n):
+            raise ValueError("Node index out of bounds for flip_and_update_cost")
 
-        # Calculate the cost of the two edges being removed from the tour
-        cost_removed_edges = D[node_before_segment, segment_start_node] + D[segment_end_node, node_after_segment]
+        if self.n == 0:  # Should not happen with valid tours
+            return 0.0
 
-        # Calculate the cost of the two new edges being added to the tour
-        # After the flip, node_before_segment connects to segment_end_node,
-        # and segment_start_node connects to node_after_segment.
-        cost_added_edges = D[node_before_segment, segment_end_node] + D[segment_start_node, node_after_segment]
+        # If node_a and node_b are the same, no change in order or cost
+        if node_a == node_b:
+            # self.flip(node_a, node_b)  # flip handles this, no actual change
+            delta_cost = 0.0
+        else:
+            pos_a = self.pos[node_a]
+            pos_b = self.pos[node_b]
 
-        # Calculate the net change in tour cost
-        delta_cost = cost_added_edges - cost_removed_edges
+            is_full_tour_flip = (self.order[(pos_b + 1) % self.n] == node_a)
 
-        # Perform the flip operation on the tour structure
-        self.flip(segment_start_node, segment_end_node)
+            if is_full_tour_flip:
+                delta_cost = 0.0
+            else:
+                prev_node_val_for_node_a = self.order[(pos_a - 1 + self.n) % self.n]
+                next_node_val_for_node_b = self.order[(pos_b + 1) % self.n]
 
-        # Update the stored tour cost, if it has been initialized
-        if self.cost is not None:
+                term_removed = D[prev_node_val_for_node_a, node_a] + D[node_b, next_node_val_for_node_b]
+                term_added = D[prev_node_val_for_node_a, node_b] + D[node_a, next_node_val_for_node_b]
+                delta_cost = term_added - term_removed
+
+        self.flip(node_a, node_b)
+
+        if self.cost is None:
+            self.cost = delta_cost
+        else:
             self.cost += delta_cost
-        # If self.cost was None (e.g., Tour initialized without D), it remains None.
-        # The method still returns the calculated delta_cost.
-
         return delta_cost
 
 
@@ -323,10 +323,28 @@ def build_distance_matrix(coords: np.ndarray) -> np.ndarray:
 
     Args:
         coords (np.ndarray): Array of vertex coordinates.
+                             Expected shape (n, d) where n is number of points, d is dimension.
 
     Returns:
-        np.ndarray: Symmetric matrix of pairwise Euclidean distances.
+        np.ndarray: Symmetric matrix of pairwise Euclidean distances. Shape (n, n).
+                    Returns an empty array of shape (0,0) if input coords is empty.
     """
+    if coords.ndim == 1 and coords.shape[0] == 0:  # Handles np.array([]) which has shape (0,)
+        # If input is truly empty (0 points), return an empty 0x0 matrix.
+        return np.empty((0, 0), dtype=float)
+
+    if coords.shape[0] == 0:  # Handles np.array([[]]) or similar (0, d)
+        # If input has 0 points but potentially d dimensions specified.
+        return np.empty((0, 0), dtype=float)
+
+    # For a single point, the distance matrix should be [[0.]]
+    if coords.shape[0] == 1:
+        return np.array([[0.0]], dtype=float)
+
+    # Using broadcasting to compute all pairwise differences
+    # diff = coords[:, np.newaxis, :] - coords[np.newaxis, :, :]  # Shape (n, n, d)
+    # dist_matrix = np.sqrt(np.sum(diff**2, axis=2))  # Shape (n, n)
+    # The original implementation using np.linalg.norm is also fine for non-empty cases:
     return np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
 
 
@@ -455,7 +473,7 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
             x, y = s1, probe
             tour.flip(x, y)
             flip_seq.append((x, y))
-            if start_cost - new_delta < best_cost:
+            if start_cost - new_delta < best_cost - FLOAT_COMPARISON_TOLERANCE:  # Apply tolerance here
                 return True, flip_seq.copy()
             if level < LK_CONFIG["MAX_LEVEL"]:
                 ok, seq = step(level + 1, new_delta, base, tour, D,
@@ -468,7 +486,7 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
             x, y = tour.next(a), base
             tour.flip(x, y)
             flip_seq.append((x, y))
-            if start_cost - new_delta < best_cost:
+            if start_cost - new_delta < best_cost - FLOAT_COMPARISON_TOLERANCE:
                 return True, flip_seq.copy()
             new_base = tour.next(a)
             if level < LK_CONFIG["MAX_LEVEL"]:
@@ -665,9 +683,22 @@ def lk_search(start_node_for_search: int, current_tour_obj: Tour, D: np.ndarray,
     )
 
     if found_improvement_alt and improving_sequence_alt:
-        return improving_sequence_alt
+        # lk_search now verifies if this sequence is strictly improving
+        # relative to current_tour_obj's state.
+        cost_before_alt_seq_check = current_tour_obj.cost
+        if cost_before_alt_seq_check is None:  # Should be initialized
+            return None
 
-    # No improvement found by either method
+        # Apply to a temporary tour to check cost
+        temp_check_tour = Tour(current_tour_obj.get_tour(), D)
+        for f_start, f_end in improving_sequence_alt:
+            temp_check_tour.flip_and_update_cost(f_start, f_end, D)
+
+        if temp_check_tour.cost is not None and \
+           temp_check_tour.cost < cost_before_alt_seq_check - FLOAT_COMPARISON_TOLERANCE:
+            return improving_sequence_alt  # Sequence is strictly improving
+        # else, sequence from alternate_step was not strictly improving, so lk_search returns None for this path
+
     return None
 
 

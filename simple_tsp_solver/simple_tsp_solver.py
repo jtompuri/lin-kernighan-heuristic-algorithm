@@ -1,18 +1,28 @@
 """
-This is a simplified TSP solver that implements only the core features:
-    - Basic k-opt moves
-    - Recursive improvement (step)
+A simplified Traveling Salesperson Problem (TSP) solver.
 
-Missing features of Lin-Kernighan heuristic algorithm:
-    - Recursive improvement is only partially implemented
-    - Flip tracking & rollback
-    - Alternate first step (alternate_step)
-    - Neighborhood ordering (lk-ordering)
-    - Breadth & depth parameters
-    - Kick / double-bridge restarts
-    - Tour object abstraction (next, flip)
-    - Delta-based tentative improvements
-    - Chained Lin-Kernighan algorithm
+This module implements a basic k-opt based heuristic for solving the TSP.
+It focuses on the core k-opt move and a recursive improvement strategy.
+
+Key features:
+- Computes pairwise Euclidean distances.
+- Implements 2-opt swaps.
+- Uses a recursive k-opt approach for tour improvement.
+- Includes a simple TSP solver function with a time limit.
+- Provides functionality for parsing TSP files (EUC_2D) and optimal tour files.
+- Visualizes tours using matplotlib.
+
+This solver is a simplified version and does not include many advanced
+features of more sophisticated algorithms like the full Lin-Kernighan heuristic,
+such as:
+- Comprehensive flip tracking and rollback mechanisms.
+- Specialized alternate first steps (alternate_step).
+- Lin-Kernighan specific neighborhood ordering.
+- Configurable breadth and depth parameters for the search.
+- Restart mechanisms like "kick" or double-bridge perturbations.
+- An abstracted Tour object with methods like `next` or `flip`.
+- Delta-based cost updates for tentative improvements.
+- Chained Lin-Kernighan algorithm structure.
 """
 import os
 import time
@@ -23,44 +33,102 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 # --- Constants ---
-TSP_FOLDER_PATH = Path('..') / "verifications" / "tsplib95"
-TIME_LIMIT = 1.0  # Default time limit for the solver in seconds
+# Define path relative to this script file for robustness
+TSP_FOLDER_PATH = Path(__file__).resolve().parent.parent / "verifications" / "tsplib95"
 MAX_SUBPLOTS = 25  # Maximum number of subplots in the tour visualization
 
 
-# Compute pairwise Euclidean distances for all city coordinates.
-# Returns a distance matrix D where D[i, j] = distance between city i and j.
-def compute_distance_matrix(coords):
-    diff = coords[:, None] - coords[None, :]        # shape (n, n, 2)
-    return np.linalg.norm(diff, axis=2)             # shape (n, n)
+def compute_distance_matrix(coords: np.ndarray) -> np.ndarray:
+    """
+    Compute pairwise Euclidean distances for all city coordinates.
+
+    Args:
+        coords: A numpy array of shape (n, 2) where n is the number of cities,
+                and each row contains the [x, y] coordinates of a city.
+
+    Returns:
+        A numpy array D of shape (n, n) where D[i, j] is the Euclidean
+        distance between city i and city j.
+    """
+    diff = coords[:, None] - coords[None, :]  # shape (n, n, 2)
+    return np.linalg.norm(diff, axis=2)       # shape (n, n)
 
 
-# Compute the total length of a tour given a distance matrix.
-def total_distance(tour, dist_matrix):
-    return sum(dist_matrix[tour[i], tour[(i + 1) % len(tour)]]  # wrap around
+def total_distance(tour: list[int], dist_matrix: np.ndarray) -> float:
+    """
+    Compute the total length of a tour given a distance matrix.
+
+    Args:
+        tour: A list of integers representing the order of cities visited.
+        dist_matrix: A square numpy array where dist_matrix[i, j] is the
+                     distance between city i and city j.
+
+    Returns:
+        The total length of the tour.
+    """
+    return sum(dist_matrix[tour[i], tour[(i + 1) % len(tour)]]
                for i in range(len(tour)))
 
 
-# Compute the gain from swapping two edges: (a-b) and (c-d) -> (a-c) and (b-d).
-def compute_gain(dist_matrix, a, b, c, d):
-    return dist_matrix[a][b] + dist_matrix[c][d] - dist_matrix[a][c] - dist_matrix[b][d]
+def compute_gain(dist_matrix: np.ndarray, a: int, b: int, c: int, d: int) -> float:
+    """
+    Compute the gain from swapping two edges (a-b) and (c-d) to (a-c) and (b-d).
+    A positive gain means the new tour (with edges a-c, b-d) is shorter.
+
+    Args:
+        dist_matrix: The distance matrix.
+        a, b: Nodes defining the first edge (a-b).
+        c, d: Nodes defining the second edge (c-d).
+
+    Returns:
+        The calculated gain.
+    """
+    return dist_matrix[a][b] + dist_matrix[c][d] - \
+        dist_matrix[a][c] - dist_matrix[b][d]
 
 
-# Reverse a segment between two indices [i+1, j] to simulate a 2-opt move.
-def two_opt_swap(tour, i, j):
+def two_opt_swap(tour: list[int], i: int, j: int) -> list[int]:
+    """
+    Perform a 2-opt swap by reversing the segment of the tour between
+    indices i+1 and j (inclusive).
+
+    Args:
+        tour: The current tour (list of node indices).
+        i: The index of the node before the start of the segment to reverse.
+        j: The index of the last node in the segment to reverse.
+
+    Returns:
+        A new tour list with the segment reversed.
+    """
     return tour[:i + 1] + tour[i + 1:j + 1][::-1] + tour[j + 1:]
 
 
-# Recursive search that attempts to improve the tour incrementally.
 def recursive_k_opt(
-    tour,
-    dist_matrix,
-    start_index,
-    visited,
-    gain_sum,
-    max_k,
-    deadline
-):
+    tour: list[int],
+    dist_matrix: np.ndarray,
+    start_index: int,
+    visited: set[int],
+    gain_sum: float,
+    max_k: int,
+    deadline: float
+) -> bool:
+    """
+    Recursive search function that attempts to improve the tour by applying
+    k-opt moves.
+
+    Args:
+        tour: The current tour (list of node indices). Modified in-place if
+              an improvement is found.
+        dist_matrix: The distance matrix.
+        start_index: The starting index in the tour for the current move.
+        visited: A set of indices already involved in the current k-opt sequence.
+        gain_sum: The accumulated gain from previous steps in this k-opt sequence.
+        max_k: The maximum depth (number of edges to swap) for the k-opt move.
+        deadline: The wall-clock time by which the search must conclude.
+
+    Returns:
+        True if an improvement was made to the tour, False otherwise.
+    """
     # Abort recursion if depth exceeded or time limit reached
     if max_k == 0 or time.time() >= deadline:
         return False
@@ -69,121 +137,159 @@ def recursive_k_opt(
     t1 = tour[start_index]
     t2 = tour[(start_index + 1) % n]
 
-    for j in range(n):
-        t3 = tour[j]
-        t4 = tour[(j + 1) % n]
+    for j_idx in range(n):
+        t3 = tour[j_idx]
+        t4 = tour[(j_idx + 1) % n]
 
         # Skip invalid pairs (same node, adjacent edge, or already visited)
-        if t3 == t1 or t4 == t2 or j == start_index or j in visited:
+        if t3 == t1 or t4 == t2 or j_idx == start_index or j_idx in visited:
             continue
 
-        gain = compute_gain(dist_matrix, t1, t2, t3, t4)
-        if gain + gain_sum <= 0:
-            continue  # Only consider moves that improve or might improve total cost
+        current_gain = compute_gain(dist_matrix, t1, t2, t3, t4)
+        # Only consider moves that improve or might lead to improvement
+        if current_gain + gain_sum <= 0:
+            continue
 
-        new_tour = two_opt_swap(tour, start_index, j)
-        new_length = total_distance(new_tour, dist_matrix)
-        old_length = total_distance(tour, dist_matrix)
-
-        if new_length < old_length:
-            tour[:] = new_tour  # Commit the improved tour in-place
+        new_tour_candidate = two_opt_swap(tour, start_index, j_idx)
+        # Check if this direct 2-opt swap is an improvement
+        if total_distance(new_tour_candidate, dist_matrix) < total_distance(tour, dist_matrix):
+            tour[:] = new_tour_candidate  # Commit the improved tour in-place
             return True
 
         # Try extending the move recursively to a deeper k-opt move
-        if recursive_k_opt(new_tour, dist_matrix, start_index,
-                           visited | {j}, gain + gain_sum, max_k - 1, deadline):
-            tour[:] = new_tour
+        if recursive_k_opt(new_tour_candidate, dist_matrix, start_index,
+                           visited | {j_idx}, gain_sum + current_gain,
+                           max_k - 1, deadline):
+            tour[:] = new_tour_candidate  # Commit if recursive call improved
             return True
 
-        if time.time() >= deadline:      # Time guard in deep recursion
+        if time.time() >= deadline:  # Time guard in deep recursion
             return False
 
     return False  # No improving move found at this level
 
 
-# Simplified TSP solver with a wall-clock time limit.
 def simple_tsp_solver(
-    coords,
-    max_k=4,
-    time_limit=10.0          # Seconds allowed for search
-):
+    coords: np.ndarray,
+    max_k: int = 4,
+    time_limit: float = 10.0  # Function's own default time limit
+) -> tuple[list[int], float]:
     """
-    Runs the simplified k-opt search until no improvement
-    OR the wall-clock time limit is reached.
-    Returns the best tour found so far.
+    Runs a simplified k-opt search until no further improvement is found
+    or the wall-clock time limit is reached.
+
+    Args:
+        coords: A numpy array of city coordinates.
+        max_k: The maximum k for k-opt moves.
+        time_limit: The maximum time in seconds allowed for the search.
+
+    Returns:
+        A tuple containing:
+            - The best tour found (list of node indices).
+            - The length of the best tour.
     """
     deadline = time.time() + time_limit
 
     n = len(coords)
-    coords = np.asarray(coords, float)
-    dist_matrix = compute_distance_matrix(coords)
+    if n == 0:
+        return [], 0.0
+    if n == 1:
+        return [0], 0.0
 
-    tour = list(range(n))            # Initial tour: sequential node order
-    best = tour.copy()
-    best_length = total_distance(tour, dist_matrix)
-    improved = True
+    coords_arr = np.asarray(coords, float)
+    dist_matrix = compute_distance_matrix(coords_arr)
 
-    while improved and time.time() < deadline:
-        improved = False
+    current_tour = list(range(n))
+    best_tour = current_tour.copy()
+    best_tour_length = total_distance(current_tour, dist_matrix)
+    has_improved_in_pass = True
+
+    while has_improved_in_pass and time.time() < deadline:
+        has_improved_in_pass = False
         for i in range(n):
             if time.time() >= deadline:
-                break                       # Stop outer loop if time is up
-            visited = set()
-            if recursive_k_opt(tour, dist_matrix, i, visited, 0.0, max_k, deadline):
-                new_length = total_distance(tour, dist_matrix)
-                if new_length < best_length:
-                    best = tour.copy()
-                    best_length = new_length
-                    improved = True
-                    break  # Restart outer loop to allow global improvement
+                break  # Stop outer loop if time is up
 
-    return best, best_length
+            visited_indices = set()
+            # Pass a copy of current_tour to recursive_k_opt if it modifies it
+            # and we only want to commit if it's better than best_tour_length
+            temp_tour_for_recursion = current_tour.copy()
+            if recursive_k_opt(temp_tour_for_recursion, dist_matrix, i,
+                               visited_indices, 0.0, max_k, deadline):
+                current_tour_length = total_distance(temp_tour_for_recursion, dist_matrix)
+                if current_tour_length < best_tour_length:
+                    best_tour = temp_tour_for_recursion.copy()
+                    best_tour_length = current_tour_length
+                    current_tour = temp_tour_for_recursion.copy()  # Update current for next iterations
+                    has_improved_in_pass = True
+                    break  # Restart outer loop from beginning with improved tour
+
+    return best_tour, best_tour_length
 
 
-# Visualize the tour in 2D using matplotlib.
-def plot_tour(coords, tour, length=None):
-    coords = np.asarray(coords)
-    tour_cycle = tour + [tour[0]]             # Close the tour into a cycle
-    x, y = coords[tour_cycle, 0], coords[tour_cycle, 1]
+def plot_tour(coords: np.ndarray, tour: list[int], length: float | None = None):
+    """
+    Visualize the TSP tour in 2D using matplotlib.
+
+    Args:
+        coords: Numpy array of city coordinates.
+        tour: List of node indices representing the tour.
+        length: Optional total length of the tour to display in the title.
+    """
+    if not tour:
+        print("Cannot plot an empty tour.")
+        return
+
+    coords_arr = np.asarray(coords)
+    tour_cycle = tour + [tour[0]]  # Close the tour into a cycle
+    x_coords, y_coords = coords_arr[tour_cycle, 0], coords_arr[tour_cycle, 1]
 
     plt.figure(figsize=(6, 6))
-    plt.plot(x, y, 'o-', markersize=2)
-    plt.title(f"TSP Path (Length: {length:.2f})" if length is not None else "TSP Path")
+    plt.plot(x_coords, y_coords, 'o-', markersize=2)
+    title = "TSP Path"
+    if length is not None:
+        title = f"TSP Path (Length: {length:.2f})"
+    plt.title(title)
     plt.axis("equal")
     plt.grid(True)
     plt.tight_layout()
     plt.show()
 
 
-# NEW custom TSP parsing function
 def parse_tsp_file(path: str) -> tuple[np.ndarray, str | None]:
     """
     Reads a TSPLIB formatted TSP file.
-    Returns a numpy array of coordinates (sorted by node ID, effectively 0-indexed
-    if nodes are 1...N) and the edge weight type.
+
+    Returns a numpy array of coordinates (sorted by node ID, effectively
+    0-indexed if nodes are 1...N) and the edge weight type.
+
+    Args:
+        path: The file path to the TSPLIB .tsp file.
+
+    Returns:
+        A tuple containing:
+            - A numpy array of coordinates.
+            - The edge weight type as a string, or None if not found/error.
     """
     coords_dict: dict[int, list[float]] = {}
     edge_weight_type: str | None = None
     reading_nodes = False
 
     try:
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding='utf-8') as f:
             for line_content in f:
                 line = line_content.strip()
                 if not line:
                     continue
 
-                # Parse headers like EDGE_WEIGHT_TYPE before NODE_COORD_SECTION
                 if ":" in line and not reading_nodes:
                     key, value = [part.strip() for part in line.split(":", 1)]
                     if key.upper() == "EDGE_WEIGHT_TYPE":
                         edge_weight_type = value.upper()
-                    # Add other header parsing here if needed (e.g., DIMENSION)
 
                 if line.upper().startswith("NODE_COORD_SECTION"):
                     reading_nodes = True
                     continue
-
                 if line.upper() == "EOF":
                     break
 
@@ -191,224 +297,221 @@ def parse_tsp_file(path: str) -> tuple[np.ndarray, str | None]:
                     parts = line.split()
                     if len(parts) >= 3:
                         try:
-                            node_id = int(parts[0])  # TSPLIB nodes are usually 1-based
-                            x = float(parts[1])
-                            y = float(parts[2])
-                            coords_dict[node_id] = [x, y]
+                            # TSPLIB nodes are usually 1-based
+                            node_id = int(parts[0])
+                            x_coord = float(parts[1])
+                            y_coord = float(parts[2])
+                            coords_dict[node_id] = [x_coord, y_coord]
                         except ValueError:
-                            print(f"Warning: Could not parse node coord line: '{line_content.strip()}' in {path}")
-
+                            print(f"Warning: Could not parse node coord line: "
+                                  f"'{line_content.strip()}' in {path}")
         if not coords_dict:
-            # print(f"Warning: No coordinates found in {path}")  # Can be noisy if file is invalid
             return np.array([], dtype=float), edge_weight_type
 
-        # Sort by node ID to ensure consistent order for the output array.
-        # This effectively maps 1-based node IDs to 0-based array indices
-        # if the original node IDs are 1, 2, ..., N.
         sorted_node_ids = sorted(coords_dict.keys())
-
-        # Optional: Add a check if node IDs are as expected (e.g., 1 to N)
-        if not sorted_node_ids or sorted_node_ids[0] != 1 or sorted_node_ids[-1] != len(sorted_node_ids):
-            print(f"Warning: Node IDs in {path} may not be a contiguous 1-N sequence. Coordinates will be ordered by sorted node ID.")
+        if not sorted_node_ids or sorted_node_ids[0] != 1 or \
+           sorted_node_ids[-1] != len(sorted_node_ids):
+            print(f"Warning: Node IDs in {path} may not be a contiguous "
+                  f"1-N sequence. Coords ordered by sorted node ID.")
 
         coords_list = [coords_dict[node_id] for node_id in sorted_node_ids]
         return np.array(coords_list, dtype=float), edge_weight_type
 
     except FileNotFoundError:
         print(f"Error: TSP file not found at {path}")
-        return np.array([], dtype=float), None  # Return empty array and None type
+        return np.array([], dtype=float), None
     except Exception as e:
         print(f"Error reading TSP file {path}: {e}")
-        return np.array([], dtype=float), None  # Return empty array and None type
+        return np.array([], dtype=float), None
 
 
-def read_opt_tour(path):
-    tour, reading = [], False
-    with open(path) as f:
-        for line in f:
-            tok = line.strip()
-            if tok.upper().startswith('TOUR_SECTION'):
-                reading = True
-                continue
-            if not reading:
-                continue
-            for p in tok.split():
-                if p in ('-1', 'EOF'):
-                    reading = False
+def read_opt_tour(path: str) -> list[int] | None:
+    """
+    Reads an optimal tour from a .opt.tour file (TSPLIB format).
+
+    Args:
+        path: The file path to the .opt.tour file.
+
+    Returns:
+        A list of 0-indexed node IDs representing the optimal tour,
+        or None if the file cannot be read or is malformed.
+    """
+    tour: list[int] = []
+    reading = False
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            for line in f:
+                token = line.strip()
+                if token.upper().startswith('TOUR_SECTION'):
+                    reading = True
+                    continue
+                if not reading:
+                    continue
+                for part in token.split():
+                    if part in ('-1', 'EOF'):
+                        reading = False
+                        break
+                    if part.isdigit() and int(part) > 0:
+                        # TSPLIB .opt.tour files are 1-indexed
+                        tour.append(int(part) - 1)
+                if not reading:
                     break
-                if p.isdigit() and int(p) > 0:
-                    tour.append(int(p) - 1)
-            if not reading:
-                break
-    return tour
+        return tour if tour else None
+    except FileNotFoundError:
+        print(f"Error: Optimal tour file not found at {path}")
+        return None
+    except Exception as e:
+        print(f"Error reading optimal tour file {path}: {e}")
+        return None
 
 
-# Batch run and plot
 if __name__ == '__main__':
+    results_data = []
+    tsp_folder = TSP_FOLDER_PATH
+    # Define the time limit for the main script's solver runs directly
+    SOLVER_TIME_LIMIT_FOR_MAIN = 5.0
 
-    # Change to your TSPLIB path
-    folder = TSP_FOLDER_PATH  # MODIFIED: Use constant
-    results = []
-
-    for fn in sorted(os.listdir(folder)):
-        if not fn.lower().endswith('.tsp'):
-            continue
-        base = fn[:-4]
-        tsp_path = os.path.join(folder, fn)
-        opt_path = os.path.join(folder, base + '.opt.tour')
-        if not os.path.exists(opt_path):
-            # If opt_path doesn't exist, we might still want to process the TSP file
-            # For now, the original logic was to skip if opt_path doesn't exist.
-            # Let's keep that, but it could be changed.
-            print(f"Skipping {base}: .opt.tour file not found at {opt_path}")
+    for filename in sorted(os.listdir(tsp_folder)):
+        if not filename.lower().endswith('.tsp'):
             continue
 
-        # problem = tsplib95.load(tsp_path)  # REMOVED
-        # if getattr(problem, 'edge_weight_type', '').upper() != 'EUC_2D':  # OLD CHECK
-        #     continue
+        base_name = filename[:-4]
+        tsp_file_path = os.path.join(tsp_folder, filename)
+        opt_tour_file_path = os.path.join(tsp_folder, base_name + '.opt.tour')
 
-        # print(f"\nProcessing {base} (EUC_2D)...")  # MOVED
-        # coords = read_tsp(tsp_path)  # REMOVED
-
-        coords, edge_weight_type = parse_tsp_file(tsp_path)  # NEW
-
-        if not coords.size:  # Check if coordinates were loaded successfully
-            print(f"Skipping {base}: Error parsing TSP file or no coordinates found.")
+        if not os.path.exists(opt_tour_file_path):
+            print(f"Skipping {base_name}: .opt.tour file not found at {opt_tour_file_path}")
             continue
 
-        if edge_weight_type != 'EUC_2D':
-            print(f"Skipping {base}: Not an EUC_2D problem (type: {edge_weight_type}).")
+        coords_data, problem_edge_weight_type = parse_tsp_file(tsp_file_path)
+
+        if not coords_data.size:
+            print(f"Skipping {base_name}: Error parsing TSP or no coordinates.")
+            continue
+        if problem_edge_weight_type != 'EUC_2D':
+            print(f"Skipping {base_name}: Not EUC_2D (type: {problem_edge_weight_type}).")
             continue
 
-        print(f"\nProcessing {base} (EUC_2D)...")  # MOVED HERE
+        print(f"\nProcessing {base_name} (EUC_2D)...")
+        distance_matrix = compute_distance_matrix(coords_data)
+        optimal_tour_nodes = read_opt_tour(opt_tour_file_path)
 
-        D = compute_distance_matrix(coords)
-        opt_tour = read_opt_tour(opt_path)
-
-        if opt_tour is None:  # If read_opt_tour failed or returned empty
-            print(f"Skipping {base}: Optimal tour could not be read from {opt_path}.")
+        if optimal_tour_nodes is None:
+            print(f"Skipping {base_name}: Optimal tour could not be read.")
             continue
 
-        opt_len = total_distance(opt_tour, D)
-        print(f"  Optimal length: {opt_len:.2f}")
+        optimal_length = total_distance(optimal_tour_nodes, distance_matrix)
+        print(f"  Optimal length: {optimal_length:.2f}")
 
-        start = time.time()
-        heu_tour, heu_len = simple_tsp_solver(coords, max_k=4, time_limit=TIME_LIMIT)  # MODIFIED: Use constant
-        elapsed = time.time() - start
-        gap = max(0.0, 100.0 * (heu_len - opt_len) / opt_len) if opt_len > 0 else float('inf') if heu_len > 0 else 0.0
-        print(f"  Heuristic length: {heu_len:.2f}  Gap: {gap:.2f}%  Time: {elapsed:.2f}s")
+        start_time = time.time()
+        heuristic_tour, heuristic_length = simple_tsp_solver(
+            coords_data, max_k=4, time_limit=SOLVER_TIME_LIMIT_FOR_MAIN
+        )
+        elapsed_time = time.time() - start_time
+        optimality_gap = float('inf')
+        if optimal_length > 0:
+            optimality_gap = max(0.0, 100.0 * (heuristic_length - optimal_length) / optimal_length)
+        elif heuristic_length == 0:  # Both opt and heu are 0
+            optimality_gap = 0.0
 
-        results.append({'name': base, 'coords': coords,
-                        'opt_tour': opt_tour, 'heu_tour': heu_tour,
-                        'opt_len': opt_len, 'heu_len': heu_len,
-                        'gap': gap, 'time': elapsed})
+        print(f"  Heuristic length: {heuristic_length:.2f}  "
+              f"Gap: {optimality_gap:.2f}%  Time: {elapsed_time:.2f}s")
 
-    # MODIFIED Summary Printing Block
-    print("\n" + "-" * 50)  # Separator
-    header = "Instance   OptLen   HeuLen   Gap(%)   Time(s)"
-    print(header)
-    print("\n" + "-" * 50)  # Separator
+        results_data.append({
+            'name': base_name, 'coords': coords_data,
+            'opt_tour': optimal_tour_nodes, 'heu_tour': heuristic_tour,
+            'opt_len': optimal_length, 'heu_len': heuristic_length,
+            'gap': optimality_gap, 'time': elapsed_time
+        })
 
-    for r_item in results:
-        opt_len_str = f"{r_item['opt_len']:>8.2f}" if r_item['opt_len'] is not None else "   N/A  "
-        gap_str = f"{r_item['gap']:>8.2f}" if r_item['gap'] is not None else "   N/A  "
-        # heu_len and time are assumed to always exist
+    print("\n" + "-" * 50)
+    print(f"{'Instance':<10s} {'OptLen':>8s} {'HeuLen':>8s} "
+          f"{'Gap(%)':>8s} {'Time(s)':>8s}")
+    print("-" * 50)
+
+    for r_item in results_data:
+        opt_len_str = f"{r_item['opt_len']:>8.2f}"
+        gap_str = f"{r_item['gap']:>8.2f}"
         print(
             f"{r_item['name']:<10s} {opt_len_str} "
             f"{r_item['heu_len']:>8.2f} {gap_str} "
             f"{r_item['time']:>8.2f}"
         )
 
-    if results:
-        print("\n" + "-" * 50)  # Separator
-        num_total_items = len(results)
-
-        valid_opt_lens = [r['opt_len']
-                          for r in results if r['opt_len'] is not None]
-        valid_gaps = [r['gap'] for r in results if r['gap'] is not None]
-
-        total_opt_len_sum = sum(valid_opt_lens) if valid_opt_lens else None
-        # heu_len should always exist and be a float
-        total_heu_len_sum = sum(r_item['heu_len'] for r_item in results)
-
-        avg_gap_val = sum(valid_gaps) / len(valid_gaps) if valid_gaps else None
-        # time should always exist and be a float
-        avg_time_val = sum(r_item['time'] for r_item in results) / \
-            num_total_items if num_total_items > 0 else 0.0
-
-        total_opt_len_str = f"{total_opt_len_sum:>8.2f}" if total_opt_len_sum is not None else "   N/A  "
-        avg_gap_str = f"{avg_gap_val:>8.2f}" if avg_gap_val is not None else "   N/A  "
+    if results_data:
+        print("-" * 50)
+        num_items = len(results_data)
+        total_opt_len = sum(r['opt_len'] for r in results_data)
+        total_heu_len = sum(r['heu_len'] for r in results_data)
+        avg_gap = sum(r['gap'] for r in results_data if r['gap'] != float('inf')) / \
+            len([r for r in results_data if r['gap'] != float('inf')]) \
+            if any(r['gap'] != float('inf') for r in results_data) else float('nan')
+        avg_time = sum(r['time'] for r in results_data) / num_items
 
         print(
-            f"{'SUMMARY':<10s} {total_opt_len_str} {total_heu_len_sum:>8.2f} "
-            f"{avg_gap_str} {avg_time_val:>8.2f}"
+            f"{'SUMMARY':<10s} {total_opt_len:>8.2f} {total_heu_len:>8.2f} "
+            f"{avg_gap:>8.2f} {avg_time:>8.2f}"
         )
     print("Done.")
 
-    # Plot tours
-    if results:
-        num_results_total = len(results)
-        if num_results_total == 0:
+    if results_data:
+        num_total = len(results_data)
+        if num_total == 0:
             print("No results to plot.")
         else:
-            results_to_plot = results
-            if num_results_total > MAX_SUBPLOTS:
-                print(f"Warning: Plotting only the first {MAX_SUBPLOTS} of {num_results_total} results due to limit.")
-                results_to_plot = results[:MAX_SUBPLOTS]
+            results_to_plot_list = results_data
+            if num_total > MAX_SUBPLOTS:
+                print(f"Warning: Plotting first {MAX_SUBPLOTS} of {num_total} results.")
+                results_to_plot_list = results_data[:MAX_SUBPLOTS]
 
-            num_plot_items = len(results_to_plot)
+            num_to_plot = len(results_to_plot_list)
+            if num_to_plot > 0:
+                cols = int(math.ceil(math.sqrt(num_to_plot)))
+                rows = int(math.ceil(num_to_plot / cols))
+                cols = max(1, cols)  # Ensure at least 1 column
+                rows = max(1, rows)  # Ensure at least 1 row
 
-            if num_plot_items > 0:
-                cols = int(math.ceil(math.sqrt(num_plot_items)))
-                rows = int(math.ceil(num_plot_items / cols))
+                fig, axes_array = plt.subplots(
+                    rows, cols, figsize=(4 * cols, 4 * rows), squeeze=False
+                )
+                flat_axes = axes_array.flatten()
+                has_plotted_heuristic, has_plotted_optimal = False, False
 
-                if num_plot_items == 1:  # Ensure cols and rows are at least 1 for a single plot
-                    cols = 1
-                    rows = 1
+                for idx, res_item in enumerate(results_to_plot_list):
+                    ax = flat_axes[idx]
+                    item_coords = res_item['coords']
+                    if 'heu_tour' in res_item and res_item['heu_tour']:
+                        h_tour = res_item['heu_tour'] + [res_item['heu_tour'][0]]
+                        ax.plot(item_coords[h_tour, 0], item_coords[h_tour, 1],
+                                '-', label='Heuristic', zorder=1, color='C0')
+                        has_plotted_heuristic = True
+                    if 'opt_tour' in res_item and res_item['opt_tour']:
+                        o_tour = res_item['opt_tour'] + [res_item['opt_tour'][0]]
+                        ax.plot(item_coords[o_tour, 0], item_coords[o_tour, 1],
+                                ':', label='Optimal', zorder=2, color='C1')
+                        has_plotted_optimal = True
 
-                fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 4 * rows), squeeze=False)
-                axes_list = axes.flatten()
-
-                plotted_heuristic = False
-                plotted_optimal = False
-
-                for i, r_item in enumerate(results_to_plot):
-                    ax = axes_list[i]
-                    coords = r_item['coords']
-
-                    if 'heu_tour' in r_item and r_item['heu_tour']:
-                        heu_plot_tour = r_item['heu_tour'] + [r_item['heu_tour'][0]]
-                        ax.plot(coords[heu_plot_tour, 0], coords[heu_plot_tour, 1], '-', label='Heuristic', zorder=1, color='C0')
-                        plotted_heuristic = True
-
-                    if 'opt_tour' in r_item and r_item['opt_tour'] is not None:
-                        opt_plot_tour = r_item['opt_tour'] + [r_item['opt_tour'][0]]
-                        ax.plot(coords[opt_plot_tour, 0], coords[opt_plot_tour, 1], ':', label='Optimal', zorder=2, color='C1')
-                        plotted_optimal = True
-
-                    title_parts = [r_item['name']]
-                    if 'gap' in r_item and r_item['gap'] is not None:
-                        title_parts.append(f"gap={r_item['gap']:.2f}%")
-                    ax.set_title(" ".join(title_parts))
-
+                    title_str_parts = [res_item['name']]
+                    if 'gap' in res_item and res_item['gap'] != float('inf'):
+                        title_str_parts.append(f"gap={res_item['gap']:.2f}%")
+                    ax.set_title(" ".join(title_str_parts))
                     ax.set_xticks([])
                     ax.set_yticks([])
                     ax.set_aspect('equal', adjustable='box')
-                    # ax.grid(False)  # Grid is off by default if not specified, or ensure it's False
 
-                for i in range(num_plot_items, len(axes_list)):
-                    axes_list[i].set_axis_off()
+                for idx_off in range(num_to_plot, len(flat_axes)):
+                    flat_axes[idx_off].set_axis_off()
 
-                legend_elements = []
-                if plotted_heuristic:
-                    legend_elements.append(Line2D([0], [0], color='C0', linestyle='-', label='Heuristic'))
-                if plotted_optimal:
-                    legend_elements.append(Line2D([0], [0], color='C1', linestyle=':', label='Optimal'))
+                legend_handles = []
+                if has_plotted_heuristic:
+                    legend_handles.append(Line2D([0], [0], color='C0', ls='-', label='Heuristic'))
+                if has_plotted_optimal:
+                    legend_handles.append(Line2D([0], [0], color='C1', ls=':', label='Optimal'))
 
-                if legend_elements:
-                    fig.legend(handles=legend_elements, loc='upper center', ncol=len(legend_elements), bbox_to_anchor=(0.5, 1.0))
-                    # Adjust layout to make space for the legend
-                    fig.subplots_adjust(top=(0.95 if num_plot_items > cols else 0.90))
+                if legend_handles:
+                    fig.legend(handles=legend_handles, loc='upper center',
+                               ncol=len(legend_handles), bbox_to_anchor=(0.5, 1.0))
+                    fig.subplots_adjust(top=(0.95 if num_to_plot > cols else 0.90))
 
-                plt.tight_layout(rect=(0, 0, 1, 0.96 if legend_elements else 1.0))  # MODIFIED: Changed list to tuple
+                plt.tight_layout(rect=(0, 0, 1, 0.96 if legend_handles else 1.0))
                 plt.show()

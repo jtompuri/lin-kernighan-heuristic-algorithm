@@ -37,6 +37,7 @@ parameters for the LK algorithm can be adjusted in the `LK_CONFIG` dictionary
 within this script.
 """
 import time
+import math
 from itertools import combinations
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Any, Iterable
@@ -65,7 +66,7 @@ LK_CONFIG = {
     "BREADTH_A": 5,  # Search breadth for t3 in alternate_step()
     "BREADTH_B": 5,  # Search breadth for t5 in alternate_step()
     "BREADTH_D": 1,  # Search breadth for t7 in alternate_step()
-    "TIME_LIMIT": 5.0,  # Default time limit for chained_lin_kernighan in seconds
+    "TIME_LIMIT": 900.0,  # Default time limit for chained_lin_kernighan in seconds
 }
 
 
@@ -414,7 +415,16 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
     """
     if time.time() >= deadline:
         return False, None
-    b = LK_CONFIG["BREADTH"][min(level - 1, len(LK_CONFIG["BREADTH"]) - 1)]
+
+    # Proposed crucial check:
+    if level > LK_CONFIG["MAX_LEVEL"]:  # In error case: level=1, MAX_LEVEL=0. So 1 > 0 is True.
+        return False, None  # This line would execute, preventing the IndexError.
+
+    # This part is only reached if level <= MAX_LEVEL
+    if not LK_CONFIG["BREADTH"]:
+        b = 1
+    else:
+        b = LK_CONFIG["BREADTH"][min(level - 1, len(LK_CONFIG["BREADTH"]) - 1)]
     s1 = tour.next(base)
     candidates = []
 
@@ -851,6 +861,20 @@ def chained_lin_kernighan(coords: np.ndarray, initial_tour_order: List[int],
     )
     assert current_best_tour_obj.cost is not None and abs(current_best_tour_obj.cost - current_best_cost) < FLOAT_COMPARISON_TOLERANCE
 
+    # Check for optimal after initial LK run
+    if known_optimal_length is not None and \
+       math.isclose(current_best_cost, known_optimal_length, rel_tol=1e-7, abs_tol=FLOAT_COMPARISON_TOLERANCE * 10):
+        # Recalculate cost for consistency before returning
+        final_recomputed_cost = 0.0
+        final_tour_order_for_return = current_best_tour_obj.get_tour()
+        for i in range(current_best_tour_obj.n):
+            node1 = final_tour_order_for_return[i]
+            node2 = final_tour_order_for_return[(i + 1) % current_best_tour_obj.n]
+            final_recomputed_cost += float(distance_matrix[node1, node2])
+        # current_best_tour_obj.cost = final_recomputed_cost # Update tour object's cost
+        # Return the recomputed cost, which should be identical to current_best_cost if no float issues
+        return final_tour_order_for_return, final_recomputed_cost
+
     # Main loop: apply kicks and re-run Lin-Kernighan
     while time.time() < deadline:
         # Apply a double-bridge kick to the current best tour
@@ -868,19 +892,21 @@ def chained_lin_kernighan(coords: np.ndarray, initial_tour_order: List[int],
 
             # Early exit if a known optimal solution is found
             if known_optimal_length is not None and \
-               abs(current_best_cost - known_optimal_length) < FLOAT_COMPARISON_TOLERANCE:
+               math.isclose(current_best_cost, known_optimal_length, rel_tol=1e-7, abs_tol=FLOAT_COMPARISON_TOLERANCE * 10):
                 break
-
+    
     # Before returning, ensure the cost stored in the tour object is accurate
     # and matches the returned best_cost. This is a safeguard.
     final_recomputed_cost = 0.0
-    final_tour_order = current_best_tour_obj.get_tour()  # Get order before potentially modifying cost
+    # Use current_best_tour_obj which holds the best tour found
+    final_tour_order = current_best_tour_obj.get_tour()
     for i in range(current_best_tour_obj.n):
         node1 = final_tour_order[i]
         node2 = final_tour_order[(i + 1) % current_best_tour_obj.n]
         final_recomputed_cost += float(distance_matrix[node1, node2])
 
-    current_best_tour_obj.cost = final_recomputed_cost
+    # current_best_tour_obj.cost = final_recomputed_cost # Update tour object's cost
+    # Return the recomputed cost as the authoritative cost for the returned tour.
     current_best_cost = final_recomputed_cost
 
     return final_tour_order, current_best_cost
@@ -1049,12 +1075,15 @@ def process_single_instance(tsp_file_path: str, opt_tour_file_path: str) -> Dict
     )
     elapsed_time = time.time() - start_time
 
-    if opt_len is not None and opt_len > FLOAT_COMPARISON_TOLERANCE:
+    if opt_len is not None and opt_len > FLOAT_COMPARISON_TOLERANCE * 10:  # Ensure opt_len is significantly positive for percentage gap
         gap_percentage = 100.0 * (heuristic_len - opt_len) / opt_len
-        gap = max(0.0, gap_percentage)
-    elif opt_len is not None and abs(opt_len) <= FLOAT_COMPARISON_TOLERANCE:
-        gap = float(
-            'inf') if heuristic_len > FLOAT_COMPARISON_TOLERANCE else 0.0
+        gap = max(0.0, gap_percentage)  # Gap cannot be negative
+    elif opt_len is not None and math.isclose(opt_len, 0.0, abs_tol=FLOAT_COMPARISON_TOLERANCE * 10):
+        # If optimal length is effectively zero
+        if math.isclose(heuristic_len, 0.0, abs_tol=FLOAT_COMPARISON_TOLERANCE * 10):
+            gap = 0.0  # Heuristic is also zero, so 0% gap
+        else:
+            gap = float('inf')  # Heuristic is positive, optimal is zero, so infinite gap
     # If opt_len is None, gap remains None
 
     print(
@@ -1149,7 +1178,6 @@ def plot_all_tours(results_data: List[Dict[str, Any]]) -> None:
 
     num_results = len(results_data_to_plot)
 
-    import math
     cols = int(math.ceil(math.sqrt(num_results)))
     rows = int(math.ceil(num_results / cols))
 

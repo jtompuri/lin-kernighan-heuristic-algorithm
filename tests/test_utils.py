@@ -1,3 +1,10 @@
+"""
+Unit tests for utility functions in the Lin-Kernighan TSP solver.
+
+This module tests functionalities such as distance matrix calculation,
+Delaunay neighbor finding, tour perturbation (double bridge), and
+parsing of TSPLIB and optimal tour files.
+"""
 import pytest
 import numpy as np
 from pathlib import Path
@@ -11,29 +18,33 @@ from lin_kernighan_tsp_solver.lin_kernighan_tsp_solver import (
 
 
 def test_build_distance_matrix():
+    """Tests the calculation of the distance matrix from coordinates."""
     coords = np.array([[0, 0], [3, 0], [0, 4]])
-    expected_D = np.array([
+    expected_d_matrix = np.array([
         [0, 3, 4],
         [3, 0, 5],
         [4, 5, 0]
     ])
-    D = build_distance_matrix(coords)
-    np.testing.assert_array_almost_equal(D, expected_D)
+    d_matrix = build_distance_matrix(coords)
+    np.testing.assert_array_almost_equal(d_matrix, expected_d_matrix)
 
     coords_empty_2d = np.empty((0, 2))
-    D_empty = build_distance_matrix(coords_empty_2d)
-    assert D_empty.shape == (0, 0)
+    d_matrix_empty = build_distance_matrix(coords_empty_2d)
+    assert d_matrix_empty.shape == (0, 0)
 
     coords_one = np.array([[1, 1]])
-    D_one = build_distance_matrix(coords_one)
-    expected_D_one = np.array([[0.0]])
-    np.testing.assert_array_almost_equal(D_one, expected_D_one)
+    d_matrix_one = build_distance_matrix(coords_one)
+    expected_d_matrix_one = np.array([[0.0]])
+    np.testing.assert_array_almost_equal(d_matrix_one, expected_d_matrix_one)
 
 
 def test_delaunay_neighbors():
+    """Tests the Delaunay neighbor finding functionality."""
     assert delaunay_neighbors(np.empty((0, 2))) == []
+
     coords1 = np.array([[0, 0]])
     assert delaunay_neighbors(coords1) == [[]]
+
     coords2 = np.array([[0, 0], [1, 1]])
     neighbors2 = delaunay_neighbors(coords2)
     assert len(neighbors2) == 2
@@ -57,6 +68,7 @@ def test_delaunay_neighbors():
 
 
 def test_double_bridge_kick():
+    """Tests the double bridge tour perturbation."""
     np.random.seed(42)
     original_tour_10 = list(range(10))
     kicked_tour_10 = double_bridge(original_tour_10.copy())
@@ -75,7 +87,11 @@ def test_double_bridge_kick():
 
 
 def test_read_opt_tour(tmp_path: Path):
-    content_valid = "NAME : test.opt.tour\nTYPE : TOUR\nDIMENSION : 4\nTOUR_SECTION\n1\n2\n3\n4\n-1\nEOF\n"
+    """Tests reading of .opt.tour files."""
+    content_valid = (
+        "NAME : test.opt.tour\nTYPE : TOUR\nDIMENSION : 4\n"
+        "TOUR_SECTION\n1\n2\n3\n4\n-1\nEOF\n"
+    )
     opt_tour_file_valid = tmp_path / "test_valid.opt.tour"
     opt_tour_file_valid.write_text(content_valid)
     tour = read_opt_tour(str(opt_tour_file_valid))
@@ -100,6 +116,7 @@ def test_read_opt_tour(tmp_path: Path):
 
 
 def test_read_tsp_file_valid_euc_2d(tmp_path: Path):
+    """Tests reading a valid EUC_2D .tsp file."""
     content = """
 NAME: test_valid
 TYPE: TSP
@@ -119,11 +136,13 @@ EOF
 
 
 def test_read_tsp_file_not_found(tmp_path: Path):
+    """Tests reading a non-existent .tsp file."""
     with pytest.raises(FileNotFoundError):
         read_tsp_file(str(tmp_path / "non_existent.tsp"))
 
 
 def test_read_tsp_file_error_cases(tmp_path: Path):
+    """Tests reading .tsp files with various malformed content."""
     content_non_numeric_coord = "NODE_COORD_SECTION\n1 10.0 ABC\nEOF\n"
     tsp_file_non_numeric_coord = tmp_path / "test_non_numeric_coord.tsp"
     tsp_file_non_numeric_coord.write_text(content_non_numeric_coord)

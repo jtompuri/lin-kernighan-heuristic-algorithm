@@ -143,19 +143,19 @@ def test_read_tsp_file_not_found(tmp_path: Path):
 
 def test_read_tsp_file_error_cases(tmp_path: Path):
     """Tests reading .tsp files with various malformed content."""
-    content_non_numeric_coord = "NODE_COORD_SECTION\n1 10.0 ABC\nEOF\n"
+    content_non_numeric_coord = "EDGE_WEIGHT_TYPE: EUC_2D\nNODE_COORD_SECTION\n1 10.0 ABC\nEOF\n"
     tsp_file_non_numeric_coord = tmp_path / "test_non_numeric_coord.tsp"
     tsp_file_non_numeric_coord.write_text(content_non_numeric_coord)
     coords_non_numeric = read_tsp_file(str(tsp_file_non_numeric_coord))
     assert coords_non_numeric.shape == (0, 2) or coords_non_numeric.shape == (0,)
-
-    content_empty_nodes = "NODE_COORD_SECTION\nEOF\n"
+    
+    content_empty_nodes = "EDGE_WEIGHT_TYPE: EUC_2D\nNODE_COORD_SECTION\nEOF\n"
     tsp_file_empty_nodes = tmp_path / "test_empty_nodes.tsp"
     tsp_file_empty_nodes.write_text(content_empty_nodes)
     coords_empty = read_tsp_file(str(tsp_file_empty_nodes))
     assert coords_empty.shape == (0, 2) or coords_empty.shape == (0,)
 
-    content_no_dim_but_parses = "NODE_COORD_SECTION\n1 10.0 20.0\nEOF\n"
+    content_no_dim_but_parses = "EDGE_WEIGHT_TYPE: EUC_2D\nNODE_COORD_SECTION\n1 10.0 20.0\nEOF\n"
     tsp_file_no_dim = tmp_path / "test_no_dim.tsp"
     tsp_file_no_dim.write_text(content_no_dim_but_parses)
     coords_no_dim = read_tsp_file(str(tsp_file_no_dim))

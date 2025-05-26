@@ -132,7 +132,7 @@ def test_tour_flip_and_update_cost_basic():
     )
 
     expected_internal_order_after_flip1 = [2, 1, 0, 3]
-    expected_get_tour_after_flip1 = [0, 3, 2, 1]  # Normalized from [2,1,0,3]
+    expected_get_tour_after_flip1 = [0, 3, 2, 1] # Normalized from [2,1,0,3]
     # Cost of [2,1,0,3]: d(2,1)+d(1,0)+d(0,3)+d(3,2) = 1+1+1+sqrt(2) = 3+sqrt(2) ~ 4.414
     expected_cost_after_flip1 = (
         dist_matrix[2, 1] + dist_matrix[1, 0] +

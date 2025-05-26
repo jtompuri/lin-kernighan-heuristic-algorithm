@@ -1,18 +1,29 @@
-import pytest
-import time
-import numpy as np
 from lin_kernighan_tsp_solver.lin_kernighan_tsp_solver import (
     Tour,
     step,
+    alternate_step,
     lk_search,
     lin_kernighan,
+    chained_lin_kernighan,
+    double_bridge,
     LK_CONFIG,
     FLOAT_COMPARISON_TOLERANCE,
-    build_distance_matrix,
-    delaunay_neighbors
+    read_tsp_file,
+    read_opt_tour,
+    build_distance_matrix,  # Already likely imported or used by other fixtures/tests
+    delaunay_neighbors,    # Already likely imported or used
 )
+from pathlib import Path
+import numpy as np  # Ensure numpy is imported
+import time  # Ensure time is imported
+import pytest  # Ensure pytest is imported
 
 # simple_tsp_setup fixture is automatically available from conftest.py
+
+VERIFICATION_RANDOM_PATH = Path(__file__).resolve().parent.parent / "verifications" / "random"
+# Path(__file__).parent -> /project_root/tests/
+# Path(__file__).parent.parent -> /project_root/
+# ... / "verifications" / "random" -> /project_root/verifications/random/
 
 
 def test_step_finds_simple_2_opt(simple_tsp_setup):
@@ -379,7 +390,7 @@ def test_lin_kernighan_respects_overall_deadline(simple_tsp_setup):
 
     # Set a very short deadline (e.g., 1 millisecond)
     # This should be short enough to likely interrupt the search.
-    short_deadline = time.time() + 0.001 
+    short_deadline = time.time() + 0.001
 
     start_time = time.time()
     # Run lin_kernighan with the short deadline
@@ -407,7 +418,7 @@ def test_lin_kernighan_respects_overall_deadline(simple_tsp_setup):
     assert final_tour_obj.n == initial_tour_obj.n, "Returned tour has incorrect number of nodes."
     assert final_cost is not None, "lin_kernighan should return a cost."
     assert final_cost == pytest.approx(final_tour_obj.cost), "Returned cost does not match tour's cost."
-    
+
     # It's hard to assert non-optimality deterministically here,
     # as for a tiny problem and a lucky very short deadline, it might find the optimum.
     # The main check is timely termination.
@@ -430,7 +441,6 @@ def test_lin_kernighan_improves_to_optimum_simple_case(simple_tsp_setup):
     # LK_CONFIG["MAX_LEVEL"] = 5  # Example if defaults weren't enough
     # LK_CONFIG["BREADTH"] = [2] * LK_CONFIG["MAX_LEVEL"]
     # LK_CONFIG["BREADTH_A"], LK_CONFIG["BREADTH_B"], LK_CONFIG["BREADTH_D"] = 5,5,1
-
 
     # Set a reasonable deadline, long enough for this small problem to solve
     deadline = time.time() + 10  # 10 seconds, more than enough
@@ -455,7 +465,7 @@ def test_lin_kernighan_improves_to_optimum_simple_case(simple_tsp_setup):
     returned_tour_normalized = final_tour_obj.get_tour()  # get_tour() normalizes
     assert returned_tour_normalized == lk_optimal_order, \
         f"Expected optimal tour {lk_optimal_order}, but got {returned_tour_normalized}"
-    
+
     assert final_tour_obj.cost == pytest.approx(lk_optimal_cost), \
         "Tour object's internal cost does not match the returned optimal cost."
 
@@ -508,4 +518,436 @@ def test_lin_kernighan_on_optimal_tour_simple_case(simple_tsp_setup):
     LK_CONFIG.clear()
     LK_CONFIG.update(original_lk_config)
 
-# ... (rest of test_lk_core.py)
+
+def test_lin_kernighan_config_sensitivity(simple_tsp_setup):
+    """
+    Tests that LK_CONFIG settings affect lin_kernighan's ability to find the optimum.
+    A restrictive config should fail to find the optimum on simple_tsp_setup,
+    while a default/good config should succeed.
+    """
+    coords, dist_matrix, initial_tour_obj, neighbors, \
+        initial_cost, lk_optimal_cost, lk_optimal_order = simple_tsp_setup
+
+    # Ensure the initial tour is not already optimal for this test to be meaningful
+    assert initial_cost != pytest.approx(lk_optimal_cost), \
+        "Initial tour cost is already optimal, test may not be indicative."
+
+    original_lk_config_snapshot = LK_CONFIG.copy()  # Snapshot at the very beginning
+    deadline = time.time() + 10  # Sufficient time for this small problem
+
+    try:
+        # Scenario 1: Highly restrictive LK_CONFIG
+        # These settings severely limit the search options.
+        restrictive_settings = {
+            "MAX_LEVEL": 0,       # Disables standard k-opt search in step()
+            "BREADTH": [],        # Consistent with MAX_LEVEL = 0 for step()
+            "MAX_CANDIDATES": 1,  # Used by step() if MAX_LEVEL > 0
+            "BREADTH_A": 0,       # Disables candidate search for y1 in alternate_step()
+            "BREADTH_B": 0,       # Disables candidate search for y2 in alternate_step()
+            "BREADTH_D": 0        # Disables candidate search for y3 in alternate_step()
+        }
+
+        current_config_for_test = original_lk_config_snapshot.copy()
+        current_config_for_test.update(restrictive_settings)
+
+        LK_CONFIG.clear()
+        LK_CONFIG.update(current_config_for_test)
+
+        suboptimal_tour_obj, suboptimal_cost = lin_kernighan(
+            coords, initial_tour_obj.get_tour(), dist_matrix, neighbors, deadline
+        )
+
+        # With MAX_LEVEL = 0, no improvement should be made from the initial tour.
+        assert suboptimal_cost == pytest.approx(initial_cost), \
+            (f"Restrictive LK_CONFIG (MAX_LEVEL=0) should not have improved the tour. "
+             f"Cost found: {suboptimal_cost}. Expected initial cost: {initial_cost}")
+
+        # And therefore, it should not be the optimal cost (unless initial was already optimal, checked above)
+        assert suboptimal_cost != pytest.approx(lk_optimal_cost), \
+            (f"Restrictive LK_CONFIG (MAX_LEVEL=0) unexpectedly resulted in optimal cost. "
+             f"Cost found: {suboptimal_cost}. Optimal cost: {lk_optimal_cost}")
+
+        # Scenario 2: Restore to original (presumably good) LK_CONFIG
+        LK_CONFIG.clear()
+        LK_CONFIG.update(original_lk_config_snapshot)
+
+        # Re-run with original/good config
+        optimal_tour_obj_again, optimal_cost_again = lin_kernighan(
+            coords, initial_tour_obj.get_tour(), dist_matrix, neighbors, deadline
+        )
+
+        assert optimal_cost_again == pytest.approx(lk_optimal_cost), \
+            (f"Default/Original LK_CONFIG should find the global optimum ({lk_optimal_cost}). "
+             f"Cost found: {optimal_cost_again}")
+
+    finally:
+        # Ensure LK_CONFIG is restored to its original state before the test
+        LK_CONFIG.clear()
+        LK_CONFIG.update(original_lk_config_snapshot)
+
+
+def test_chained_lk_max_iterations_one(simple_tsp_setup):
+    """
+    Tests that chained_lin_kernighan with max_iterations=1 behaves like a single lin_kernighan run.
+    """
+    coords, dist_matrix, initial_tour_obj, neighbors, \
+        _initial_cost, lk_optimal_cost, lk_optimal_order = simple_tsp_setup
+
+    original_lk_config = LK_CONFIG.copy()
+    deadline_val = time.time() + 10
+    time_limit_sec = 10.0
+
+    # Run single lin_kernighan
+    lk_tour_obj, lk_cost = lin_kernighan(
+        coords, initial_tour_obj.get_tour(), dist_matrix, neighbors, deadline_val
+    )
+
+    # chained_lin_kernighan returns List[int], float
+    chained_lk_tour_order, chained_lk_cost = chained_lin_kernighan(
+        coords, initial_tour_obj.get_tour(),
+        time_limit_seconds=time_limit_sec
+    )
+
+    assert chained_lk_cost == pytest.approx(lk_cost), \
+        "Chained LK cost should match single LK cost (when effectively one iteration)."
+    # chained_lk_tour_order is a list, lk_tour_obj.get_tour() is also a list
+    assert chained_lk_tour_order == lk_tour_obj.get_tour(), \
+        "Chained LK tour order should match single LK tour order (when effectively one iteration)."
+
+    # It should also find the optimum for simple_tsp_setup
+    assert chained_lk_cost == pytest.approx(lk_optimal_cost)
+    assert chained_lk_tour_order == lk_optimal_order
+
+    LK_CONFIG.clear()
+    LK_CONFIG.update(original_lk_config)
+
+
+def test_chained_lk_multiple_iterations(simple_tsp_setup):
+    """
+    Tests that chained_lin_kernighan with multiple iterations runs and finds the optimum.
+    """
+    coords, dist_matrix, initial_tour_obj, neighbors, \
+        _initial_cost, lk_optimal_cost, lk_optimal_order = simple_tsp_setup
+
+    original_lk_config = LK_CONFIG.copy()
+    time_limit_sec = 15.0  # Sufficient time for a few iterations
+
+    # chained_lin_kernighan returns List[int], float
+    # num_iterations variable is just for the f-string, not used by the function
+    num_iterations_display = 3
+    chained_lk_tour_order, chained_lk_cost = chained_lin_kernighan(
+        coords, initial_tour_obj.get_tour(),
+        time_limit_seconds=time_limit_sec
+    )
+
+    assert chained_lk_tour_order is not None, "Chained LK should return a tour order list."
+    assert isinstance(chained_lk_tour_order, list), "Chained LK should return a list as the first element."
+    assert chained_lk_cost is not None, "Chained LK should return a cost."
+
+    # For simple_tsp_setup, it should find the optimal solution.
+    assert chained_lk_cost == pytest.approx(lk_optimal_cost), \
+        f"Chained LK (runtime {time_limit_sec}s) failed to find optimal cost. Got {chained_lk_cost}, expected {lk_optimal_cost}."
+    assert chained_lk_tour_order == lk_optimal_order, \
+        f"Chained LK (runtime {time_limit_sec}s) failed to find optimal tour. Got {chained_lk_tour_order}, expected {lk_optimal_order}."
+
+    # To check the cost of the returned tour order, reconstruct a Tour object
+    reconstructed_tour_from_chained = Tour(chained_lk_tour_order, dist_matrix)
+    assert reconstructed_tour_from_chained.cost == pytest.approx(lk_optimal_cost), \
+        "Chained LK tour order's calculated cost does not match expected optimal cost."
+    assert reconstructed_tour_from_chained.cost == pytest.approx(chained_lk_cost), \
+        "Chained LK tour order's calculated cost does not match its returned cost."
+
+    LK_CONFIG.clear()
+    LK_CONFIG.update(original_lk_config)
+
+
+def test_double_bridge_small_tours():
+    """
+    Tests double_bridge with small tours (n <= 4),
+    where it should return the original tour as per its implementation.
+    """
+    # The double_bridge function returns the original tour if n <= 4.
+    for n in range(5):  # Test n = 0, 1, 2, 3, 4
+        original_tour = list(range(n))
+        perturbed_tour = double_bridge(original_tour.copy())  # Pass a copy
+        assert perturbed_tour == original_tour, \
+            f"Double bridge should not change a tour with {n} nodes. Got {perturbed_tour}, expected {original_tour}"
+
+
+def test_double_bridge_larger_tour():
+    """
+    Tests double_bridge with a tour large enough (n > 4)
+    to be perturbed.
+    """
+    # Test cases for n > 4, e.g., n = 5, 8, 10
+    for n in [5, 8, 10]:
+        original_tour = list(range(n))
+
+        different_tour_found = False
+        # For these sizes, a single perturbation should ideally be different.
+        # Running a few times can help if the random choice is unlucky,
+        # but for a test, one good perturbation is often enough to check validity.
+        # Let's try a few times to be more robust against unlucky random choices.
+        attempts = 5
+        for _ in range(attempts):
+            perturbed_tour = double_bridge(original_tour.copy())
+
+            assert len(perturbed_tour) == n, \
+                f"Perturbed tour length {len(perturbed_tour)} for n={n} does not match original {n}."
+            assert sorted(perturbed_tour) == sorted(original_tour), \
+                f"Perturbed tour for n={n} does not contain the same set of nodes as the original."
+            assert len(set(perturbed_tour)) == n, \
+                f"Perturbed tour for n={n} contains duplicate nodes or missing nodes."
+
+            if perturbed_tour != original_tour:
+                different_tour_found = True
+                break  # Found a different tour, this attempt is successful for this n
+
+        assert different_tour_found, \
+            f"Double bridge did not change the tour with {n} nodes after {attempts} attempts."
+
+
+def test_double_bridge_very_large_tour_is_different():
+    """
+    Tests that double_bridge on a sufficiently large tour
+    actually produces a different tour.
+    """
+    n = 20  # A reasonably large tour
+    original_tour = list(range(n))
+
+    perturbed_tour = double_bridge(original_tour.copy())
+
+    assert len(perturbed_tour) == n, f"Perturbed tour length {len(perturbed_tour)} does not match original {n}."
+    assert sorted(perturbed_tour) == sorted(original_tour), "Perturbed tour does not contain the same set of nodes."
+    assert len(set(perturbed_tour)) == n, "Perturbed tour has duplicate or missing nodes."
+
+    # For a tour of size 20, it's highly probable it will be different.
+    # If it's the same, the random choices might have coincidentally reconstructed the original,
+    # or there's an issue. Running it once should be fine for this check.
+    assert perturbed_tour != original_tour, \
+        f"Double bridge perturbation resulted in the same tour for n={n}. This is unlikely or indicates an issue."
+
+
+def test_alternate_step_finds_improvement(simple_tsp_setup):
+    coords, dist_matrix, _initial_tour_obj, neighbors, \
+        _initial_cost, lk_optimal_cost, _lk_optimal_order = simple_tsp_setup
+
+    # Define a specific tour that is NOT optimal but might be 2-optimal,
+    # and hopefully alternate_step can find a 3-opt or 5-opt.
+    # For simple_tsp_setup (5 nodes: 0,1,2,3,4), optimal is [0,1,3,2,4] cost ~8.00056
+    # Initial in fixture is [0,1,2,3,4] cost ~10.0013
+    # Let's try a tour that is not the initial one from the fixture, but also not optimal.
+    # e.g., tour_order = [0, 2, 1, 3, 4]  # A permutation
+    # We need to ensure this tour is one where alternate_step can find a known improvement.
+
+    # This requires careful construction of 'tour_to_test_order'
+    # For now, let's use the initial tour from simple_tsp_setup, as alternate_step
+    # might find an improvement there if step() doesn't.
+    tour_to_test_order = _initial_tour_obj.get_tour()  # [0,1,2,3,4]
+    tour_to_test = Tour(tour_to_test_order, dist_matrix)
+    initial_test_cost = tour_to_test.cost
+
+    original_lk_config = LK_CONFIG.copy()
+    # Configure LK_CONFIG for alternate_step if necessary (e.g., ensure BREADTH_A/B/D are > 0)
+    # Default config should be fine: BREADTH_A=5, BREADTH_B=5, BREADTH_D=1
+
+    deadline = time.time() + 5
+
+    improvement_found = False
+    best_improving_sequence = None
+
+    # Try alternate_step from each node as a base_node
+    for base_node_idx in range(tour_to_test.n):
+        # alternate_step operates on the tour object passed to it.
+        # To test its effect cleanly, we might want to pass a fresh copy or reset.
+        # However, alternate_step itself doesn't modify the tour; it returns a sequence.
+
+        # Create a fresh tour object for each call to alternate_step to avoid state issues
+        # if alternate_step were to modify the tour (it doesn't, but good practice for testing)
+        current_call_tour = Tour(tour_to_test_order, dist_matrix)
+
+        found, sequence = alternate_step(
+            base_node=current_call_tour.order[base_node_idx],  # Pass actual node label
+            tour=current_call_tour,
+            D=dist_matrix,
+            neigh=neighbors,
+            deadline=deadline
+        )
+        if found and sequence:
+            # Apply sequence to a copy to check cost
+            temp_tour = Tour(tour_to_test_order, dist_matrix)
+            cost_before_apply = temp_tour.cost
+            for f_start, f_end in sequence:
+                temp_tour.flip_and_update_cost(f_start, f_end, dist_matrix)
+
+            if temp_tour.cost < cost_before_apply - 1e-9: # Check for strict improvement
+                improvement_found = True
+                best_improving_sequence = sequence  # Store the first one found
+                # print(f"Alternate_step from base {current_call_tour.order[base_node_idx]} found sequence: {sequence}, new cost: {temp_tour.cost}")
+                break
+
+    assert improvement_found, "alternate_step failed to find an improvement on the test tour."
+
+    # Further assertions: apply best_improving_sequence and check cost
+    final_tour = Tour(tour_to_test_order, dist_matrix)
+    for f_start, f_end in best_improving_sequence:
+        final_tour.flip_and_update_cost(f_start, f_end, dist_matrix)
+
+    assert final_tour.cost < initial_test_cost - 1e-9, \
+        "Applying sequence from alternate_step did not reduce cost."
+    # Optionally, assert it reaches the known optimal for simple_tsp_setup if the sequence is powerful enough
+    # assert final_tour.cost == pytest.approx(lk_optimal_cost)
+
+    LK_CONFIG.clear()
+    LK_CONFIG.update(original_lk_config)
+
+
+def test_alternate_step_no_improvement_on_optimal(simple_tsp_setup):
+    """
+    Tests that alternate_step does not find an improvement on an already optimal tour.
+    """
+    coords, dist_matrix, _initial_tour_obj, neighbors, \
+        _initial_cost, _lk_optimal_cost, lk_optimal_order = simple_tsp_setup
+
+    optimal_tour = Tour(lk_optimal_order, dist_matrix)
+    deadline = time.time() + 5
+    original_lk_config = LK_CONFIG.copy()  # Ensure default BREADTH_A/B/D are used
+
+    for base_node_idx in range(optimal_tour.n):
+        # Pass a fresh copy of the optimal tour object to alternate_step
+        current_call_tour = Tour(lk_optimal_order, dist_matrix)
+        cost_before_call = current_call_tour.cost
+
+        found, sequence = alternate_step(
+            base_node=current_call_tour.order[base_node_idx],
+            tour=current_call_tour,
+            D=dist_matrix,
+            neigh=neighbors,
+            deadline=deadline
+        )
+        if found and sequence:
+            # If a sequence is returned, apply it and check if it's truly improving
+            temp_tour = Tour(lk_optimal_order, dist_matrix)
+            for f_start, f_end in sequence:
+                temp_tour.flip_and_update_cost(f_start, f_end, dist_matrix)
+            assert temp_tour.cost >= cost_before_call - 1e-9, \
+                f"alternate_step found a sequence {sequence} from base {current_call_tour.order[base_node_idx]} that 'improved' an optimal tour. New cost: {temp_tour.cost}, Optimal: {cost_before_call}"
+        # If found is False, or sequence is None, that's the expected behavior (no strict improvement).
+
+    LK_CONFIG.clear()
+    LK_CONFIG.update(original_lk_config)
+
+
+def test_alternate_step_restrictive_breadth(simple_tsp_setup):
+    """
+    Tests that alternate_step with zero breadth settings does not find an improvement
+    and does not crash.
+    """
+    coords, dist_matrix, initial_tour_obj, neighbors, \
+        _initial_cost, _lk_optimal_cost, _lk_optimal_order = simple_tsp_setup
+
+    # Use the non-optimal initial tour
+    test_tour = Tour(initial_tour_obj.get_tour(), dist_matrix)
+    deadline = time.time() + 5
+
+    original_lk_config = LK_CONFIG.copy()
+    restrictive_config = original_lk_config.copy()
+    restrictive_config.update({
+        "BREADTH_A": 0,
+        "BREADTH_B": 0,
+        "BREADTH_D": 0
+    })
+    LK_CONFIG.clear()
+    LK_CONFIG.update(restrictive_config)
+
+    for base_node_idx in range(test_tour.n):
+        current_call_tour = Tour(test_tour.get_tour(), dist_matrix)  # Fresh copy
+        found, sequence = alternate_step(
+            base_node=current_call_tour.order[base_node_idx],
+            tour=current_call_tour,
+            D=dist_matrix,
+            neigh=neighbors,
+            deadline=deadline
+        )
+        assert not (found and sequence), \
+            f"alternate_step found an improvement {sequence} from base {current_call_tour.order[base_node_idx]} with zero breadth settings."
+
+    LK_CONFIG.clear()
+    LK_CONFIG.update(original_lk_config)
+
+
+# You might want to parameterize this test if you have many random instances
+# List the base names of your instance files here (without .tsp or .opt.tour)
+@pytest.mark.parametrize("instance_base_name", ["rand4"])  # Replace with your actual file base names
+def test_chained_lk_terminates_at_known_optimum(instance_base_name):
+    tsp_file = VERIFICATION_RANDOM_PATH / f"{instance_base_name}.tsp"
+    opt_tour_file = VERIFICATION_RANDOM_PATH / f"{instance_base_name}.opt.tour"
+
+    assert tsp_file.exists(), f"TSP file not found: {tsp_file}"
+    assert opt_tour_file.exists(), f"Optimal tour file not found: {opt_tour_file}"
+
+    coords = read_tsp_file(str(tsp_file))
+    assert coords is not None and coords.size > 0, f"Could not load coordinates from {tsp_file}"
+
+    optimal_tour_nodes = read_opt_tour(str(opt_tour_file))
+    assert optimal_tour_nodes is not None, f"Could not load optimal tour from {opt_tour_file}"
+
+    if coords.shape[0] < 4:  # Lin-Kernighan typically needs at least 4 nodes
+        pytest.skip(f"Skipping {instance_base_name} as it has fewer than 4 nodes ({coords.shape[0]}).")
+        return
+
+    if len(optimal_tour_nodes) != coords.shape[0]:
+        pytest.fail(f"Optimal tour node count ({len(optimal_tour_nodes)}) does not match coordinate count ({coords.shape[0]}) for {instance_base_name}.")
+
+    dist_matrix = build_distance_matrix(coords)
+
+    # Calculate the known optimal length from the optimal tour and distance matrix
+    calculated_known_opt_len = 0.0
+    for i in range(len(optimal_tour_nodes)):
+        u = optimal_tour_nodes[i]
+        v = optimal_tour_nodes[(i + 1) % len(optimal_tour_nodes)]
+        calculated_known_opt_len += dist_matrix[u, v]
+
+    neighbors = delaunay_neighbors(coords)
+    initial_tour_order = list(range(coords.shape[0]))  # A simple sequential initial tour
+
+    original_lk_config = LK_CONFIG.copy()
+    # Use default LK_CONFIG, but ensure TIME_LIMIT is long enough for the test logic
+    temp_config = original_lk_config.copy()
+    long_time_limit_seconds = 5.0  # Should be much longer than expected solve time
+    temp_config["TIME_LIMIT"] = long_time_limit_seconds  # Ensure chained_lk uses this if not overridden by param
+
+    LK_CONFIG.clear()
+    LK_CONFIG.update(temp_config)
+
+    start_time = time.time()
+    final_tour_order, final_cost = chained_lin_kernighan(
+        coords,
+        initial_tour_order,
+        known_optimal_length=calculated_known_opt_len,  # Pass the calculated known optimum
+        time_limit_seconds=long_time_limit_seconds  # Explicitly pass time limit
+    )
+    end_time = time.time()
+    execution_time = end_time - start_time
+
+    assert final_cost == pytest.approx(calculated_known_opt_len), \
+        (f"Chained LK for {instance_base_name} did not reach known optimal length {calculated_known_opt_len:.4f}. "
+         f"Got {final_cost:.4f}.")
+
+    # Heuristic check for early termination:
+    # If the problem is non-trivial and solved, execution time should be noticeably less than the long_time_limit.
+    # This threshold is somewhat arbitrary and might need adjustment based on instance difficulty.
+    # A very small instance might solve "instantly" regardless of the known_optimal_length.
+    # We expect that if known_optimal_length caused an early exit, the time taken is small.
+    # If the instance is very easy, execution_time might be small anyway.
+    # The main goal is that it *stops* once optimal is hit, not running for the full long_time_limit_seconds.
+    # For a 30s limit, finishing in < 5s would suggest early exit or very fast solve.
+    # If an instance takes 0.01s to solve anyway, this part of the assert is less meaningful for proving early exit.
+    assert execution_time < (long_time_limit_seconds * 0.5) or execution_time < 5.0, \
+        (f"Chained LK for {instance_base_name} took {execution_time:.3f}s. "
+         f"This might be too long if early exit due to known_optimal_length was expected "
+         f"relative to time_limit_seconds={long_time_limit_seconds}s. "
+         f"Optimal length was {calculated_known_opt_len:.4f}.")
+
+    LK_CONFIG.clear()
+    LK_CONFIG.update(original_lk_config)  # Restore original config

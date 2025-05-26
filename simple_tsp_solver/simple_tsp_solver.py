@@ -17,14 +17,15 @@ Missing features of Lin-Kernighan heuristic algorithm:
 import os
 import time
 import math
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D  # ADDED
+from matplotlib.lines import Line2D
 
 # --- Constants ---
-TSP_FOLDER_PATH = '../verifications/tsplib95'  # Path to the folder containing TSPLIB .tsp files
+TSP_FOLDER_PATH = Path('..') / "verifications" / "tsplib95"
 TIME_LIMIT = 1.0  # Default time limit for the solver in seconds
-MAX_SUBPLOTS = 25  # ADDED: Maximum number of subplots in the tour visualization
+MAX_SUBPLOTS = 25  # Maximum number of subplots in the tour visualization
 
 
 # Compute pairwise Euclidean distances for all city coordinates.

@@ -153,6 +153,22 @@ TSPLIB95-kirjastosta poimittiin kaikki tsp-ongelmat, joihin oli tarjolla optimaa
 
 ![pcb422-ongelma](/images/lk_verification_pcb442_7200s.png)
 
+```
+Configuration parameters:
+  MAX_LEVEL   = 12
+  BREADTH     = [5, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  BREADTH_A   = 5
+  BREADTH_B   = 5
+  BREADTH_D   = 1
+  TIME_LIMIT  = 7200.00
+
+Instance     OptLen   HeuLen   Gap(%)  Time(s)
+----------------------------------------------
+pcb442     50783.55 51370.13     1.16  7389.95
+----------------------------------------------
+SUMMARY    50783.55 51370.13     1.16  7389.95
+```
+
 Tutkittiin lähemmin tsp-ongelmaa `pcb422` asettamalla aikaraja 7200 sekuntiin eli kahteen tuntiin. Pitkällä aikarajalla myös tämän tsp-ongelman likiarvo saatiin lähelle optimaalista ratkaisua (1.16%).  
 
 ### LK-algoritmin vertailu yksinkertaiseen tsp-ratkaisijaan
@@ -165,6 +181,9 @@ Yksinkertainen tsp-ratkaisija `/simple_tsp_solver/simple_tsp_solver.py` toteutta
 
 Havaitaan, että yksinkertainen tsp-ratkaisija pääsee yleensä noin 5-10 %:n päähän optimaalisesta ratkaisusta poislukien muutama poikkeustapaus. Voidaan todeta, että LK-algoritmi tuottaa merkittävästi parempia tuloksia. Toisaalta jos sovellusalueella riittää karkea likiarvo tai jos nopeus on kriittistä, niin yksinkertainen tsp-ratkaisija voi olla riittävän hyvä.
 
+### LK-algoritmin tulokset pidemmällä aikarajalla
+
+![LK-algoritmi pitkällä aikarajalla](/images/lk_verifications_tsplib95_900s.png)
 
 ## 6. Sovelluksen puutteet ja kehitysmahdollisuudet
 

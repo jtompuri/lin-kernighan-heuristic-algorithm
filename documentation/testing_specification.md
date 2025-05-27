@@ -149,6 +149,46 @@ SUMMARY    910625.92 1014553.02     4.54    13.64
 
 TSPLIB95-kirjastosta poimittiin kaikki tsp-ongelmat, joihin oli tarjolla optimaalinen ratkaisu. Tämän jälkeen varmistettiin LK-algoritmin oikeellisuus ratkaisemalla tsp-ongelmat ja vertaamalla saatua ratkaisua optimaaliseen ratkaisuun. Vertailuluku `gap` kertoo kuinka monta prosenttia löydetty reitti on optimaalista reittiä pidempi. Kuten nähdään niin löydetyt reitit ovat kahta poikkeusta lukuunottamatta 0-2% etäisyydellä optimaalisesta ratkaisusta eli erittäin lähellä. 
 
+
+### LK-algoritmin tulokset pidemmällä aikarajalla
+
+![LK-algoritmi pitkällä aikarajalla](/images/lk_verifications_tsplib95_900s.png)
+
+```
+Configuration parameters:
+  MAX_LEVEL   = 12
+  BREADTH     = [5, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  BREADTH_A   = 5
+  BREADTH_B   = 5
+  BREADTH_D   = 1
+  TIME_LIMIT  = 900.00s
+
+Instance   OptLen   HeuLen   Gap(%)   Time(s)
+---------------------------------------------
+a280        2586.77  2586.77     0.00   394.77
+berlin52    7544.37  7544.37     0.00     0.17
+ch130       6110.86  6110.72     0.00  1779.75
+ch150       6532.28  6530.90     0.00  5213.94
+eil101       642.31   642.03     0.00  1501.20
+eil51        429.98   428.98     0.00  2248.01
+eil76        545.39   544.37     0.00  2429.44
+kroA100    21285.44 21285.44     0.00     2.17
+kroC100    20750.76 20750.76     0.00     4.94
+kroD100    21294.29 21375.45     0.38  1998.50
+lin105     14383.00 14383.00     0.00     2.53
+pcb442     50783.55 78633.19    54.84  2964.19
+pr1002     259066.66 342394.27    32.16  2642.24
+pr2392     378062.83 378062.83     0.00  1691.25
+pr76       108159.44 108159.44     0.00     0.98
+rd100       7910.40  7910.40     0.00     3.88
+st70         678.60   677.11     0.00   900.00
+tsp225      3859.00  3859.00     0.00    62.48
+---------------------------------------------
+SUMMARY    910625.92 1021879.03     4.85  1324.47
+```
+
+Havaitaan, että pidemmällä aikarajalla lähestytään optimaalista ratkaisua kahta poikkeusta lukuunottamatta. Otetaan toinen poikkeuksista lähempään tarkasteluun, jotta saadaan selville, jääkö LK-algoritmi paikalliseen minimiin vai onko optimaalisen ratkaisun löytäminen vain hidasta.
+
 ### Poikkeustapauksen `pcb422` lähempi tarkastelu 
 
 ![pcb422-ongelma](/images/lk_verification_pcb442_7200s.png)
@@ -169,7 +209,7 @@ pcb442     50783.55 51370.13     1.16  7389.95
 SUMMARY    50783.55 51370.13     1.16  7389.95
 ```
 
-Tutkittiin lähemmin tsp-ongelmaa `pcb422` asettamalla aikaraja 7200 sekuntiin eli kahteen tuntiin. Pitkällä aikarajalla myös tämän tsp-ongelman likiarvo saatiin lähelle optimaalista ratkaisua (1.16%).  
+Tutkittiin lähemmin tsp-ongelmaa `pcb422` asettamalla aikaraja 7200 sekuntiin eli kahteen tuntiin. Pitkällä aikarajalla myös tämän tsp-ongelman likiarvo saatiin lähelle optimaalista ratkaisua (1.16%). Toisin sanoen LK-algoritmi ei jää jumiin paikalliseen minimiin. 
 
 ### LK-algoritmin vertailu yksinkertaiseen tsp-ratkaisijaan
 
@@ -224,42 +264,6 @@ SUMMARY    910625.92 1025236.02    10.90     1.48
 
 Havaitaan, että yksinkertainen tsp-ratkaisija pääsee yleensä noin 5-10 %:n päähän optimaalisesta ratkaisusta poislukien muutama poikkeustapaus. Voidaan todeta, että LK-algoritmi tuottaa merkittävästi parempia tuloksia. Toisaalta jos sovellusalueella riittää karkea likiarvo tai jos nopeus on kriittistä, niin yksinkertainen tsp-ratkaisija voi olla riittävän hyvä.
 
-### LK-algoritmin tulokset pidemmällä aikarajalla
-
-![LK-algoritmi pitkällä aikarajalla](/images/lk_verifications_tsplib95_900s.png)
-
-```
-Configuration parameters:
-  MAX_LEVEL   = 12
-  BREADTH     = [5, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-  BREADTH_A   = 5
-  BREADTH_B   = 5
-  BREADTH_D   = 1
-  TIME_LIMIT  = 900.00s
-
-Instance   OptLen   HeuLen   Gap(%)   Time(s)
----------------------------------------------
-a280        2586.77  2586.77     0.00   394.77
-berlin52    7544.37  7544.37     0.00     0.17
-ch130       6110.86  6110.72     0.00  1779.75
-ch150       6532.28  6530.90     0.00  5213.94
-eil101       642.31   642.03     0.00  1501.20
-eil51        429.98   428.98     0.00  2248.01
-eil76        545.39   544.37     0.00  2429.44
-kroA100    21285.44 21285.44     0.00     2.17
-kroC100    20750.76 20750.76     0.00     4.94
-kroD100    21294.29 21375.45     0.38  1998.50
-lin105     14383.00 14383.00     0.00     2.53
-pcb442     50783.55 78633.19    54.84  2964.19
-pr1002     259066.66 342394.27    32.16  2642.24
-pr2392     378062.83 378062.83     0.00  1691.25
-pr76       108159.44 108159.44     0.00     0.98
-rd100       7910.40  7910.40     0.00     3.88
-st70         678.60   677.11     0.00   900.00
-tsp225      3859.00  3859.00     0.00    62.48
----------------------------------------------
-SUMMARY    910625.92 1021879.03     4.85  1324.47
-```
 
 
 ## 6. Sovelluksen puutteet ja kehitysmahdollisuudet

@@ -76,11 +76,16 @@ Testit on kirjoitettu `pytest`-testauskehyksellä ja ne voidaan toistaa seuraava
     *   Testit käyttävät pääosin dynaamisesti luotuja syötteitä tai `simple_tsp_setup`-fixturea, jotka eivät vaadi ulkoisia tiedostoja (lukuun ottamatta `randN`-testejä, jotka vaativat tiedostot `verifications/random`-kansiosta).
     *   Satunnaisuutta käytetään `double_bridge`-funktiossa, mutta testit on suunniteltu varmistamaan sen yleiset ominaisuudet. Yhdessä `double_bridge`-testissä käytetään `np.random.seed(42)` toistettavuuden varmistamiseksi.
 
-## 5. Ohjelman toiminnan mahdollisen empiirisen testauksen tulosten esittäminen graafisessa muodossa
+## 5. Ohjelman toiminnan empiirisen testauksen tulokset graafisessa muodossa
 
-Toimitetut yksikkötestit keskittyvät ohjelman eri osien oikeellisuuden varmistamiseen. Itse pääratkaisijaskripti (`lin_kernighan_tsp_solver.py`) sisältää toiminnallisuuden (`plot_all_tours` ja `display_summary_table`), joka visualisoi ja taulukoi tulokset useille TSPLIB-instansseille. Tämä toimii empiirisenä tulosten esityksenä algoritmin suorituskyvystä.
+Toimitetut yksikkötestit keskittyvät ohjelman eri osien oikeellisuuden varmistamiseen. Itse pääratkaisijaskripti (`lin_kernighan_tsp_solver.py`) sisältää toiminnallisuuden (`plot_all_tours` ja `display_summary_table`), joka visualisoi ja taulukoi tulokset useille TSPLIB-instansseille. Tämä toimii empiirisenä tulosten esityksenä algoritmin suorituskyvystä. Seuraavassa esitettävät kuvaajat on luotu 20 sekunnin aikarajalla ellei toisin ole mainittu.
 
-Mahdollisia jatkokehitysideoita empiiriseen testaukseen voisivat olla skaalautuvuustestit (ajoaika vs. solmumäärä) tai `LK_CONFIG`-parametrien vaikutuksen systemaattinen tutkiminen, joiden tulokset esitettäisiin graafeina. Nämä ovat kuitenkin erillisiä yksikkötestauksesta.
+### LK:n verfiointi brute force -algoritmin tuloksilla
+
+[](/images/lk_verifications_random_20s.png)
+
+Skriptillä `/problems/create_tsp_problem.py` luotiin 4–12 solmun satunnaisia tsp-ongelmia, joiden optimaalinen reitti ratkaistiin skriptillä `/exact_tsp_solver/exact_tsp_solver.py` käymällä läpi kaikki mahdolliset reitit. LK algoritmin oikeellisuus pienillä solmujen määrällä varmistettiin ratkaisemalla pienet tsp-ongelmat ja vertaamalla tulosta optimaaliseen reittiin. Kuten kuvasta näkyy, niin LK-algoritmi löysi optimaalisen ratkaisun kaikkiin tsp-ongelmiin.  
+
 
 ## 6. Sovelluksen puutteet ja kehitysmahdollisuudet
 

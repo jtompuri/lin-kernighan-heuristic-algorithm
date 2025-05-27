@@ -211,7 +211,7 @@ SUMMARY    50783.55 51370.13     1.16  7389.95
 
 Tutkittiin lähemmin tsp-ongelmaa `pcb422` asettamalla aikaraja 7200 sekuntiin eli kahteen tuntiin. Pitkällä aikarajalla myös tämän tsp-ongelman likiarvo saatiin lähelle optimaalista ratkaisua (1.16%). Toisin sanoen LK-algoritmi ei jää jumiin paikalliseen minimiin. 
 
-### LK-algoritmin vertailu yksinkertaiseen tsp-ratkaisijaan
+### Yksinkertainen tsp-ratkaisija (pienet tsp-ongelmat)
 
 ![Simple tsp-solver 1](/images/simple_tsp_solver_verifications_random_20s.png)
 
@@ -233,6 +233,9 @@ SUMMARY    21989.68 22366.42     1.69     0.00
 ```
 
 Yksinkertainen tsp-ratkaisija `/simple_tsp_solver/simple_tsp_solver.py` toteuttaa rekursiivisesti 2-opt-vaihtoja, mutta ei sisällä mitään kehittyneempiä LK-algoritmin ominaisuuksia, kuten `double_bridge` tai `chained_lk_search`. Havaitaan, että yksinkertainen algoritmi ei saa ratkaistua optimaalisesti 4-12 solmun tsp-ongelmia.
+
+### Yksinkertainen tsp-ratkaisija (tsplib95-ongelmat)
+
 
 ![Simple tsp-solver 2](/images/simple_tsp_solver_verifications_tsplib95_20s.png)
 

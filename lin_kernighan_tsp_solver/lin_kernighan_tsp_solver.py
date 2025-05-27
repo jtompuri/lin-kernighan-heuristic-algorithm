@@ -191,8 +191,7 @@ class Tour:
         # Check if 0 is a potential index for self.pos and actually in tour
         if 0 <= self.pos.shape[0] - 1:
             idx_of_0_in_order = self.pos[0]
-            if (0 <= idx_of_0_in_order < self.n and
-                    self.order[idx_of_0_in_order] == 0):
+            if (0 <= idx_of_0_in_order < self.n and self.order[idx_of_0_in_order] == 0):
                 node_zero_present_and_valid = True
 
         if node_zero_present_and_valid:
@@ -234,10 +233,8 @@ class Tour:
                 delta_cost = 0.0
             else:
                 # Cost change for a 2-opt move
-                term_removed = (D[prev_node_of_a, node_a] +
-                                D[node_b, next_node_of_b])
-                term_added = (D[prev_node_of_a, node_b] +
-                              D[node_a, next_node_of_b])
+                term_removed = (D[prev_node_of_a, node_a] + D[node_b, next_node_of_b])
+                term_added = (D[prev_node_of_a, node_b] + D[node_a, next_node_of_b])
                 delta_cost = term_added - term_removed
 
         self.flip(node_a, node_b)  # Perform the segment reversal
@@ -364,9 +361,7 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
             continue
 
         gain_mak_morton = (
-            (D[base, s1] - D[base, candidate_a_mm]) +
-            (D[candidate_a_mm, tour.next(candidate_a_mm)] -
-             D[tour.next(candidate_a_mm), s1])
+            (D[base, s1] - D[base, candidate_a_mm]) + (D[candidate_a_mm, tour.next(candidate_a_mm)] - D[tour.next(candidate_a_mm), s1])
         )
         # Pruning condition similar to standard flips
         if delta + (D[base, s1] - D[base, candidate_a_mm]) \
@@ -493,9 +488,7 @@ def alternate_step(
             # --- Stage 3: Find candidate y3 for a 5-opt move (Type Q in Applegate et al. Fig 15.5) ---
             candidates_for_y3 = []
             for y3_candidate in neigh[chosen_t6]:  # y3 from neighbors of t6
-                if (y3_candidate == t1 or y3_candidate == t2 or
-                        y3_candidate == chosen_y1 or y3_candidate == t4 or
-                        y3_candidate == chosen_y2):
+                if (y3_candidate == t1 or y3_candidate == t2 or y3_candidate == chosen_y1 or y3_candidate == t4 or y3_candidate == chosen_y2):
                     continue
                 node_after_y3_candidate = tour.next(y3_candidate)  # t8
                 # Sort metric for y3: D[node_after_y3,y3] - D[chosen_t6,y3]
@@ -871,13 +864,15 @@ def process_single_instance(
     results: Dict[str, Any] = {
         'name': problem_name, 'coords': np.array([]), 'opt_tour': None,
         'heu_tour': [], 'opt_len': None, 'heu_len': float('inf'),
-        'gap': None, 'time': 0.0, 'error': False
+        'gap': None, 'time': 0.0, 'error': False,
+        'nodes': 0  # Initialize 'nodes' key
     }
     try:
         coords = read_tsp_file(tsp_file_path_str)
         results['coords'] = coords
         if coords.size == 0:  # Check if read_tsp_file returned empty
             raise ValueError("No coordinates loaded from TSP file.")
+        results['nodes'] = coords.shape[0]  # Set the number of nodes
         D_matrix = build_distance_matrix(coords)
 
         opt_tour_nodes = read_opt_tour(opt_tour_file_path_str)
@@ -998,7 +993,10 @@ def plot_all_tours(results_data: List[Dict[str, Any]]) -> None:
         results_data: List of result dictionaries.
     """
     # Filter for results that are not errored and have coordinates
-    valid_results_to_plot = [r for r in results_data if not r.get('error') and r['coords'].size > 0]
+    valid_results_to_plot = [
+        r for r in results_data
+        if not r.get('error') and r.get('coords') is not None and r['coords'].size > 0
+    ]
     num_valid_results = len(valid_results_to_plot)
 
     if num_valid_results == 0:
@@ -1006,12 +1004,9 @@ def plot_all_tours(results_data: List[Dict[str, Any]]) -> None:
         return
 
     # Limit number of plots
-    results_to_plot_limited = (valid_results_to_plot[:MAX_SUBPLOTS_IN_PLOT]
-                               if num_valid_results > MAX_SUBPLOTS_IN_PLOT
-                               else valid_results_to_plot)
+    results_to_plot_limited = (valid_results_to_plot[:MAX_SUBPLOTS_IN_PLOT] if num_valid_results > MAX_SUBPLOTS_IN_PLOT else valid_results_to_plot)
     if num_valid_results > MAX_SUBPLOTS_IN_PLOT:
-        print(f"Warning: Plotting first {MAX_SUBPLOTS_IN_PLOT} of "
-              f"{num_valid_results} valid results.")
+        print(f"Warning: Plotting first {MAX_SUBPLOTS_IN_PLOT} of {num_valid_results} valid results.")
 
     num_to_plot_actual = len(results_to_plot_limited)
     if num_to_plot_actual == 0:
@@ -1020,8 +1015,7 @@ def plot_all_tours(results_data: List[Dict[str, Any]]) -> None:
     cols = int(math.ceil(math.sqrt(num_to_plot_actual)))
     rows = int(math.ceil(num_to_plot_actual / cols))
 
-    fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 4 * rows),
-                             squeeze=False)  # Ensure axes is always 2D
+    fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 4 * rows), squeeze=False)  # Ensure axes is always 2D
     axes_list = axes.flatten()
     plotted_heuristic_legend, plotted_optimal_legend = False, False
 
@@ -1036,19 +1030,29 @@ def plot_all_tours(results_data: List[Dict[str, Any]]) -> None:
                     '-', label='Heuristic', zorder=1, color='C0')
             plotted_heuristic_legend = True
         # Plot optimal tour if available
-        if r_item['opt_tour']:
-            opt_plot_nodes = r_item['opt_tour'] + [r_item['opt_tour'][0]]  # Close the loop
+        opt_tour_data = r_item.get('opt_tour')
+        if opt_tour_data:  # Check if opt_tour_data is not None and not empty
+            opt_plot_nodes = opt_tour_data + [opt_tour_data[0]]  # Close the loop
             ax.plot(coords[opt_plot_nodes, 0], coords[opt_plot_nodes, 1],
                     ':', label='Optimal', zorder=2, color='C1')
             plotted_optimal_legend = True
 
-        title = f"{r_item['name']}"
-        if r_item['gap'] is not None and r_item['gap'] != float('inf'):
-            title += f" gap={r_item['gap']:.2f}%"
-        ax.set_title(title)
-        ax.set_xticks([])  # Hide ticks and labels
-        ax.set_yticks([])
-        ax.set_aspect('equal', adjustable='box')  # Square aspect ratio
+            title = f"{r_item['name']}"
+            # Safely get gap, opt_len, heu_len for the title
+            gap_val = r_item.get('gap')
+            opt_len_val = r_item.get('opt_len')
+            heu_len_val = r_item.get('heu_len')
+
+            if gap_val is not None and gap_val != float('inf'):
+                title += f" gap={gap_val:.2f}%"
+            if opt_len_val is not None:
+                title += f" OptLen={opt_len_val:.2f}"
+            if heu_len_val is not None:
+                title += f" HeuLen={heu_len_val:.2f}"
+            ax.set_title(title)
+            ax.set_xticks([])  # Hide ticks and labels
+            ax.set_yticks([])
+            ax.set_aspect('equal', adjustable='box')  # Square aspect ratio
 
     # Turn off unused subplots
     for i in range(num_to_plot_actual, len(axes_list)):
@@ -1057,14 +1061,11 @@ def plot_all_tours(results_data: List[Dict[str, Any]]) -> None:
     # Create legend for the figure
     legend_elements = []
     if plotted_heuristic_legend:
-        legend_elements.append(Line2D([0], [0], color='C0', ls='-',
-                                      label='Heuristic'))
+        legend_elements.append(Line2D([0], [0], color='C0', ls='-', label='Heuristic'))
     if plotted_optimal_legend:
-        legend_elements.append(Line2D([0], [0], color='C1', ls=':',
-                                      label='Optimal'))
+        legend_elements.append(Line2D([0], [0], color='C1', ls=':', label='Optimal'))
     if legend_elements:
-        fig.legend(handles=legend_elements, loc='upper center',
-                   ncol=len(legend_elements), bbox_to_anchor=(0.5, 1.0))
+        fig.legend(handles=legend_elements, loc='upper center', ncol=len(legend_elements), bbox_to_anchor=(0.5, 1.0))
         # Adjust top margin if legend is present
         fig.subplots_adjust(top=(0.95 if num_to_plot_actual > cols else 0.90))
 

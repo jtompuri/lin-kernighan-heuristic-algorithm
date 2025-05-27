@@ -108,7 +108,7 @@ rand9       2829.56  2829.56     0.00     0.00
 SUMMARY    21989.68 21989.68     0.00     0.00
 ```
 
-Skriptillä `/problems/create_tsp_problem.py` luotiin 4–12 solmun satunnaisia tsp-ongelmia, joiden optimaalinen reitti ratkaistiin skriptillä `/exact_tsp_solver/exact_tsp_solver.py` käymällä läpi kaikki mahdolliset reitit. LK-algoritmin oikeellisuus pienillä solmujen määrällä varmistettiin ratkaisemalla tsp-ongelmat ja vertaamalla tulosta optimaaliseen reittiin. Kuten kuvasta näkyy, niin LK-algoritmi löysi optimaalisen ratkaisun kaikkiin tsp-ongelmiin.  
+Skriptillä `create_tsp_problem.py` luotiin 4–12 solmun satunnaisia tsp-ongelmia, joiden optimaalinen reitti ratkaistiin skriptillä `exact_tsp_solver.py` käymällä läpi kaikki mahdolliset reitit. LK-algoritmin oikeellisuus pienillä solmujen määrällä varmistettiin ratkaisemalla tsp-ongelmat ja vertaamalla tulosta optimaaliseen reittiin. Kuten kuvasta näkyy, niin LK-algoritmi löysi optimaalisen ratkaisun kaikkiin tsp-ongelmiin.  
 
 ### LK-algoritmin verfiointi TSPLIB95-datalla
 
@@ -232,7 +232,7 @@ rand9       2829.56  2910.33     2.85     0.00
 SUMMARY    21989.68 22366.42     1.69     0.00
 ```
 
-Yksinkertainen tsp-ratkaisija `/simple_tsp_solver/simple_tsp_solver.py` toteuttaa rekursiivisesti 2-opt-vaihtoja, mutta ei sisällä mitään kehittyneempiä LK-algoritmin ominaisuuksia, kuten `double_bridge` tai `chained_lk_search`. Havaitaan, että yksinkertainen algoritmi ei saa ratkaistua optimaalisesti 4-12 solmun tsp-ongelmia.
+Yksinkertainen tsp-ratkaisija `simple_tsp_solver.py` toteuttaa rekursiivisesti 2-opt-vaihtoja, mutta ei sisällä mitään kehittyneempiä LK-algoritmin ominaisuuksia, kuten `double_bridge` tai `chained_lk_search`. Havaitaan, että yksinkertainen algoritmi ei saa ratkaistua optimaalisesti kaikkia 4-12 solmun tsp-ongelmia.
 
 ### Yksinkertainen tsp-ratkaisija (tsplib95-ongelmat)
 

@@ -175,9 +175,52 @@ Tutkittiin lähemmin tsp-ongelmaa `pcb422` asettamalla aikaraja 7200 sekuntiin e
 
 ![Simple tsp-solver 1](/images/simple_tsp_solver_verifications_random_20s.png)
 
+```
+--------------------------------------------------
+Instance     OptLen   HeuLen   Gap(%)  Time(s)
+--------------------------------------------------
+rand10      2862.79  2914.22     1.80     0.00
+rand11      2866.43  2947.14     2.82     0.00
+rand12      2894.02  2894.02     0.00     0.00
+rand4       2032.77  2032.77     0.00     0.00
+rand5       2079.70  2145.25     3.15     0.00
+rand6       2127.74  2145.26     0.82     0.00
+rand7       2147.16  2227.92     3.76     0.00
+rand8       2149.50  2149.50     0.00     0.00
+rand9       2829.56  2910.33     2.85     0.00
+--------------------------------------------------
+SUMMARY    21989.68 22366.42     1.69     0.00
+```
+
 Yksinkertainen tsp-ratkaisija `/simple_tsp_solver/simple_tsp_solver.py` toteuttaa rekursiivisesti 2-opt-vaihtoja, mutta ei sisällä mitään kehittyneempiä LK-algoritmin ominaisuuksia, kuten `double_bridge` tai `chained_lk_search`. Havaitaan, että yksinkertainen algoritmi ei saa ratkaistua optimaalisesti 4-12 solmun tsp-ongelmia.
 
 ![Simple tsp-solver 2](/images/simple_tsp_solver_verifications_tsplib95_20s.png)
+
+```
+--------------------------------------------------
+Instance     OptLen   HeuLen   Gap(%)  Time(s)
+--------------------------------------------------
+a280        2586.77  2727.23     5.43     0.54
+berlin52    7544.37  8002.77     6.08     0.05
+ch130       6110.86  6470.60     5.89     1.32
+ch150       6532.28  7103.04     8.74     2.30
+eil101       642.31   678.19     5.59     0.71
+eil51        429.98   443.60     3.17     0.09
+eil76        545.39   572.96     5.06     0.25
+kroA100    21285.44 21605.87     1.51     0.75
+kroC100    20750.76 21233.71     2.33     0.70
+kroD100    21294.29 23317.94     9.50     0.75
+lin105     14383.00 15549.63     8.11     0.30
+pcb442     50783.55 91965.09    81.09     5.00
+pr1002     259066.66 315885.78    21.93     5.00
+pr2392     378062.83 378062.83     0.00     5.00
+pr76       108159.44 118342.93     9.42     0.07
+rd100       7910.40  8439.96     6.69     0.72
+st70         678.60   743.87     9.62     0.23
+tsp225      3859.00  4090.02     5.99     2.91
+--------------------------------------------------
+SUMMARY    910625.92 1025236.02    10.90     1.48
+```
 
 Havaitaan, että yksinkertainen tsp-ratkaisija pääsee yleensä noin 5-10 %:n päähän optimaalisesta ratkaisusta poislukien muutama poikkeustapaus. Voidaan todeta, että LK-algoritmi tuottaa merkittävästi parempia tuloksia. Toisaalta jos sovellusalueella riittää karkea likiarvo tai jos nopeus on kriittistä, niin yksinkertainen tsp-ratkaisija voi olla riittävän hyvä.
 

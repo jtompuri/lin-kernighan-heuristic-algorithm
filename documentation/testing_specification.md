@@ -80,7 +80,7 @@ Testit on kirjoitettu `pytest`-testauskehyksellä ja ne voidaan toistaa seuraava
 
 Toimitetut yksikkötestit keskittyvät ohjelman eri osien oikeellisuuden varmistamiseen. Itse pääratkaisijaskripti (`lin_kernighan_tsp_solver.py`) sisältää toiminnallisuuden (`plot_all_tours` ja `display_summary_table`), joka visualisoi ja taulukoi tulokset useille TSPLIB-instansseille. Tämä toimii empiirisenä tulosten esityksenä algoritmin suorituskyvystä. Seuraavassa esitettävät kuvaajat on luotu 20 sekunnin aikarajalla ellei toisin ole mainittu.
 
-### LK:n verfiointi brute force -algoritmin tuloksilla
+### LK-algoritmin verfiointi brute force -algoritmin tuloksilla
 
 ![LK verifiointi random 20s](/images/lk_verifications_random_20s.png)
 
@@ -108,7 +108,52 @@ rand9       2829.56  2829.56     0.00     0.00
 SUMMARY    21989.68 21989.68     0.00     0.00
 ```
 
-Skriptillä `/problems/create_tsp_problem.py` luotiin 4–12 solmun satunnaisia tsp-ongelmia, joiden optimaalinen reitti ratkaistiin skriptillä `/exact_tsp_solver/exact_tsp_solver.py` käymällä läpi kaikki mahdolliset reitit. LK algoritmin oikeellisuus pienillä solmujen määrällä varmistettiin ratkaisemalla pienet tsp-ongelmat ja vertaamalla tulosta optimaaliseen reittiin. Kuten kuvasta näkyy, niin LK-algoritmi löysi optimaalisen ratkaisun kaikkiin tsp-ongelmiin.  
+Skriptillä `/problems/create_tsp_problem.py` luotiin 4–12 solmun satunnaisia tsp-ongelmia, joiden optimaalinen reitti ratkaistiin skriptillä `/exact_tsp_solver/exact_tsp_solver.py` käymällä läpi kaikki mahdolliset reitit. LK-algoritmin oikeellisuus pienillä solmujen määrällä varmistettiin ratkaisemalla tsp-ongelmat ja vertaamalla tulosta optimaaliseen reittiin. Kuten kuvasta näkyy, niin LK-algoritmi löysi optimaalisen ratkaisun kaikkiin tsp-ongelmiin.  
+
+### LK-algoritmin verfiointi TSPLIB95-datalla
+
+![TSPLIB95-kuvaajat](/images/lk_verifications_tsplib95_20s.png)
+
+```
+Configuration parameters:
+  MAX_LEVEL   = 12
+  BREADTH     = [5, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  BREADTH_A   = 5
+  BREADTH_B   = 5
+  BREADTH_D   = 1
+  TIME_LIMIT  = 20.00
+
+Instance     OptLen   HeuLen   Gap(%)  Time(s)
+----------------------------------------------
+a280        2586.77  2617.49     1.19    20.00
+berlin52    7544.37  7544.37     0.00     0.19
+ch130       6110.86  6164.24     0.87    20.00
+ch150       6532.28  6552.30     0.31    20.00
+eil101       642.31   640.21     0.00    20.00
+eil51        429.98   428.87     0.00    20.00
+eil76        545.39   544.37     0.00    20.00
+kroA100    21285.44 21285.44     0.00    11.69
+kroC100    20750.76 20750.76     0.00     2.38
+kroD100    21294.29 21294.29     0.00    11.22
+lin105     14383.00 14383.00     0.00     2.70
+pcb442     50783.55 74322.54    46.35    20.00
+pr1002     259066.66 339278.81    30.96    20.00
+pr2392     378062.83 378062.83     0.00    12.97
+pr76       108159.44 108159.44     0.00     2.04
+rd100       7910.40  7910.40     0.00     2.35
+st70         678.60   677.11     0.00    20.00
+tsp225      3859.00  3936.55     2.01    20.00
+----------------------------------------------
+SUMMARY    910625.92 1014553.02     4.54    13.64
+```
+
+TSPLIB95-kirjastosta poimittiin kaikki tsp-ongelmat, joihin oli tarjolla optimaalinen ratkaisu. Tämän jälkeen varmistettiin LK-algoritmin oikeellisuus ratkaisemalla tsp-ongelmat ja vertaamalla saatua ratkaisua optimaaliseen ratkaisuun. Vertailuluku `gap` kertoo kuinka monta prosenttia löydetty reitti on optimaalista reittiä pidempi. Kuten nähdään niin löydetyt reitit ovat kahta poikkeusta lukuunottamatta 0-2% etäisyydellä optimaalisesta ratkaisusta eli erittäin lähellä. 
+
+### Poikkeustapauksen `pcb422` lähempi tarkastelu 
+
+![pcb422-ongelma](/images/lk_verification_pcb442_7200s.png)
+
+Tutkittiin lähemmin tsp-ongelmaa `pcb422` asettamalla aikaraja 7200 sekuntiin eli kahteen tuntiin. Pitkällä aikarajalla myös tämän tsp-ongelman likiarvo saatiin lähelle optimaalista ratkaisua (1.16%).  
 
 
 ## 6. Sovelluksen puutteet ja kehitysmahdollisuudet

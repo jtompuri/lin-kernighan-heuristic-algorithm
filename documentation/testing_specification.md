@@ -82,7 +82,29 @@ Toimitetut yksikkötestit keskittyvät ohjelman eri osien oikeellisuuden varmist
 
 ### LK:n verfiointi brute force -algoritmin tuloksilla
 
-[](/images/lk_verifications_random_20s.png)
+[LK verifiointi random 20s](/images/lk_verifications_random_20s.png)
+
+```Configuration parameters:
+  MAX_LEVEL   = 12
+  BREADTH     = [5, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  BREADTH_A   = 5
+  BREADTH_B   = 5
+  BREADTH_D   = 1
+  TIME_LIMIT  = 20.00
+
+Instance     OptLen   HeuLen   Gap(%)  Time(s)
+----------------------------------------------
+rand10      2862.79  2862.79     0.00     0.01
+rand11      2866.43  2866.43     0.00     0.01
+rand12      2894.02  2894.02     0.00     0.01
+rand4       2032.77  2032.77     0.00     0.00
+rand5       2079.70  2079.70     0.00     0.00
+rand6       2127.74  2127.74     0.00     0.00
+rand7       2147.16  2147.16     0.00     0.00
+rand8       2149.50  2149.50     0.00     0.00
+rand9       2829.56  2829.56     0.00     0.00
+----------------------------------------------
+SUMMARY    21989.68 21989.68     0.00     0.00```
 
 Skriptillä `/problems/create_tsp_problem.py` luotiin 4–12 solmun satunnaisia tsp-ongelmia, joiden optimaalinen reitti ratkaistiin skriptillä `/exact_tsp_solver/exact_tsp_solver.py` käymällä läpi kaikki mahdolliset reitit. LK algoritmin oikeellisuus pienillä solmujen määrällä varmistettiin ratkaisemalla pienet tsp-ongelmat ja vertaamalla tulosta optimaaliseen reittiin. Kuten kuvasta näkyy, niin LK-algoritmi löysi optimaalisen ratkaisun kaikkiin tsp-ongelmiin.  
 

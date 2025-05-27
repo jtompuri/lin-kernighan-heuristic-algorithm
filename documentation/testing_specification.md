@@ -4,7 +4,7 @@ Tämä dokumentti kuvaa Lin-Kernighan TSP-ratkaisijan Python-toteutuksen testaus
 
 ## 1. Yksikkötestauksen kattavuusraportti
 
-Yksikkötestien kattavuus on tällä hetkellä 92%. Yksityiskohtainen kattavuusraportti löytyy html-muodossa kansiosta [`htmlcov`](/htmlcov/index.html). Yksikkötestauksen kattavuusraportti on tuotettu komennolla `pytest --cov=lin_kernighan_tsp_solver --cov-report=html --cov-report=term --cov-report=term-missing`.
+Yksikkötestien kattavuus on tällä hetkellä 92%. Yksityiskohtainen kattavuusraportti löytyy html-muodossa kansiosta [`htmlcov`](/htmlcov/index.html). Et voi selata raporttia Githubissa, vaan sinun pitää kloonata projekti paikalliseen kansioon ja avata index.html-sivu selaimeen. Yksikkötestauksen kattavuusraportti on tuotettu komennolla `pytest --cov=lin_kernighan_tsp_solver --cov-report=html --cov-report=term --cov-report=term-missing`.
 
 ## 2. Mitä on testattu, miten tämä tehtiin?
 
@@ -81,3 +81,21 @@ Testit on kirjoitettu `pytest`-testauskehyksellä ja ne voidaan toistaa seuraava
 Toimitetut yksikkötestit keskittyvät ohjelman eri osien oikeellisuuden varmistamiseen. Itse pääratkaisijaskripti (`lin_kernighan_tsp_solver.py`) sisältää toiminnallisuuden (`plot_all_tours` ja `display_summary_table`), joka visualisoi ja taulukoi tulokset useille TSPLIB-instansseille. Tämä toimii empiirisenä tulosten esityksenä algoritmin suorituskyvystä.
 
 Mahdollisia jatkokehitysideoita empiiriseen testaukseen voisivat olla skaalautuvuustestit (ajoaika vs. solmumäärä) tai `LK_CONFIG`-parametrien vaikutuksen systemaattinen tutkiminen, joiden tulokset esitettäisiin graafeina. Nämä ovat kuitenkin erillisiä yksikkötestauksesta.
+
+## 6. Sovelluksen puutteet ja kehitysmahdollisuudet
+
+Vaikka sovellus on testattu kattavasti ja saavuttaa hyvän testikattavuuden, on olemassa joitakin tunnistettuja puutteita ja mahdollisia kehityskohteita:
+
+*   **Testikattavuus:** Vaikka 92% on hyvä, jäljellä olevat 8% koodista (lukuun ottamatta `if __name__ == '__main__':` -lohkoa) sisältävät pääasiassa monimutkaisempia ehtolauseita ja poikkeustilanteiden käsittelyä algoritmin ytimessä (`step`, `alternate_step`, `lk_search`). Näiden täydellinen kattaminen vaatisi erittäin spesifisiä ja mahdollisesti vaikeasti konstruoitavia testiskenaarioita.
+    *   Esimerkiksi tietyt `continue`-lauseet syvällä sisäkkäisissä silmukoissa (`step`-funktiossa rivit 243, 338) tai harvinaisemmat poistumisehdot `alternate_step`-funktiossa (rivi 466, 482, 501) ovat vielä kattamatta.
+    *   Myös `lin_kernighan`-funktion sisäinen `while True:` -silmukan poistumisehto rivillä 563 (kun `current_tour_obj.cost` ei parane) vaatisi tarkempaa testausta eri skenaarioissa.
+    *   `lk_search`-funktion sisällä olevat `gain_threshold`-laskelmat ja niihin liittyvät ehdot (rivit 705-710) ovat osittain kattamatta.
+*   **TSPLIB-formaatin tuki:** Tällä hetkellä `read_tsp_file` tukee vain `EUC_2D`-tyyppisiä etäisyysmatriiseja. Laajempi tuki muille TSPLIB-formaateille (esim. `GEO`, `ATT`, eksplisiittiset matriisit) parantaisi sovelluksen käytettävyyttä. Jokainen uusi tuettu formaatti vaatisi omat yksikkötestinsä.
+*   **Naapurilistojen generointi:** Vain Delaunay-triangulaatioon perustuva naapurilista on implementoitu. Muiden naapuristrategioiden (esim. k-lähimmät naapurit, quadrant-naapurit) lisääminen voisi parantaa ratkaisun laatua tietyissä instansseissa. Nämä vaatisivat omat testinsä.
+*   **Parametrien viritys:** `LK_CONFIG`-sanakirjan parametrit ovat globaaleja ja niiden optimaaliset arvot voivat vaihdella instanssityypin ja -koon mukaan. Kehittyneempi parametrien hallinta tai automaattinen viritys voisi olla hyödyllistä. Tämän testaaminen olisi monimutkaista ja vaatisi todennäköisesti laajempaa empiiristä testausta.
+*   **Suorituskyky suurilla instansseilla:** Vaikka algoritmi on tehokas, Pythonin luontainen hitaus verrattuna käännettyihin kieliin voi rajoittaa suorituskykyä erittäin suurilla TSP-instansseilla (useita tuhansia solmuja). Kriittisten osien (esim. `Tour`-luokan operaatiot, etäisyyslaskenta) optimointi tai siirtäminen Cythoniin voisi olla kehityssuunta. Suorituskykytestaus ja profilointi auttaisivat tunnistamaan pullonkauloja.
+*   **Käyttöliittymä ja käytettävyys:** Nykyinen sovellus on komentorivipohjainen. Graafinen käyttöliittymä tai parempi integrointi muihin työkaluihin voisi parantaa käytettävyyttä.
+*   **Virheiden raportointi:** Vaikka virheitä käsitellään, käyttäjälle annettava palaute virhetilanteissa (esim. tiedostojen lukuvirheet) voisi olla yksityiskohtaisempaa ja ohjaavampaa.
+*   **Dokumentaatio:** Koodin sisäistä dokumentaatiota (docstringejä) voisi paikoin laajentaa selkeyden parantamiseksi, erityisesti monimutkaisimmissa algoritmin osissa. Myös käyttäjädokumentaatiota voisi laajentaa.
+
+Nämä kohdat tarjoavat suuntaviivoja sovelluksen jatkokehitykselle ja laadun parantamiselle.

@@ -84,7 +84,7 @@ Toimitetut yksikkötestit keskittyvät ohjelman eri osien oikeellisuuden varmist
 
 ![LK verifiointi random 20s](/images/lk_verifications_random_20s.png)
 
-``
+`
 Configuration parameters:
   MAX_LEVEL   = 12
   BREADTH     = [5, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
@@ -106,7 +106,7 @@ rand8       2149.50  2149.50     0.00     0.00
 rand9       2829.56  2829.56     0.00     0.00
 ----------------------------------------------
 SUMMARY    21989.68 21989.68     0.00     0.00
-``
+`
 
 Skriptillä `/problems/create_tsp_problem.py` luotiin 4–12 solmun satunnaisia tsp-ongelmia, joiden optimaalinen reitti ratkaistiin skriptillä `/exact_tsp_solver/exact_tsp_solver.py` käymällä läpi kaikki mahdolliset reitit. LK algoritmin oikeellisuus pienillä solmujen määrällä varmistettiin ratkaisemalla pienet tsp-ongelmat ja vertaamalla tulosta optimaaliseen reittiin. Kuten kuvasta näkyy, niin LK-algoritmi löysi optimaalisen ratkaisun kaikkiin tsp-ongelmiin.  
 

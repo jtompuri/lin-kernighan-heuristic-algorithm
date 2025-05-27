@@ -78,7 +78,7 @@ Testit on kirjoitettu `pytest`-testauskehyksellä ja ne voidaan toistaa seuraava
 
 ## 5. Ohjelman toiminnan empiirisen testauksen tulokset graafisessa muodossa
 
-Toimitetut yksikkötestit keskittyvät ohjelman eri osien oikeellisuuden varmistamiseen. Itse pääratkaisijaskripti (`lin_kernighan_tsp_solver.py`) sisältää toiminnallisuuden, joka visualisoi ja taulukoi tulokset useille TSPLIB-instansseille. Tämä toimii empiirisenä tulosten esityksenä algoritmin suorituskyvystä. Seuraavassa esitettävät kuvaajat on luotu 20 sekunnin aikarajalla ellei toisin ole mainittu.
+Toimitetut yksikkötestit keskittyvät ohjelman eri osien oikeellisuuden varmistamiseen. Pääskripti `lin_kernighan_tsp_solver.py` sisältää toiminnallisuuden, joka visualisoi ja taulukoi tulokset useille TSPLIB-instansseille. Tämä toimii empiirisenä tulosten esityksenä algoritmin suorituskyvystä. Seuraavassa esitettävät kuvaajat on luotu 20 sekunnin aikarajalla ellei toisin ole mainittu.
 
 ### LK-algoritmin verfiointi brute force -algoritmin tuloksilla
 

@@ -132,7 +132,7 @@ def test_tour_flip_and_update_cost_basic():
     )
 
     expected_internal_order_after_flip1 = [2, 1, 0, 3]
-    expected_get_tour_after_flip1 = [0, 3, 2, 1] # Normalized from [2,1,0,3]
+    expected_get_tour_after_flip1 = [0, 3, 2, 1]  # Normalized from [2,1,0,3]
     # Cost of [2,1,0,3]: d(2,1)+d(1,0)+d(0,3)+d(3,2) = 1+1+1+sqrt(2) = 3+sqrt(2) ~ 4.414
     expected_cost_after_flip1 = (
         dist_matrix[2, 1] + dist_matrix[1, 0] +
@@ -356,15 +356,19 @@ def test_tour_next_prev_parametrized(
          f"got {tour.prev(node_v)}")
 
 
-def test_tour_next_prev_empty_tour():
+def test_tour_next_prev_on_empty_tour():
     """
-    Tests that Tour.next() and Tour.prev() raise IndexError for an empty tour.
+    Tests that calling next() or prev() on an empty Tour raises IndexError.
     """
-    empty_tour = Tour([])
+    empty_tour_instance = Tour([])  # Creates a tour with n=0
+
+    assert empty_tour_instance.n == 0, "Empty tour should have n=0."
+
     with pytest.raises(IndexError, match="Cannot get next node from an empty tour."):
-        empty_tour.next(0)
+        empty_tour_instance.next(0)  # Argument value doesn't matter as it should fail before use.
+
     with pytest.raises(IndexError, match="Cannot get previous node from an empty tour."):
-        empty_tour.prev(0)
+        empty_tour_instance.prev(0)  # Argument value doesn't matter.
 
 
 def test_tour_next_prev_node_not_in_tour_if_pos_small():
@@ -471,3 +475,29 @@ def test_tour_get_tour_normalization(
     else:
         assert len(tour.order) == 0, \
             "Internal order should be empty for an empty initial tour"
+
+
+def test_tour_empty_sequence():
+    """Tests the sequence method on an empty tour."""
+    tour = Tour([])
+    assert not tour.sequence(0, 1, 2), "Sequence on empty tour should be False."
+    assert not tour.sequence(0, 0, 0), "Sequence on empty tour with same nodes should be False."
+
+
+def test_tour_empty_flip_and_update_cost(simple_tsp_setup):
+    """
+    Tests flip_and_update_cost on an empty tour.
+    It should do nothing and return 0.0 delta cost.
+    """
+    # We need dist_matrix, even if not used for an empty tour,
+    # because the method requires it as an argument.
+    _, dist_matrix, _, _, _, _, _ = simple_tsp_setup
+    tour = Tour([])
+    initial_cost = tour.cost  # Should be 0.0
+
+    delta = tour.flip_and_update_cost(0, 1, dist_matrix)
+
+    assert delta == 0.0, "Delta cost for flip on empty tour should be 0.0."
+    assert tour.cost == initial_cost, "Cost of empty tour should remain unchanged."
+    assert tour.cost == 0.0, "Cost of empty tour should be 0.0."
+    assert list(tour.order) == [], "Order of empty tour should remain empty."

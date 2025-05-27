@@ -4,7 +4,7 @@ Tämä dokumentti kuvaa Lin-Kernighan TSP-ratkaisijan Python-toteutuksen testaus
 
 ## 1. Yksikkötestauksen kattavuusraportti
 
-Yksikkötestauksen kattavuusraportti tuotettaisiin tyypillisesti erillisellä työkalulla, kuten `coverage.py`. Suorittamalla esimerkiksi komento `coverage run -m pytest && coverage report -m` projektin juuressa saataisiin yksityiskohtainen raportti siitä, mitkä koodirivit ja haarat testit kattavat. Tämän dokumentin puitteissa oletetaan, että tällainen raportti on ajettu ja sen tuloksia hyödynnetään testauksen kehittämisessä. Tavoitteena on mahdollisimman korkea testikattavuus kriittisille osille (nykyinen n. 92 %).
+Yksikkötestien kattavuus on tällä hetkellä 92%. Yksityiskohtainen kattavuusraportti löytyy html-muodossa kansiosta [`htmlcov`](/htmlcov/index.html). Yksikkötestauksen kattavuusraportti on tuotettu komennolla `pytest --cov=lin_kernighan_tsp_solver --cov-report=html --cov-report=term --cov-report=term-missing`.
 
 ## 2. Mitä on testattu, miten tämä tehtiin?
 

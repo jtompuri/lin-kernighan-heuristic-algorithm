@@ -40,7 +40,7 @@ Ohjelman pääkomponentit ovat:
     *   `chained_lin_kernighan`: Toteuttaa ketjutetun Lin-Kernighan-metaheuristiikan (Applegate et al., Algoritmi 15.5). Toistaa LK-ajoja `double_bridge`-kick-siirtoja välttääkseen paikallisia minimejä. Pysähtyy aikarajaan tai jos tunnettu optimi löydetään.
     *   `read_opt_tour`: Lukee optimaalisen kierroksen `.opt.tour`-tiedostosta (TSPLIB-muoto).
     *   `read_tsp_file`: Lukee TSP-instanssin koordinaatit `.tsp`-tiedostosta (tukee vain `EUC_2D`-tyyppiä).
-    *   `process_single_instance`: Käsittelee yhden TSP-instanssin: lataa datan, suorittaa `chained_lin_kernighan`-algoritmin ja laskee tilastot (kuten aukon optimaaliseen ratkaisuun).
+    *   `process_single_instance`: Käsittelee yhden TSP-instanssin: lataa datan, suorittaa `chained_lin_kernighan`-algoritmin ja laskee tilastot (kuten etäisyyden optimaaliseen ratkaisuun).
     *   `display_summary_table`: Tulostaa yhteenvedon käsiteltyjen instanssien tuloksista.
     *   `plot_all_tours`: Visualisoi heuristiset ja (jos saatavilla) optimaaliset kierrokset.
 
@@ -55,31 +55,31 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 
 **Aikavaativuus (arviot):**
 
-*   **`build_distance_matrix`**: O(n^2), missä n on solmujen määrä, koska kaikki solmuparien väliset etäisyydet lasketaan.
-*   **`delaunay_neighbors`**: SciPy:n Delaunay-triangulaatio on tyypillisesti O(n log n) 2D-tapauksessa.
+*   **`build_distance_matrix`**: $O(n^2)$, missä n on solmujen määrä, koska kaikki solmuparien väliset etäisyydet lasketaan.
+*   **`delaunay_neighbors`**: SciPy:n Delaunay-triangulaatio on tyypillisesti $O(n * log n)$ 2D-tapauksessa.
 *   **`Tour`-luokan operaatiot:**
-    *   `next`, `prev`: O(1) `pos`-taulukon ansiosta.
-    *   `flip`: O(k), missä k on käännettävän segmentin pituus (pahimmillaan O(n)).
-    *   `flip_and_update_cost`: O(k) segmentin kääntämiselle, O(1) kustannuksen päivitykselle (2-opt).
-*   **`step` ja `alternate_step`:** Näiden funktioiden kompleksisuus on merkittävä. Ne iteroivat naapureiden yli (Delaunay rajoittaa määrää). Rekursiosyvyys (`MAX_LEVEL`) ja haun leveys (`BREADTH`) vaikuttavat suorituskykyyn. Karkeasti arvioiden yhden `step`-kutsun kompleksisuus voisi olla luokkaa O(MAX_LEVEL * BREADTH_avg * n * C), missä C liittyy naapurien käsittelyyn ja etäisyyslaskuihin.
+    *   `next`, `prev`: $O(1)$ `pos`-taulukon ansiosta.
+    *   `flip`: $O(k)$, missä k on käännettävän segmentin pituus (pahimmillaan $O(n)$).
+    *   `flip_and_update_cost`: $O(k)$ segmentin kääntämiselle, $O(1)$ kustannuksen päivitykselle (2-opt).
+*   **`step` ja `alternate_step`:** Näiden funktioiden kompleksisuus on merkittävä. Ne iteroivat naapureiden yli (Delaunay rajoittaa määrää). Rekursiosyvyys (`MAX_LEVEL`) ja haun leveys (`BREADTH`) vaikuttavat suorituskykyyn. Karkeasti arvioiden yhden `step`-kutsun kompleksisuus voisi olla luokkaa $O(MAX_LEVEL * BREADTH_avg * n * C)$, missä C liittyy naapurien käsittelyyn ja etäisyyslaskuihin.
 *   **`lk_search`**: Kutsuu `step`- ja `alternate_step`-funktioita. Sen kompleksisuus on verrannollinen näiden funktioiden kompleksisuuteen.
 *   **`lin_kernighan`**: Iteroi, kunnes parannusta ei löydy. Yhden iteraation aikana kutsutaan `lk_search` enintään `n` kertaa (merkityille solmuille). Iterointien määrä on instanssiriippuvainen.
-*   **`chained_lin_kernighan`**: Suorittaa `lin_kernighan`-funktion useita kertoja, joiden välissä on O(n)-kompleksisuuden `double_bridge`-kick. Kokonaiskestoa rajoittaa annettu aikaraja.
-*   **Kokonaisaikavaativuus:** Empiirisesti Lin-Kernighan-heuristiikan on raportoitu skaalautuvan usein luokkaa O(n^2.2) - O(n^3) tyypillisillä euklidisilla instansseilla, mutta tämä ei ole tiukka teoreettinen yläraja. Toteutuksen suorituskykyä dominoivat `step`- ja `alternate_step`-funktioiden sisäiset silmukat ja rekursio.
+*   **`chained_lin_kernighan`**: Suorittaa `lin_kernighan`-funktion useita kertoja, joiden välissä on $O(n)$-kompleksisuuden `double_bridge`-kick. Kokonaiskestoa rajoittaa annettu aikaraja.
+*   **Kokonaisaikavaativuus:** Empiirisesti Lin-Kernighan-heuristiikan on raportoitu skaalautuvan usein luokkaa $O(n^2.2)$ - $O(n^3)$ tyypillisillä euklidisilla instansseilla, mutta tämä ei ole tiukka teoreettinen yläraja. Toteutuksen suorituskykyä dominoivat `step`- ja `alternate_step`-funktioiden sisäiset silmukat ja rekursio.
 
 **Tilavaativuus:**
 
-*   **`coords`**: O(n) koordinaateille.
-*   **`D` (etäisyysmatriisi)**: O(n^2). Tämä on usein dominoiva tekijä.
-*   **`neigh` (naapurilistat)**: O(n*k_avg), missä k_avg on keskimääräinen Delaunay-naapureiden määrä. Pahimmillaan O(n^2), mutta käytännössä paljon vähemmän (lähellä O(n) tasomaisille graafeille).
-*   **`Tour`-olio**: `order`- ja `pos`-taulukot vaativat O(n) tilaa.
+*   **`coords`**: $O(n)$ koordinaateille.
+*   **`D` (etäisyysmatriisi)**: $O(n^2)$. Tämä on usein dominoiva tekijä.
+*   **`neigh` (naapurilistat)**: $O(n * k_avg)$, missä k_avg on keskimääräinen Delaunay-naapureiden määrä. Pahimmillaan $O(n^2)$, mutta käytännössä paljon vähemmän (lähellä $O(n)$ tasomaisille graafeille).
+*   **`Tour`-olio**: `order`- ja `pos`-taulukot vaativat $O(n)$ tilaa.
 *   **Rekursiopino (`step`)**: Syvyys enintään `MAX_LEVEL`.
-*   **Kokonais_tilavaativuus**: Pääasiassa O(n^2) etäisyysmatriisin vuoksi.
+*   **Kokonais_tilavaativuus**: Pääasiassa $O(n^2)$ etäisyysmatriisin vuoksi.
 
 ## 3. Suorituskyky- ja O-analyysivertailu
 
-*   **Teoreettinen vs. Käytännön suorituskyky:** Vaikka tarkkaa O-notaatiota on vaikea antaa koko algoritmille, sen komponenttien analyysi (esim. O(n^2) etäisyysmatriisille) auttaa ymmärtämään pullonkauloja. LK:n vahvuus on sen erinomainen empiirinen suorituskyky monissa TSP-instansseissa, vaikka teoreettiset takuut puuttuvat.
-*   **Tietorakenteiden vaikutus:** `Tour`-luokan `pos`-taulukko mahdollistaa O(1)-aikaiset `next`- ja `prev`-kyselyt, mikä on kriittistä algoritmin tehokkuudelle.
+*   **Teoreettinen vs. Käytännön suorituskyky:** Vaikka tarkkaa O-notaatiota on vaikea antaa koko algoritmille, sen komponenttien analyysi (esim. $O(n^2)$ etäisyysmatriisille) auttaa ymmärtämään pullonkauloja. LK:n vahvuus on sen erinomainen empiirinen suorituskyky monissa TSP-instansseissa, vaikka teoreettiset takuut puuttuvat.
+*   **Tietorakenteiden vaikutus:** `Tour`-luokan `pos`-taulukko mahdollistaa $O(1)$-aikaiset `next`- ja `prev`-kyselyt, mikä on kriittistä algoritmin tehokkuudelle.
 *   **Delaunay-naapurien käyttö:** Rajoittamalla ehdokassiirrot Delaunay-naapureihin vähennetään merkittävästi tutkittavien siirtojen määrää verrattuna kaikkien mahdollisten naapureiden tarkasteluun, mikä parantaa suorituskykyä erityisesti suurilla instansseilla.
 *   **Parametrien (`MAX_LEVEL`, `BREADTH`) vaikutus:** Nämä parametrit tarjoavat kompromissin ratkaisun laadun ja laskenta-ajan välillä. Suuremmat arvot voivat johtaa parempiin ratkaisuihin, mutta lisäävät laskenta-aikaa.
 

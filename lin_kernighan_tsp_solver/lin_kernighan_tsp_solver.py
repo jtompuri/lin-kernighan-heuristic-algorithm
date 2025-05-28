@@ -46,7 +46,7 @@ LK_CONFIG = {
     "BREADTH_A": 5,  # Search breadth for y1 in alternate_step()
     "BREADTH_B": 5,  # Search breadth for y2 in alternate_step()
     "BREADTH_D": 1,  # Search breadth for y3 in alternate_step()
-    "TIME_LIMIT": 1.0,  # Default time limit for chained_lin_kernighan (s)
+    "TIME_LIMIT": 20.0,  # Default time limit for chained_lin_kernighan (s)
 }
 
 
@@ -1040,15 +1040,15 @@ def plot_all_tours(results_data: List[Dict[str, Any]]) -> None:
             title = f"{r_item['name']}"
             # Safely get gap, opt_len, heu_len for the title
             gap_val = r_item.get('gap')
-            opt_len_val = r_item.get('opt_len')
-            heu_len_val = r_item.get('heu_len')
+            # opt_len_val = r_item.get('opt_len')
+            # heu_len_val = r_item.get('heu_len')
 
             if gap_val is not None and gap_val != float('inf'):
                 title += f" gap={gap_val:.2f}%"
-            if opt_len_val is not None:
-                title += f" OptLen={opt_len_val:.2f}"
-            if heu_len_val is not None:
-                title += f" HeuLen={heu_len_val:.2f}"
+            # if opt_len_val is not None:
+            #     title += f" OptLen={opt_len_val:.2f}"
+            # if heu_len_val is not None:
+            #     title += f" HeuLen={heu_len_val:.2f}"
             ax.set_title(title)
             ax.set_xticks([])  # Hide ticks and labels
             ax.set_yticks([])

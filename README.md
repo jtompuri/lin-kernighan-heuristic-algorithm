@@ -15,7 +15,6 @@ performed for it. The script displays a summary table and plots of the tours.
 
 ## Usage
 
-Usage:
   1. Ensure all dependencies are installed:
      ```bash
      pip install numpy matplotlib scipy

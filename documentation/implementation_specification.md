@@ -12,7 +12,7 @@ Ohjelman pääkomponentit ovat:
     *   `TSP_FOLDER_PATH`: Polku TSPLIB-instanssitiedostoihin.
     *   `FLOAT_COMPARISON_TOLERANCE`: Toleranssi liukulukujen vertailuun.
     *   `MAX_SUBPLOTS_IN_PLOT`: Maksimimäärä alikaavioita tulosten visualisoinnissa.
-    *   `LK_CONFIG`: Sanakirja, joka sisältää Lin-Kernighan-algoritmin parametrit, kuten `MAX_LEVEL` (rekursion maksimisyvyys), `BREADTH` (haun leveys eri tasoilla) ja aikarajat.
+    *   `LK_CONFIG`: Sanakirja, joka sisältää Lin-Kernighan-algoritmin parametrit. Näihin kuuluvat `MAX_LEVEL` (rekursion maksimisyvyys `step`-funktiossa), `BREADTH` (haun leveys `step`-funktion eri tasoilla), `BREADTH_A`, `BREADTH_B`, `BREADTH_D` (haun leveydet `alternate_step`-funktion eri vaiheissa) sekä oletusaikarajat.
 
 2.  **`Tour`-luokka:**
     *   Edustaa kierrosta (solmujen permutaatiota).
@@ -88,7 +88,7 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 **Puutteet:**
 
 1.  **Rajoitettu tuki etäisyystyypeille:** Ohjelma tukee tällä hetkellä vain `EUC_2D`-tyyppisiä TSPLIB-instansseja.
-2.  **Kiinteät parametrit:** `LK_CONFIG`-asetukset ovat kiinteitä. Dynaamisesti mukautuvat parametrit voisivat parantaa suorituskykyä eri instanssityypeillä.
+2.  **Kiinteät ja globaalit parametrit:** `LK_CONFIG`-asetukset ovat globaalisti määriteltyjä ja kiinteitä ajon aikana. Dynaamisesti mukautuvat parametrit voisivat parantaa suorituskykyä, ja parametrien välittäminen funktioille globaalin muuttujan sijaan voisi parantaa modulaarisuutta ja testattavuutta monimutkaisemmissa käyttötapauksissa.
 3.  **Yksinkertainen perturbaatio:** `double_bridge` on yleinen potkumenetelmä, mutta kehittyneempiä tai vaihtelevia perturbaatiostrategioita voitaisiin harkita.
 4.  **Ei rinnakkaistusta:** Algoritmin suoritus voitaisiin mahdollisesti nopeuttaa rinnakkaistamalla esimerkiksi `lk_search`-kutsuja eri aloituspisteille tai ajamalla useita `chained_lin_kernighan`-ketjuja rinnakkain.
 5.  **Virheidenkäsittely tiedostojen lukemisessa:** Vaikka virheitä käsitellään, käyttäjälle annettava palaute voisi olla yksityiskohtaisempaa (esim. `read_opt_tour` ja `read_tsp_file` voisivat antaa tarkempia virheilmoituksia kommentoitujen `print`-kutsujen sijaan).
@@ -103,5 +103,5 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 5.  **Rinnakkaistus:** Tutkitaan mahdollisuuksia rinnakkaistaa laskentaa (esim. käyttämällä `multiprocessing`-kirjastoa).
 6.  **Koodin profilointi ja optimointi:** Profiloidaan koodi säännöllisesti ja optimoidaan kriittisimpiä osia.
 7.  **Käyttöliittymä:** Graafinen käyttöliittymä voisi helpottaa ohjelman käyttöä ja tulosten analysointia.
-8.  **Testaus ja validointi:** Laajennetaan testausta kattamaan enemmän reunatapauksia ja erilaisia instansseja. Varmistetaan tulosten oikeellisuus vertaamalla tunnettuihin optimiratkaisuihin ja muihin ratkaisijoihin.
-9.  **Dokumentaation parantaminen:** Lisätään yksityiskohtaisempaa dokumentaatiota koodin sisälle ja ulkoisiin dokumentteihin.
+8.  **Testaus ja validointi:** Laajennetaan testausta kattamaan enemmän reunatapauksia, erilaisia instansseja ja erityisesti algoritmin ytimen monimutkaisia ehtolauseita tavoitteena korkeampi testikattavuus. Varmistetaan tulosten oikeellisuus vertaamalla tunnettuihin optimiratkaisuihin ja tarvittaessa muihin ratkaisijoihin.
+9.  **Dokumentaation parantaminen:** Lisätään yksityiskohtaisempaa dokumentaatiota koodin sisälle (erityisesti `step`- ja `alternate_step`-funktioiden monimutkaisiin osiin viitaten algoritmien alkuperäisiin kuvauksiin) ja ulkoisiin dokumentteihin.

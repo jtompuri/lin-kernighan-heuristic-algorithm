@@ -56,7 +56,7 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 **Aikavaativuus (arviot):**
 
 *   **`build_distance_matrix`**: $O(n^2)$, missä n on solmujen määrä, koska kaikki solmuparien väliset etäisyydet lasketaan.
-*   **`delaunay_neighbors`**: SciPy:n Delaunay-triangulaatio on tyypillisesti $O(n * log n)$ 2D-tapauksessa.
+*   **`delaunay_neighbors`**: SciPy:n Delaunay-triangulaatio on tyypillisesti $O(n * log(n))$ 2D-tapauksessa.
 *   **`Tour`-luokan operaatiot:**
     *   `next`, `prev`: $O(1)$ `pos`-taulukon ansiosta.
     *   `flip`: $O(k)$, missä k on käännettävän segmentin pituus (pahimmillaan $O(n)$).

@@ -92,7 +92,6 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 3.  **Yksinkertainen siirto:** `double_bridge` on yleinen kick-menetelmä, mutta kehittyneempiä tai vaihtelevia strategioita voitaisiin harkita.
 4.  **Ei rinnakkaistusta:** Algoritmin suoritus voitaisiin mahdollisesti nopeuttaa rinnakkaistamalla esimerkiksi `lk_search`-kutsuja eri aloituspisteille tai ajamalla useita `chained_lin_kernighan`-ketjuja rinnakkain.
 5.  **Virheidenkäsittely tiedostojen lukemisessa:** Vaikka virheitä käsitellään, käyttäjälle annettava palaute voisi olla yksityiskohtaisempaa (esim. `read_opt_tour` ja `read_tsp_file` voisivat antaa tarkempia virheilmoituksia kommentoitujen `print`-kutsujen sijaan).
-6.  **Kustannusten päivitys `step`-funktiossa:** `step`-funktio kumuloi `delta`-arvoa (saavutettua hyötyä) sen sijaan, että laskisi kierroksen kokonaiskustannuksen jokaisen väliaikaisen käännön jälkeen uudelleen. Tämä on tehokasta, mutta vaatii huolellisuutta logiikassa. Kuitenkin, kun parantava sekvenssi löydetään, se sovelletaan alkuperäiseen kierrokseen `flip_and_update_cost`-metodilla, joka laskee kustannusmuutokset tarkasti 2-opt-siirroille.
 
 **Parannusehdotukset:**
 

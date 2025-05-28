@@ -71,7 +71,7 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 
 *   **`coords`**: $O(n)$ koordinaateille.
 *   **`D` (etäisyysmatriisi)**: $O(n^2)$. Tämä on usein dominoiva tekijä.
-*   **`neigh` (naapurilistat)**: $O(n * k_avg)$, missä k_avg on keskimääräinen Delaunay-naapureiden määrä. Pahimmillaan $O(n^2)$, mutta käytännössä paljon vähemmän (lähellä $O(n)$ tasomaisille graafeille).
+*   **`neigh` (naapurilistat)**: $O(n * k avg)$, missä k_avg on keskimääräinen Delaunay-naapureiden määrä. Pahimmillaan $O(n^2)$, mutta käytännössä paljon vähemmän (lähellä $O(n)$ tasomaisille graafeille).
 *   **`Tour`-olio**: `order`- ja `pos`-taulukot vaativat $O(n)$ tilaa.
 *   **Rekursiopino (`step`)**: Syvyys enintään `MAX_LEVEL`.
 *   **Kokonais_tilavaativuus**: Pääasiassa $O(n^2)$ etäisyysmatriisin vuoksi.

@@ -46,7 +46,7 @@ LK_CONFIG = {
     "BREADTH_A": 5,  # Search breadth for y1 in alternate_step()
     "BREADTH_B": 5,  # Search breadth for y2 in alternate_step()
     "BREADTH_D": 1,  # Search breadth for y3 in alternate_step()
-    "TIME_LIMIT": 5.0,  # Default time limit for chained_lin_kernighan (s)
+    "TIME_LIMIT": 20.0,  # Default time limit for chained_lin_kernighan (s)
 }
 
 

@@ -39,8 +39,8 @@ Ohjelman pääkomponentit ovat:
 5.  **Kokonaisratkaisu ja tiedostonkäsittely:**
     *   `chained_lin_kernighan`: Toteuttaa ketjutetun Lin-Kernighan-metaheuristiikan (Applegate et al., Algoritmi 15.5). Toistaa LK-ajoja `double_bridge`-kick-siirtoja välttääkseen paikallisia minimejä. Pysähtyy aikarajaan tai jos tunnettu optimi löydetään.
     *   `read_opt_tour`: Lukee optimaalisen kierroksen `.opt.tour`-tiedostosta (TSPLIB-muoto).
-    *   `read_tsp_file`: Lukee TSP-instanssin koordinaatit `.tsp`-tiedostosta (tukee vain `EUC_2D`-tyyppiä).
-    *   `process_single_instance`: Käsittelee yhden TSP-instanssin: lataa datan, suorittaa `chained_lin_kernighan`-algoritmin ja laskee tilastot (kuten etäisyyden optimaaliseen ratkaisuun).
+    *   `read_tsp_file`: Lukee TSP-ongelman koordinaatit `.tsp`-tiedostosta (tukee vain `EUC_2D`-tyyppiä).
+    *   `process_single_instance`: Käsittelee yhden TSP-ongelman: lataa datan, suorittaa `chained_lin_kernighan`-algoritmin ja laskee tilastot (kuten etäisyyden optimaaliseen ratkaisuun).
     *   `display_summary_table`: Tulostaa yhteenvedon käsiteltyjen instanssien tuloksista.
     *   `plot_all_tours`: Visualisoi heuristiset ja (jos saatavilla) optimaaliset kierrokset.
 
@@ -87,7 +87,7 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 
 **Puutteet:**
 
-1.  **Rajoitettu tuki etäisyystyypeille:** Ohjelma tukee tällä hetkellä vain `EUC_2D`-tyyppisiä TSPLIB-instansseja.
+1.  **Rajoitettu tuki etäisyystyypeille:** Ohjelma tukee tällä hetkellä vain `EUC_2D`-tyyppisiä TSPLIB-tiedostoja.
 2.  **Kiinteät ja globaalit parametrit:** `LK_CONFIG`-asetukset ovat globaalisti määriteltyjä ja kiinteitä ajon aikana. Dynaamisesti mukautuvat parametrit voisivat parantaa suorituskykyä, ja parametrien välittäminen funktioille globaalin muuttujan sijaan voisi parantaa modulaarisuutta ja testattavuutta monimutkaisemmissa käyttötapauksissa.
 3.  **Yksinkertainen siirto:** `double_bridge` on yleinen kick-menetelmä, mutta kehittyneempiä tai vaihtelevia strategioita voitaisiin harkita.
 4.  **Ei rinnakkaistusta:** Algoritmin suoritus voitaisiin mahdollisesti nopeuttaa rinnakkaistamalla esimerkiksi `lk_search`-kutsuja eri aloituspisteille tai ajamalla useita `chained_lin_kernighan`-ketjuja rinnakkain.
@@ -97,11 +97,9 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 **Parannusehdotukset:**
 
 1.  **Laajempi TSPLIB-tuki:** Lisätään tuki muille etäisyysfunktioille (esim. `GEO`, `ATT`).
-2.  **Adaptiiviset parametrit:** Kehitetään mekanismeja, jotka säätävät `MAX_LEVEL`- ja `BREADTH`-parametreja dynaamisesti instanssin ominaisuuksien tai haun edistymisen perusteella.
+2.  **Adaptiiviset parametrit:** Kehitetään mekanismeja, jotka säätävät `MAX_LEVEL`- ja `BREADTH`-parametreja dynaamisesti ongelman ominaisuuksien tai haun edistymisen perusteella.
 3.  **Kehittyneemmät ehdokasstrategiat:** Otetaan käyttöön kehittyneempiä ehdokaslistojen generointimenetelmiä (esim. alpha-läheisyys).
 4.  **Monipuolisemmat siirrot:** Kokeillaan ja implementoidaan muita kick-mekanismeja `chained_lin_kernighan`-algoritmiin.
 5.  **Rinnakkaistus:** Tutkitaan mahdollisuuksia rinnakkaistaa laskentaa (esim. käyttämällä `multiprocessing`-kirjastoa).
 6.  **Koodin profilointi ja optimointi:** Profiloidaan koodi säännöllisesti ja optimoidaan kriittisimpiä osia.
 7.  **Käyttöliittymä:** Graafinen käyttöliittymä voisi helpottaa ohjelman käyttöä ja tulosten analysointia.
-8.  **Testaus ja validointi:** Laajennetaan testausta kattamaan enemmän reunatapauksia, erilaisia instansseja ja erityisesti algoritmin ytimen monimutkaisia ehtolauseita tavoitteena korkeampi testikattavuus. Varmistetaan tulosten oikeellisuus vertaamalla tunnettuihin optimiratkaisuihin ja tarvittaessa muihin ratkaisijoihin.
-9.  **Dokumentaation parantaminen:** Lisätään yksityiskohtaisempaa dokumentaatiota koodin sisälle (erityisesti `step`- ja `alternate_step`-funktioiden monimutkaisiin osiin viitaten algoritmien alkuperäisiin kuvauksiin) ja ulkoisiin dokumentteihin.

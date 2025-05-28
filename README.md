@@ -40,6 +40,46 @@ tours if the optimal is available, otherwise just the heuristic tour). Configura
 parameters for the LK algorithm can be adjusted in the `LK_CONFIG` dictionary
 within the script.
 
+## Example output using TSPLIB95 
+
+Here is the example output using defaults: 
+
+![Example output plots](/images/lk_verifications_tsplib95_20s.png)
+
+```
+Configuration parameters:
+  MAX_LEVEL   = 12
+  BREADTH     = [5, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  BREADTH_A   = 5
+  BREADTH_B   = 5
+  BREADTH_D   = 1
+  TIME_LIMIT  = 20.00
+
+Instance     OptLen   HeuLen   Gap(%)  Time(s)
+----------------------------------------------
+a280        2586.77  2617.49     1.19    20.00
+berlin52    7544.37  7544.37     0.00     0.19
+ch130       6110.86  6164.24     0.87    20.00
+ch150       6532.28  6552.30     0.31    20.00
+eil101       642.31   640.21     0.00    20.00
+eil51        429.98   428.87     0.00    20.00
+eil76        545.39   544.37     0.00    20.00
+kroA100    21285.44 21285.44     0.00    11.69
+kroC100    20750.76 20750.76     0.00     2.38
+kroD100    21294.29 21294.29     0.00    11.22
+lin105     14383.00 14383.00     0.00     2.70
+pcb442     50783.55 74322.54    46.35    20.00
+pr1002     259066.66 339278.81    30.96    20.00
+pr2392     378062.83 378062.83     0.00    12.97
+pr76       108159.44 108159.44     0.00     2.04
+rd100       7910.40  7910.40     0.00     2.35
+st70         678.60   677.11     0.00    20.00
+tsp225      3859.00  3936.55     2.01    20.00
+----------------------------------------------
+SUMMARY    910625.92 1014553.02     4.54    13.64
+```
+
+
 ## Course documentation (in Finnish)
 
 - [Määrittelydokumentti](/documentation/requirements_specification.md)

@@ -13,6 +13,8 @@ against the known optimal solution and calculates the percentage gap. If no opti
 tour file is available, the instance is still processed, but no gap calculation is
 performed for it. The script displays a summary table and plots of the tours.
 
+## Usage
+
 Usage:
   1. Ensure all dependencies are installed:
      ```bash

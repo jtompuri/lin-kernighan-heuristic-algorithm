@@ -102,3 +102,11 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 5.  **Rinnakkaistus:** Tutkitaan mahdollisuuksia rinnakkaistaa laskentaa (esim. käyttämällä `multiprocessing`-kirjastoa).
 6.  **Koodin profilointi ja optimointi:** Profiloidaan koodi säännöllisesti ja optimoidaan kriittisimpiä osia.
 7.  **Käyttöliittymä:** Graafinen käyttöliittymä voisi helpottaa ohjelman käyttöä ja tulosten analysointia.
+
+## 5. Lähteet
+
+[^1]: Applegate, David L. & Bixby, Robert E. & Chvtal,  Vaek & Cook, William J. (2006): *The Traveling Salesman Problem : A Computational Study*, Princeton University Press.
+
+[^2]: Lin, Shen & Kernighan, Brian W. (1973): ”An Effective Heuristic Algorithm for the Traveling-Salesman Problem”, Operations Research, Vol. 21, No. 2, s. 498–516.
+
+[3^]: Reinelt, Gerhard (1995): *TSPLIB95: TSP Library*, University of Heidelberg, Operations Research Group. Saatavilla osoitteessa: http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/

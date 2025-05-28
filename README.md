@@ -38,8 +38,11 @@ within this script.
 ## Course documentation (in Finnish)
 
 - [Määrittelydokumentti](/documentation/requirements_specification.md)
+- [Toteutusdokumentti](/documentation/implementation_specification.md)
+- [Testausdokumentti](/documentation/test_specification.md)
 - [Viikkoraportti 1](/reports/weekly_report_1.md)
 - [Viikkoraportti 2](/reports/weekly_report_2.md)
+- [Viikkoraportti 3](/reports/weekly_report_3.md)
 
 [^1]: Applegate, David L. & Bixby, Robert E. & Chvtal,  Vaek & Cook, William J. (2006): *The Traveling Salesman Problem : A Computational Study*, Princeton University Press.
 

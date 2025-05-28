@@ -61,7 +61,7 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
     *   `next`, `prev`: $O(1)$ `pos`-taulukon ansiosta.
     *   `flip`: $O(k)$, missä k on käännettävän segmentin pituus (pahimmillaan $O(n)$ ).
     *   `flip_and_update_cost`: $O(k)$ segmentin kääntämiselle, $O(1)$ kustannuksen päivitykselle (2-opt).
-*   **`step` ja `alternate_step`:** Näiden funktioiden kompleksisuus on merkittävä. Ne iteroivat naapureiden yli (Delaunay rajoittaa määrää). Rekursiosyvyys (`MAX_LEVEL`) ja haun leveys (`BREADTH`) vaikuttavat suorituskykyyn. Karkeasti arvioiden yhden `step`-kutsun kompleksisuus voisi olla luokkaa $O(MAX-LEVEL * BREADTH * n * C)$, missä C liittyy naapurien käsittelyyn ja etäisyyslaskuihin.
+*   **`step` ja `alternate_step`:** Näiden funktioiden kompleksisuus on merkittävä. Ne iteroivat naapureiden yli (Delaunay rajoittaa määrää). Rekursiosyvyys (`MAX_LEVEL`) ja haun leveys (`BREADTH`) vaikuttavat suorituskykyyn. Karkeasti arvioiden yhden `step`-kutsun kompleksisuus voisi olla luokkaa $O(MAXLEVEL * BREADTH * n * C)$, missä C liittyy naapurien käsittelyyn ja etäisyyslaskuihin.
 *   **`lk_search`**: Kutsuu `step`- ja `alternate_step`-funktioita. Sen kompleksisuus on verrannollinen näiden funktioiden kompleksisuuteen.
 *   **`lin_kernighan`**: Iteroi, kunnes parannusta ei löydy. Yhden iteraation aikana kutsutaan `lk_search` enintään `n` kertaa (merkityille solmuille). Iterointien määrä on instanssiriippuvainen.
 *   **`chained_lin_kernighan`**: Suorittaa `lin_kernighan`-funktion useita kertoja, joiden välissä on $O(n)$-kompleksisuuden `double_bridge`-kick. Kokonaiskestoa rajoittaa annettu aikaraja.
@@ -71,7 +71,7 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 
 *   **`coords`**: $O(n)$ koordinaateille.
 *   **`D` (etäisyysmatriisi)**: $O(n^2)$. Tämä on usein dominoiva tekijä.
-*   **`neigh` (naapurilistat)**: $O(n * k-avg)$, missä k-avg on keskimääräinen Delaunay-naapureiden määrä. Pahimmillaan $O(n^2)$, mutta käytännössä paljon vähemmän (lähellä $O(n)$ tasomaisille graafeille).
+*   **`neigh` (naapurilistat)**: $O(n * kavg)$, missä kavg on keskimääräinen Delaunay-naapureiden määrä. Pahimmillaan $O(n^2)$, mutta käytännössä paljon vähemmän (lähellä $O(n)$ tasomaisille graafeille).
 *   **`Tour`-olio**: `order`- ja `pos`-taulukot vaativat $O(n)$ tilaa.
 *   **Rekursiopino (`step`)**: Syvyys enintään `MAX_LEVEL`.
 *   **Kokonais_tilavaativuus**: Pääasiassa $O(n^2)$ etäisyysmatriisin vuoksi.

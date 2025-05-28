@@ -59,13 +59,13 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 *   **`delaunay_neighbors`**: SciPy:n Delaunay-triangulaatio on tyypillisesti $O(n * log(n))$ 2D-tapauksessa.
 *   **`Tour`-luokan operaatiot:**
     *   `next`, `prev`: $O(1)$ `pos`-taulukon ansiosta.
-    *   `flip`: $O(k)$, missä k on käännettävän segmentin pituus (pahimmillaan $O(n)$).
+    *   `flip`: $O(k)$, missä k on käännettävän segmentin pituus (pahimmillaan $O(n)$ ).
     *   `flip_and_update_cost`: $O(k)$ segmentin kääntämiselle, $O(1)$ kustannuksen päivitykselle (2-opt).
-*   **`step` ja `alternate_step`:** Näiden funktioiden kompleksisuus on merkittävä. Ne iteroivat naapureiden yli (Delaunay rajoittaa määrää). Rekursiosyvyys (`MAX_LEVEL`) ja haun leveys (`BREADTH`) vaikuttavat suorituskykyyn. Karkeasti arvioiden yhden `step`-kutsun kompleksisuus voisi olla luokkaa $O(MAX_LEVEL * BREADTH_avg * n * C)$, missä C liittyy naapurien käsittelyyn ja etäisyyslaskuihin.
+*   **`step` ja `alternate_step`:** Näiden funktioiden kompleksisuus on merkittävä. Ne iteroivat naapureiden yli (Delaunay rajoittaa määrää). Rekursiosyvyys (`MAX_LEVEL`) ja haun leveys (`BREADTH`) vaikuttavat suorituskykyyn. Karkeasti arvioiden yhden `step`-kutsun kompleksisuus voisi olla luokkaa $O(MAX\_LEVEL * BREADTH_avg * n * C)$, missä C liittyy naapurien käsittelyyn ja etäisyyslaskuihin.
 *   **`lk_search`**: Kutsuu `step`- ja `alternate_step`-funktioita. Sen kompleksisuus on verrannollinen näiden funktioiden kompleksisuuteen.
 *   **`lin_kernighan`**: Iteroi, kunnes parannusta ei löydy. Yhden iteraation aikana kutsutaan `lk_search` enintään `n` kertaa (merkityille solmuille). Iterointien määrä on instanssiriippuvainen.
 *   **`chained_lin_kernighan`**: Suorittaa `lin_kernighan`-funktion useita kertoja, joiden välissä on $O(n)$-kompleksisuuden `double_bridge`-kick. Kokonaiskestoa rajoittaa annettu aikaraja.
-*   **Kokonaisaikavaativuus:** Empiirisesti Lin-Kernighan-heuristiikan on raportoitu skaalautuvan usein luokkaa $O(n^2.2)$ - $O(n^3)$ tyypillisillä euklidisilla instansseilla, mutta tämä ei ole tiukka teoreettinen yläraja. Toteutuksen suorituskykyä dominoivat `step`- ja `alternate_step`-funktioiden sisäiset silmukat ja rekursio.
+*   **Kokonaisaikavaativuus:** Empiirisesti Lin-Kernighan-heuristiikan on raportoitu skaalautuvan usein luokkaa $O(n^{2.2})$ - $O(n^3)$ tyypillisillä euklidisilla instansseilla, mutta tämä ei ole tiukka teoreettinen yläraja. Toteutuksen suorituskykyä dominoivat `step`- ja `alternate_step`-funktioiden sisäiset silmukat ja rekursio.
 
 **Tilavaativuus:**
 

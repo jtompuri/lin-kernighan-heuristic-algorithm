@@ -28,7 +28,7 @@ Ohjelman pääkomponentit ovat:
 3.  **Aputoiminnot:**
     *   `build_distance_matrix`: Laskee painotetun etäisyysmatriisin koordinaateista (Euklidinen etäisyys).
     *   `delaunay_neighbors`: Generoi Delaunay-triangulaatioon perustuvat naapurilistat, joita käytetään ehdokassiirtojen rajaamiseen LK-algoritmissa.
-    *   `double_bridge`: Toteuttaa "double bridge" -perturbaation (4-opt-siirto) kierroksen monipuolistamiseksi ja paikallisista optimoista pakenemiseksi.
+    *   `double_bridge`: Toteuttaa "double bridge"-kick-siirron (4-opt-siirto) kierroksen satunnaiseksi rikastamiseksi ja paikallisen minimin välttämiseksi.
 
 4.  **Lin-Kernighan-algoritmin ydinlogiikka:**
     *   `step`: Rekursiivinen funktio, joka toteuttaa Lin-Kernighan-algoritmin ydinaskeleen (Applegate et al., Algoritmi 15.1). Tutkii k-opt-siirtoja (standardi- ja Mak-Morton-tyyppisiä) kierroksen parantamiseksi.
@@ -37,7 +37,7 @@ Ohjelman pääkomponentit ovat:
     *   `lin_kernighan`: Pääfunktio Lin-Kernighan-heuristiikalle (Applegate et al., Algoritmi 15.4). Soveltaa iteratiivisesti `lk_search`-funktiota merkityistä solmuista, kunnes parannusta ei enää löydy tai aikaraja saavutetaan.
 
 5.  **Kokonaisratkaisu ja tiedostonkäsittely:**
-    *   `chained_lin_kernighan`: Toteuttaa ketjutetun Lin-Kernighan-metaheuristiikan (Applegate et al., Algoritmi 15.5). Toistaa LK-ajoja `double_bridge`-potkuilla paikallisista optimoista pakenemiseksi. Pysähtyy aikarajaan tai jos tunnettu optimi löydetään.
+    *   `chained_lin_kernighan`: Toteuttaa ketjutetun Lin-Kernighan-metaheuristiikan (Applegate et al., Algoritmi 15.5). Toistaa LK-ajoja `double_bridge`-kick-siirtoja välttääkseen paikallisia minimejä. Pysähtyy aikarajaan tai jos tunnettu optimi löydetään.
     *   `read_opt_tour`: Lukee optimaalisen kierroksen `.opt.tour`-tiedostosta (TSPLIB-muoto).
     *   `read_tsp_file`: Lukee TSP-instanssin koordinaatit `.tsp`-tiedostosta (tukee vain `EUC_2D`-tyyppiä).
     *   `process_single_instance`: Käsittelee yhden TSP-instanssin: lataa datan, suorittaa `chained_lin_kernighan`-algoritmin ja laskee tilastot (kuten aukon optimaaliseen ratkaisuun).
@@ -64,7 +64,7 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 *   **`step` ja `alternate_step`:** Näiden funktioiden kompleksisuus on merkittävä. Ne iteroivat naapureiden yli (Delaunay rajoittaa määrää). Rekursiosyvyys (`MAX_LEVEL`) ja haun leveys (`BREADTH`) vaikuttavat suorituskykyyn. Karkeasti arvioiden yhden `step`-kutsun kompleksisuus voisi olla luokkaa O(MAX_LEVEL * BREADTH_avg * n * C), missä C liittyy naapurien käsittelyyn ja etäisyyslaskuihin.
 *   **`lk_search`**: Kutsuu `step`- ja `alternate_step`-funktioita. Sen kompleksisuus on verrannollinen näiden funktioiden kompleksisuuteen.
 *   **`lin_kernighan`**: Iteroi, kunnes parannusta ei löydy. Yhden iteraation aikana kutsutaan `lk_search` enintään `n` kertaa (merkityille solmuille). Iterointien määrä on instanssiriippuvainen.
-*   **`chained_lin_kernighan`**: Suorittaa `lin_kernighan`-funktion useita kertoja, joiden välissä on O(n)-kompleksisuuden `double_bridge`-potku. Kokonaiskestoa rajoittaa annettu aikaraja.
+*   **`chained_lin_kernighan`**: Suorittaa `lin_kernighan`-funktion useita kertoja, joiden välissä on O(n)-kompleksisuuden `double_bridge`-kick. Kokonaiskestoa rajoittaa annettu aikaraja.
 *   **Kokonaisaikavaativuus:** Empiirisesti Lin-Kernighan-heuristiikan on raportoitu skaalautuvan usein luokkaa O(n^2.2) - O(n^3) tyypillisillä euklidisilla instansseilla, mutta tämä ei ole tiukka teoreettinen yläraja. Toteutuksen suorituskykyä dominoivat `step`- ja `alternate_step`-funktioiden sisäiset silmukat ja rekursio.
 
 **Tilavaativuus:**
@@ -89,7 +89,7 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 
 1.  **Rajoitettu tuki etäisyystyypeille:** Ohjelma tukee tällä hetkellä vain `EUC_2D`-tyyppisiä TSPLIB-instansseja.
 2.  **Kiinteät ja globaalit parametrit:** `LK_CONFIG`-asetukset ovat globaalisti määriteltyjä ja kiinteitä ajon aikana. Dynaamisesti mukautuvat parametrit voisivat parantaa suorituskykyä, ja parametrien välittäminen funktioille globaalin muuttujan sijaan voisi parantaa modulaarisuutta ja testattavuutta monimutkaisemmissa käyttötapauksissa.
-3.  **Yksinkertainen perturbaatio:** `double_bridge` on yleinen potkumenetelmä, mutta kehittyneempiä tai vaihtelevia perturbaatiostrategioita voitaisiin harkita.
+3.  **Yksinkertainen siirto:** `double_bridge` on yleinen kick-menetelmä, mutta kehittyneempiä tai vaihtelevia strategioita voitaisiin harkita.
 4.  **Ei rinnakkaistusta:** Algoritmin suoritus voitaisiin mahdollisesti nopeuttaa rinnakkaistamalla esimerkiksi `lk_search`-kutsuja eri aloituspisteille tai ajamalla useita `chained_lin_kernighan`-ketjuja rinnakkain.
 5.  **Virheidenkäsittely tiedostojen lukemisessa:** Vaikka virheitä käsitellään, käyttäjälle annettava palaute voisi olla yksityiskohtaisempaa (esim. `read_opt_tour` ja `read_tsp_file` voisivat antaa tarkempia virheilmoituksia kommentoitujen `print`-kutsujen sijaan).
 6.  **Kustannusten päivitys `step`-funktiossa:** `step`-funktio kumuloi `delta`-arvoa (saavutettua hyötyä) sen sijaan, että laskisi kierroksen kokonaiskustannuksen jokaisen väliaikaisen käännön jälkeen uudelleen. Tämä on tehokasta, mutta vaatii huolellisuutta logiikassa. Kuitenkin, kun parantava sekvenssi löydetään, se sovelletaan alkuperäiseen kierrokseen `flip_and_update_cost`-metodilla, joka laskee kustannusmuutokset tarkasti 2-opt-siirroille.
@@ -99,7 +99,7 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 1.  **Laajempi TSPLIB-tuki:** Lisätään tuki muille etäisyysfunktioille (esim. `GEO`, `ATT`).
 2.  **Adaptiiviset parametrit:** Kehitetään mekanismeja, jotka säätävät `MAX_LEVEL`- ja `BREADTH`-parametreja dynaamisesti instanssin ominaisuuksien tai haun edistymisen perusteella.
 3.  **Kehittyneemmät ehdokasstrategiat:** Otetaan käyttöön kehittyneempiä ehdokaslistojen generointimenetelmiä (esim. alpha-läheisyys).
-4.  **Monipuolisemmat perturbaatiot:** Kokeillaan ja implementoidaan muita "kick"-mekanismeja `chained_lin_kernighan`-algoritmiin.
+4.  **Monipuolisemmat siirrot:** Kokeillaan ja implementoidaan muita kick-mekanismeja `chained_lin_kernighan`-algoritmiin.
 5.  **Rinnakkaistus:** Tutkitaan mahdollisuuksia rinnakkaistaa laskentaa (esim. käyttämällä `multiprocessing`-kirjastoa).
 6.  **Koodin profilointi ja optimointi:** Profiloidaan koodi säännöllisesti ja optimoidaan kriittisimpiä osia.
 7.  **Käyttöliittymä:** Graafinen käyttöliittymä voisi helpottaa ohjelman käyttöä ja tulosten analysointia.

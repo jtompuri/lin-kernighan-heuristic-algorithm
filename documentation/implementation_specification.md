@@ -103,7 +103,17 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 6.  **Koodin profilointi ja optimointi:** Profiloidaan koodi säännöllisesti ja optimoidaan kriittisimpiä osia.
 7.  **Käyttöliittymä:** Graafinen käyttöliittymä voisi helpottaa ohjelman käyttöä ja tulosten analysointia.
 
-## 5. Lähteet
+## 5. Laajojen kielimallien käyttö
+
+Harjoitustyön toteutuksessa on käytetty Googlen Gemini Pro 2.5 (Preview) laajaa kielimallia (LLM). Kielimallia on käytetty ratkaisujen ideointiin ja koodikatselmointeihin sekä testien luomiseen.
+
+Kokemukset kielimallin käytöstä ohjelmoinnissa ovat olleet suurelta osin positiivisia. Aiemmin olen käyttänyt ohjelmointiongelmien malliratkaisujen etsimiseen esimerkiksi verkosta löytyviä lähteitä kuten Stackoverflow'ta. Triviaalien ongelmien kohdalla kielimalli korvasi lähes kokonaan verkkolähteet. Kielimallin käyttö nopeuttaa ohjelmointia, mutta edellyttää ihan yhtä lailla koodin säännöllistä refaktorointia toisteisuuden poistamiseksi, hyvien ohjelmointikäytäntöjen noudattamiseksi ja käyttämättömän koodin siivoamiseksi pois. 
+
+Lin-Kernighan pääalgoritmin kehittämisessä kielimallista oli enemmän haittaa kuin hyötyä. Kielimalli tarjoaa LK-algoritmista hyvin yksinkertaisen toteutuksen, joka ei vastaa lainkaan algoritmin TSP-kirjan mallitoteuksesta. Kielimallin avulla voi tuottaa Simple TSP Solverin kaltaisen 2-opt-vaihtoja tekevän algoritmin, mutta sen kutsuminen LK-algoritmiksi on harhaanjohtavaa. Käytin LK-algoritmin toteutukseen tukena TSP-kirjan pseudokoodia, jota pyrin tulkitsemaan parhaani mukaan.
+
+Testitapausten ideoinnissa ja toteutuksessa kielimalli vähensi paljon toisteista ohjelmointia. Koin myös, että en olisi luultavasti keksinyt kaikkia poikkeustapauksia testeihin. Kielimalli ei osaa kehittää testejä varten TSP-ongelmia, jotka varmasti johtavat tiettyyn algoritmin haaraan. Tämä on myös ihmiselle hyvin haasteellista ja tältä osin tukeuduin tunnettujen ja tutkittujen TSP-ongelmien piirteisiin. Tämä ei kuitenkaan aina tuottanut tulosta, minkä vuoksi 100 %:n testikattavuus on vaikea saavuttaa järkevällä työmäärällä.
+
+## 6. Lähteet
 
 Applegate, David L. & Bixby, Robert E. & Chvtal,  Vaek & Cook, William J. (2006): *The Traveling Salesman Problem : A Computational Study*, Princeton University Press.
 

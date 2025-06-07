@@ -45,21 +45,21 @@ within the script.
 
 Create and solve simple (4-12 nodes) TSP problems with Exact TSP Solver:
 ```
-$ cd exact_tsp_solver
-$ python exact_tsp_solver
+cd exact_tsp_solver
+python exact_tsp_solver
 ```
 
 Create random TSP problems:
 ```
-$ cd problems
-$ python create_tsp_problem.py 20 my_tsp20.tsp
-$ python create_tsp_problem.py 50 random50.tsp --max_coord 500 --name Random50
+cd problems
+python create_tsp_problem.py 20 my_tsp20.tsp
+python create_tsp_problem.py 50 random50.tsp --max_coord 500 --name Random50
 ```
 
 Solve TSP problems with Simple TSP Solver:
 ```
-$ cd simple_tsp_solver
-$ python simple_tsp_solver
+cd simple_tsp_solver
+python simple_tsp_solver
 ```
 
 ## Example output using TSPLIB95 

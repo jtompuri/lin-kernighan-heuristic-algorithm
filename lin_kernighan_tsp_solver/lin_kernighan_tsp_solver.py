@@ -1,21 +1,20 @@
 """
-Lin-Kernighan Heuristic for the Traveling Salesperson Problem (TSP).
+lin_kernighan_tsp_solver.py
 
-Implements the Lin-Kernighan (LK) heuristic, a local search algorithm for
-finding approximate solutions to the TSP. Based on Applegate et al. and
-Lin & Kernighan's original paper.
+Implements the Lin-Kernighan (LK) heuristic for the Traveling Salesperson Problem (TSP).
 
-Processes TSPLIB format instances, computes solutions using chained LK,
-compares against optimal tours if available, and displays results.
+This script processes TSPLIB format instances, computes heuristic solutions using chained LK,
+compares against optimal tours if available, and displays results in both tabular and graphical form.
 
 Usage:
-  1. Install dependencies: pip install numpy matplotlib scipy
-  2. Place .tsp files (and optional .opt.tour files) in a folder.
-  3. Update `TSP_FOLDER_PATH` constant below.
-  4. Run: python lin_kernighan_tsp_solver.py
+    1. Install dependencies: pip install numpy matplotlib scipy
+    2. Place .tsp files (and optional .opt.tour files) in a folder.
+    3. Update the TSP_FOLDER_PATH constant below if needed.
+    4. Run: python lin_kernighan_tsp_solver.py
 
-Adjust LK algorithm parameters in `LK_CONFIG`.
+LK algorithm parameters can be adjusted in the LK_CONFIG dictionary.
 """
+
 import time
 import math
 from itertools import combinations
@@ -46,7 +45,7 @@ LK_CONFIG = {
     "BREADTH_A": 5,  # Search breadth for y1 in alternate_step()
     "BREADTH_B": 5,  # Search breadth for y2 in alternate_step()
     "BREADTH_D": 1,  # Search breadth for y3 in alternate_step()
-    "TIME_LIMIT": 20.0,  # Default time limit for chained_lin_kernighan (s)
+    "TIME_LIMIT": 5.0,  # Default time limit for chained_lin_kernighan (s)
 }
 
 
@@ -57,20 +56,19 @@ class Tour:
     Supports efficient queries (next/prev), segment flips, and cost tracking.
 
     Attributes:
-        n: Number of vertices.
-        order: Numpy array of vertex indices in tour order.
-        pos: Numpy array mapping vertex index to its position in `order`.
-        cost: Total cost (length) of the tour.
+        n (int): Number of vertices.
+        order (np.ndarray): Vertex indices in tour order.
+        pos (np.ndarray): Mapping vertex index to its position in `order`.
+        cost (float or None): Total cost (length) of the tour.
     """
 
     def __init__(self, order: Iterable[int],
                  D: Optional[np.ndarray] = None) -> None:
         """
-        Initializes Tour from a vertex sequence.
+        Calculates and stores the tour's total cost using distance matrix D.
 
         Args:
-            order: Sequence of vertex indices.
-            D: Optional distance matrix to calculate initial tour cost.
+            D (np.ndarray): Distance matrix (D[i, j] = distance between i and j).
         """
         order_list = list(order)  # Convert iterable to list
         self.n: int = len(order_list)
@@ -111,17 +109,31 @@ class Tour:
         self.cost = current_total_cost
 
     def next(self, v: int) -> int:
-        """Returns the vertex immediately following v in the tour."""
+        """
+        Returns the vertex immediately following v in the tour.
+
+        Args:
+            v (int): Vertex index.
+
+        Returns:
+            int: Next vertex in the tour.
+        """
         if self.n == 0:
             raise IndexError("Cannot get next node from an empty tour.")
-        # self.pos[v] is index of v in self.order; +1 % n for next index
         return int(self.order[(self.pos[v] + 1) % self.n])
 
     def prev(self, v: int) -> int:
-        """Returns the vertex immediately preceding v in the tour."""
+        """
+        Returns the vertex immediately preceding v in the tour.
+
+        Args:
+            v (int): Vertex index.
+
+        Returns:
+            int: Previous vertex in the tour.
+        """
         if self.n == 0:
             raise IndexError("Cannot get previous node from an empty tour.")
-        # self.pos[v] is index of v in self.order; -1 + n % n for prev index
         return int(self.order[(self.pos[v] - 1 + self.n) % self.n])
 
     def sequence(self, node_a: int, node_b: int, node_c: int) -> bool:
@@ -129,12 +141,12 @@ class Tour:
         Checks if node_b is on the path from node_a to node_c (inclusive).
 
         Args:
-            node_a: Start vertex of the segment.
-            node_b: Vertex to check.
-            node_c: End vertex of the segment.
+            node_a (int): Start vertex of the segment.
+            node_b (int): Vertex to check.
+            node_c (int): End vertex of the segment.
 
         Returns:
-            True if node_b is on the segment [node_a, ..., node_c].
+            bool: True if node_b is on the segment [node_a, ..., node_c].
         """
         if self.n == 0:
             return False
@@ -151,8 +163,8 @@ class Tour:
         Reverses the tour segment from segment_start_node to segment_end_node.
 
         Args:
-            segment_start_node: First vertex of the segment to flip.
-            segment_end_node: Last vertex of the segment to flip.
+            segment_start_node (int): First vertex of the segment to flip.
+            segment_end_node (int): Last vertex of the segment to flip.
         """
         idx_a, idx_b = self.pos[segment_start_node], self.pos[segment_end_node]
 
@@ -179,10 +191,9 @@ class Tour:
     def get_tour(self) -> List[int]:
         """
         Returns tour as a list, normalized to start with node 0 if present.
-        If node 0 is not in the tour, returns the tour as is.
 
         Returns:
-            List of vertex indices. Empty if tour is empty.
+            List[int]: List of vertex indices. Empty if tour is empty.
         """
         if self.n == 0:
             return []
@@ -208,12 +219,12 @@ class Tour:
         Flips segment [node_a,...,node_b], updates cost, returns cost change.
 
         Args:
-            node_a: Start node of the segment to flip.
-            node_b: End node of the segment to flip.
-            D: Distance matrix.
+            node_a (int): Start node of the segment to flip.
+            node_b (int): End node of the segment to flip.
+            D (np.ndarray): Distance matrix.
 
         Returns:
-            Change in tour cost (delta_cost). Positive if cost increased.
+            float: Change in tour cost (delta_cost). Positive if cost increased.
         """
         if self.n == 0:  # Should not occur with valid tours
             return 0.0
@@ -251,10 +262,10 @@ def build_distance_matrix(coords: np.ndarray) -> np.ndarray:
     Computes pairwise Euclidean distances for coordinates.
 
     Args:
-        coords: Numpy array of shape (n, d) for n points in d dimensions.
+        coords (np.ndarray): Array of shape (n, d) for n points in d dimensions.
 
     Returns:
-        Numpy array of shape (n, n) with distances D[i,j].
+        np.ndarray: Array of shape (n, n) with distances D[i,j].
     """
     # Handle empty or single point cases
     if coords.shape[0] == 0:
@@ -270,13 +281,11 @@ def delaunay_neighbors(coords: np.ndarray) -> List[List[int]]:
     """
     Generates sorted neighbor lists using Delaunay triangulation.
 
-    Used to restrict candidate moves in LK. For <3 points, all are neighbors.
-
     Args:
-        coords: Numpy array of shape (n, 2) for n points.
+        coords (np.ndarray): Array of shape (n, 2) for n points.
 
     Returns:
-        List where `List[i]` contains sorted neighbors of vertex i.
+        List[List[int]]: List where List[i] contains sorted neighbors of vertex i.
     """
     num_vertices = len(coords)
     if num_vertices < 3:
@@ -308,20 +317,19 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
     Explores k-opt moves (standard and Mak-Morton) to improve the tour.
 
     Args:
-        level: Current recursion depth (k in k-opt).
-        delta: Accumulated gain from previous flips.
-        base: Current base node (t1) for moves.
-        tour: Tour object (modified and reverted during search).
-        D: Distance matrix.
-        neigh: Neighbor lists for candidate selection.
-        flip_seq: Current sequence of (start_node, end_node) flips.
-        start_cost: Cost of tour at the beginning of the current lk_search pass.
-        best_cost: Globally best tour cost found so far.
-        deadline: Time limit for search.
+        level (int): Current recursion depth (k in k-opt).
+        delta (float): Accumulated gain from previous flips.
+        base (int): Current base node (t1) for moves.
+        tour (Tour): Tour object (modified and reverted during search).
+        D (np.ndarray): Distance matrix.
+        neigh (List[List[int]]): Neighbor lists for candidate selection.
+        flip_seq (List[Tuple[int, int]]): Current sequence of flips.
+        start_cost (float): Cost of tour at the beginning of the current lk_search pass.
+        best_cost (float): Globally best tour cost found so far.
+        deadline (float): Time limit for search.
 
     Returns:
-        (True, improving_flip_sequence) if a tour better than `best_cost`
-        is found, else (False, None).
+        Tuple[bool, Optional[List[Tuple[int, int]]]]: (True, improving_flip_sequence) if a tour better than best_cost is found, else (False, None).
     """
     if time.time() >= deadline or level > LK_CONFIG["MAX_LEVEL"]:
         return False, None
@@ -424,20 +432,16 @@ def alternate_step(
     Alternative first step of LK (Algorithm 15.2, Applegate et al.).
 
     Explores specific 3-opt or 5-opt moves for additional breadth.
-    This function identifies candidate flip sequences; the caller (`lk_search`)
-    verifies if these sequences result in an actual tour cost improvement.
 
     Args:
-        base_node: Current base vertex (t1) for the LK move.
-        tour: The current Tour object.
-        D: Distance matrix.
-        neigh: Neighbor lists for candidate selection.
-        deadline: Time limit for the search.
+        base_node (int): Current base vertex (t1) for the LK move.
+        tour (Tour): The current Tour object.
+        D (np.ndarray): Distance matrix.
+        neigh (List[List[int]]): Neighbor lists for candidate selection.
+        deadline (float): Time limit for the search.
 
     Returns:
-        (True, flip_sequence) if a potentially improving 3-opt or 5-opt
-        sequence is identified, else (False, None). The flip_sequence
-        contains (start_node, end_node) tuples.
+        Tuple[bool, Optional[List[Tuple[int, int]]]]: (True, flip_sequence) if a potentially improving sequence is identified, else (False, None).
     """
     if time.time() >= deadline:
         return False, None
@@ -511,17 +515,17 @@ def lk_search(start_node_for_search: int, current_tour_obj: Tour,
     """
     Single Lin-Kernighan search pass (Algorithm 15.3, Applegate et al.).
 
-    Tries `step` then `alternate_step` to find an improving flip sequence.
+    Tries step then alternate_step to find an improving flip sequence.
 
     Args:
-        start_node_for_search: Vertex to initiate search from (t1).
-        current_tour_obj: Current tour.
-        D: Distance matrix.
-        neigh: Neighbor lists.
-        deadline: Time limit.
+        start_node_for_search (int): Vertex to initiate search from (t1).
+        current_tour_obj (Tour): Current tour.
+        D (np.ndarray): Distance matrix.
+        neigh (List[List[int]]): Neighbor lists.
+        deadline (float): Time limit.
 
     Returns:
-        List of (start, end) flips if improvement found, else None.
+        Optional[List[Tuple[int, int]]]: List of (start, end) flips if improvement found, else None.
     """
     if time.time() >= deadline:
         return None
@@ -570,18 +574,17 @@ def lin_kernighan(coords: np.ndarray, init: List[int], D: np.ndarray,
     """
     Main Lin-Kernighan heuristic (Algorithm 15.4, Applegate et al.).
 
-    Iteratively applies `lk_search` from marked nodes until no improvement
-    or time limit.
+    Iteratively applies lk_search from marked nodes until no improvement or time limit.
 
     Args:
-        coords: Vertex coordinates (for `n`).
-        init: Initial tour permutation.
-        D: Distance matrix.
-        neigh: Neighbor lists.
-        deadline: Time limit.
+        coords (np.ndarray): Vertex coordinates.
+        init (List[int]): Initial tour permutation.
+        D (np.ndarray): Distance matrix.
+        neigh (List[List[int]]): Neighbor lists.
+        deadline (float): Time limit.
 
     Returns:
-        (Best Tour object, its cost).
+        Tuple[Tour, float]: (Best Tour object, its cost).
     """
     n = len(coords)
     current_best_tour_obj = Tour(init, D)
@@ -625,14 +628,11 @@ def double_bridge(order: List[int]) -> List[int]:
     """
     Applies a double-bridge 4-opt move to perturb the tour.
 
-    Selects 4 random cut points, defining 5 segments S0-S4.
-    This implementation reorders to S0-S2-S1-S3-S4 (swaps S1 and S2).
-
     Args:
-        order: Current tour order.
+        order (List[int]): Current tour order.
 
     Returns:
-        New perturbed tour order. Returns original if n <= 4.
+        List[int]: New perturbed tour order. Returns original if n <= 4.
     """
     n = len(order)
     if n <= 4:  # Perturbation is trivial or not possible for small tours
@@ -661,16 +661,15 @@ def chained_lin_kernighan(
     Chained Lin-Kernighan metaheuristic (Algorithm 15.5, Applegate et al.).
 
     Repeatedly applies LK, with double-bridge kicks to escape local optima.
-    Stops at time limit or if known optimum is found.
 
     Args:
-        coords: Vertex coordinates.
-        initial_tour_order: Initial tour.
-        known_optimal_length: Optional known optimal length for early stop.
-        time_limit_seconds: Max run time. Uses LK_CONFIG if None.
+        coords (np.ndarray): Vertex coordinates.
+        initial_tour_order (List[int]): Initial tour.
+        known_optimal_length (float, optional): Known optimal length for early stop.
+        time_limit_seconds (float, optional): Max run time.
 
     Returns:
-        (Best tour order found, its cost).
+        Tuple[List[int], float]: (Best tour order found, its cost).
     """
     effective_time_limit = (time_limit_seconds
                             if time_limit_seconds is not None
@@ -685,7 +684,7 @@ def chained_lin_kernighan(
         coords, initial_tour_order, distance_matrix, neighbor_list, deadline
     )
     assert current_best_tour_obj.cost is not None and \
-           math.isclose(current_best_tour_obj.cost, current_best_cost)
+        math.isclose(current_best_tour_obj.cost, current_best_cost)
 
     if known_optimal_length is not None and \
        math.isclose(current_best_cost, known_optimal_length,
@@ -699,7 +698,7 @@ def chained_lin_kernighan(
             coords, kicked_tour_order, distance_matrix, neighbor_list, deadline
         )
         assert lk_result_tour_obj.cost is not None and \
-               math.isclose(lk_result_tour_obj.cost, lk_result_cost)
+            math.isclose(lk_result_tour_obj.cost, lk_result_cost)
 
         if lk_result_cost < current_best_cost - FLOAT_COMPARISON_TOLERANCE:
             current_best_tour_obj = lk_result_tour_obj
@@ -724,13 +723,11 @@ def read_opt_tour(path: str) -> Optional[List[int]]:
     """
     Reads an optimal tour from a .opt.tour file (TSPLIB format).
 
-    Expects TOUR_SECTION, 1-indexed nodes, terminated by -1.
-
     Args:
-        path: Path to .opt.tour file.
+        path (str): Path to .opt.tour file.
 
     Returns:
-        List of 0-indexed node IDs, or None on error/malformed.
+        Optional[List[int]]: List of 0-indexed node IDs, or None on error/malformed.
     """
     tour: List[int] = []
     in_tour_section = False
@@ -777,10 +774,10 @@ def read_tsp_file(path: str) -> np.ndarray:
     Reads TSPLIB .tsp file (EUC_2D only) and returns coordinates.
 
     Args:
-        path: Path to .tsp file.
+        path (str): Path to .tsp file.
 
     Returns:
-        Numpy array (n, 2) of coordinates.
+        np.ndarray: Numpy array (n, 2) of coordinates.
 
     Raises:
         FileNotFoundError: If the TSP file is not found.
@@ -851,12 +848,11 @@ def process_single_instance(
     Processes one TSP instance: loads, runs LK, calculates stats.
 
     Args:
-        tsp_file_path_str: Path to .tsp file.
-        opt_tour_file_path_str: Path to .opt.tour file.
+        tsp_file_path_str (str): Path to .tsp file.
+        opt_tour_file_path_str (str): Path to .opt.tour file.
 
     Returns:
-        Dictionary with results: name, coords, tours, lengths, gap, time.
-        Includes 'error': True on failure.
+        Dict[str, Any]: Dictionary with results: name, coords, tours, lengths, gap, time, error.
     """
     problem_name = Path(tsp_file_path_str).stem
     print(f"Processing {problem_name} (EUC_2D)...")
@@ -927,7 +923,7 @@ def display_summary_table(results_data: List[Dict[str, Any]]) -> None:
     Prints a formatted summary table of processing results.
 
     Args:
-        results_data: List of result dictionaries from instances.
+        results_data (List[Dict[str, Any]]): List of result dictionaries from instances.
     """
     print("\nConfiguration parameters:")
     for key, value in LK_CONFIG.items():
@@ -938,7 +934,7 @@ def display_summary_table(results_data: List[Dict[str, Any]]) -> None:
     print("")
 
     header = f"{'Instance':<10s} {'OptLen':>8s} {'HeuLen':>8s} " \
-             f"{'Gap(%)':>8s} {'Time(s)':>8s}"
+        f"{'Gap(%)':>8s} {'Time(s)':>8s}"
     print(header)
     print("-" * len(header))
 
@@ -990,7 +986,7 @@ def plot_all_tours(results_data: List[Dict[str, Any]]) -> None:
     Plots optimal and heuristic tours for processed instances.
 
     Args:
-        results_data: List of result dictionaries.
+        results_data (List[Dict[str, Any]]): List of result dictionaries.
     """
     # Filter for results that are not errored and have coordinates
     valid_results_to_plot = [
@@ -1040,15 +1036,9 @@ def plot_all_tours(results_data: List[Dict[str, Any]]) -> None:
             title = f"{r_item['name']}"
             # Safely get gap, opt_len, heu_len for the title
             gap_val = r_item.get('gap')
-            # opt_len_val = r_item.get('opt_len')
-            # heu_len_val = r_item.get('heu_len')
 
             if gap_val is not None and gap_val != float('inf'):
                 title += f" gap={gap_val:.2f}%"
-            # if opt_len_val is not None:
-            #     title += f" OptLen={opt_len_val:.2f}"
-            # if heu_len_val is not None:
-            #     title += f" HeuLen={heu_len_val:.2f}"
             ax.set_title(title)
             ax.set_xticks([])  # Hide ticks and labels
             ax.set_yticks([])

@@ -13,7 +13,7 @@ against the known optimal solution and calculates the percentage gap. If no opti
 tour file is available, the instance is still processed, but no gap calculation is
 performed for it. The script displays a summary table and plots of the tours.
 
-## Usage
+## Usage: Lin-Kernighan Heuristic Algorithm
 
   1. Ensure all dependencies are installed:
      ```bash
@@ -40,6 +40,27 @@ Finally, a plot of all processed tours is displayed (showing both optimal and he
 tours if the optimal is available, otherwise just the heuristic tour). Configuration
 parameters for the LK algorithm can be adjusted in the `LK_CONFIG` dictionary
 within the script.
+
+## Usage: Helper Algorithms
+
+Create and solve simple (4-12 nodes) TSP problems with Exact TSP Solver:
+```
+$ cd exact_tsp_solver
+$ python exact_tsp_solver
+```
+
+Create random TSP problems:
+```
+$ cd problems
+$ python create_tsp_problem.py 20 my_tsp20.tsp
+$ python create_tsp_problem.py 50 random50.tsp --max_coord 500 --name Random50
+```
+
+Solve TSP problems with Simple TSP Solver:
+```
+$ cd simple_tsp_solver
+$ python simple_tsp_solver
+```
 
 ## Example output using TSPLIB95 
 

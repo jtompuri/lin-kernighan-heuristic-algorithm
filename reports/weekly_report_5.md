@@ -8,7 +8,7 @@ Tein tällä viikolla lähinnä vertaisarvioinnin ja tutustuin vertaisarvioinnis
 
 Sovellus ei ole edistynyt tällä viikolla, sillä olin lomamatkalla. 
 
-En raportoinut edeltäneellä viikolla tekemiäni kokeiluja liittyen sovelluksen suorituskykyyn. Kokeilin nimittäin vaihtaa `Tour`-luokan tietorakenteeksi TSP-kirjan suosittelemaa kahteen suuntaan linkitettyä listaa (_double linked list_) sekä nopeuttaa keskeisten funktioiden ja metodien usein toistuvia silmukoita kääntämällä ne konekielisiksi numba-kirjaston avulla. 
+En raportoinut edeltäneellä viikolla tekemiäni kokeiluja liittyen sovelluksen suorituskykyyn. Kokeilin nimittäin vaihtaa `Tour`-luokan tietorakenteeksi TSP-kirjan suositteleman kahteen suuntaan linkitetyn listan (_double linked list_) sekä nopeuttaa keskeisten funktioiden ja metodien usein toistuvia silmukoita kääntämällä ne konekielisiksi numba-kirjaston avulla. 
 
 ### Kahteen suuntaan linkitetty lista
 

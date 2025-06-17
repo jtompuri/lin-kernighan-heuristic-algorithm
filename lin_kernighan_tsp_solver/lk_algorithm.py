@@ -534,7 +534,7 @@ def lk_search(start_node_for_search: int, current_tour_obj: Tour,
     if found_alt and seq_alt:
         # Verify if the sequence from alternate_step is strictly improving
         cost_before_alt_check = current_tour_obj.cost
-        if cost_before_alt_check is None:
+        if cost_before_alt_check is None:  # pragma: no cover
             return None
 
         temp_check_tour = Tour(current_tour_obj.get_tour(), D)

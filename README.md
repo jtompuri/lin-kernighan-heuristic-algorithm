@@ -38,14 +38,19 @@ venv\Scripts\activate
    pip install -r requirements.txt
    ```
 
-4. Use default TSPLIB files or place your own TSPLIB `.tsp` files in a designated folder.
+4. Optionally install dependencies for development environment:
+   ```bash
+   pip install -r requirements-dev.txt
+   ```
+
+5. Use default TSPLIB files or place your own TSPLIB `.tsp` files in a designated folder.
    Optionally, place corresponding `.opt.tour` files (if available) in the same
    folder. The default folder is `verifications/tsplib95/` relative to the project root.
 
-5. If you are using a different folder for TSP instances, update the `TSP_FOLDER_PATH` 
-   constant at the top of the `lin_kernighan_tsp_solver/config.py` module to point to your TSPLIB folder.
+6. If you are using a different folder for TSP instances, update the `TSP_FOLDER_PATH` 
+   constant at the top of the `lin_kernighan_tsp_solver/config.py` module.
 
-6. Run the Python module from the project's root directory:
+7. Run the Python module from the project's root directory:
    ```bash
    python -m lin_kernighan_tsp_solver
    ```

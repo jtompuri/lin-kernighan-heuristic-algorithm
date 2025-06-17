@@ -28,7 +28,8 @@ listojen luontia siten, että polun osan järjestys käännetään ympäri paika
 testikattavuus on täydellinen, oli helppo varmistua, ettei mikään mennyt rikki 
 muutosta tehtäessä. Toteutin myös vertailutestin `tests/test_performance.py`, joka 
 suoritetaan komennolla `python -m tests.test_performance`. Testin perusteella uusi
-`flip`-metodi on 50 % nopeampi kuin vanha metodi.
+`flip`-metodi on 50 % nopeampi kuin vanha metodi, mutta vaikutus TSP-ongelmien
+ratkaisuihin on marginaalinen eli eroa tuskin huomaa.
 
 Tein sovelluksesta ajettavan Python moduulin ja muutin README:n ohjeen vastaamaan tätä. 
 

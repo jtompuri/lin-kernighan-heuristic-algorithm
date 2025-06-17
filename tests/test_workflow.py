@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
 from unittest.mock import patch
-from lin_kernighan_tsp_solver.lin_kernighan_tsp_solver import (
-    process_single_instance,
+from lin_kernighan_tsp_solver.main import (
+    process_single_instance
 )
 
 
@@ -19,7 +19,7 @@ def test_process_single_instance_no_coords_loaded(tmp_path):
     opt_tour_file.write_text("TOUR_SECTION\n-1\nEOF")  # Dummy opt tour file.
 
     # Mock read_tsp_file to simulate failed coordinate loading.
-    with patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.read_tsp_file', return_value=np.array([])) as mock_read_tsp:
+    with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=np.array([])) as mock_read_tsp:
         result = process_single_instance(str(tsp_file), str(opt_tour_file))
         mock_read_tsp.assert_called_once_with(str(tsp_file))
 
@@ -53,9 +53,9 @@ def test_process_single_instance_no_opt_tour_loaded(tmp_path, simple_tsp_setup):
     mock_clk_result_tour = initial_tour_obj.get_tour()
     mock_clk_result_cost = initial_cost_fixture
 
-    with patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.read_tsp_file', return_value=mock_coords) as mock_read_tsp, \
-         patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.read_opt_tour', return_value=None) as mock_read_opt, \
-         patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.chained_lin_kernighan',
+    with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=mock_coords) as mock_read_tsp, \
+         patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=None) as mock_read_opt, \
+         patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan',
                return_value=(mock_clk_result_tour, mock_clk_result_cost)) as mock_clk:
 
         result = process_single_instance(str(tsp_file), str(opt_tour_file))
@@ -99,9 +99,9 @@ def test_process_single_instance_handles_chained_lk_exception(tmp_path, simple_t
     mock_coords = coords
     error_message = "Simulated CLK Failure"
 
-    with patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.read_tsp_file', return_value=mock_coords) as mock_read_tsp, \
-         patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.read_opt_tour', return_value=None) as mock_read_opt, \
-         patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.chained_lin_kernighan', side_effect=Exception(error_message)) as mock_clk:
+    with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=mock_coords) as mock_read_tsp, \
+         patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=None) as mock_read_opt, \
+         patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', side_effect=Exception(error_message)) as mock_clk:
 
         result = process_single_instance(str(tsp_file), str(opt_tour_file))
 

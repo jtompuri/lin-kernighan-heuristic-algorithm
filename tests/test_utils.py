@@ -9,13 +9,15 @@ import pytest
 import numpy as np
 from pathlib import Path
 from unittest.mock import patch
-from lin_kernighan_tsp_solver.lin_kernighan_tsp_solver import (
+from lin_kernighan_tsp_solver.lk_algorithm import (
     build_distance_matrix,
     delaunay_neighbors,
     double_bridge,
-    read_opt_tour,
-    read_tsp_file,
     Tour
+)
+from lin_kernighan_tsp_solver.tsp_io import (
+    read_opt_tour,
+    read_tsp_file
 )
 
 

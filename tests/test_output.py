@@ -2,9 +2,11 @@ import numpy as np
 from unittest.mock import MagicMock, patch
 import matplotlib.axes
 import matplotlib.figure
-from lin_kernighan_tsp_solver.lin_kernighan_tsp_solver import (
+from lin_kernighan_tsp_solver.utils import (
     display_summary_table,
     plot_all_tours,
+)
+from lin_kernighan_tsp_solver.config import (
     MAX_SUBPLOTS_IN_PLOT,
 )
 
@@ -20,7 +22,7 @@ def test_plot_all_tours_num_to_plot_actual_is_zero(capsys):
     ]
 
     # Mock MAX_SUBPLOTS_IN_PLOT to be 0 for this test
-    with patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.MAX_SUBPLOTS_IN_PLOT', 0):
+    with patch('lin_kernighan_tsp_solver.config.MAX_SUBPLOTS_IN_PLOT', 0):
         # Mock matplotlib calls as they shouldn't be reached if it returns early
         with patch('matplotlib.pyplot.subplots') as mock_subplots, \
              patch('matplotlib.pyplot.show') as mock_show:
@@ -215,7 +217,7 @@ def test_plot_all_tours_successful_path_mocked(tmp_path, capsys):
     # Patch the necessary matplotlib functions
     # Correct the patch target for Line2D
     with patch('matplotlib.pyplot.subplots', return_value=(mock_figure_instance, mock_axes_array)) as mock_subplots_call, \
-         patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.Line2D') as mock_line2d_call, \
+         patch('lin_kernighan_tsp_solver.utils.Line2D') as mock_line2d_call, \
          patch('matplotlib.pyplot.tight_layout') as mock_tight_layout_call, \
          patch('matplotlib.pyplot.show') as mock_show_call:
 
@@ -291,7 +293,7 @@ def test_plot_all_tours_exceeds_max_subplots_prints_warning(capsys):
             ax.set_axis_off = MagicMock()
 
     with patch('matplotlib.pyplot.subplots', return_value=(mock_figure_instance, mock_axes_array_2d)), \
-         patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.Line2D'), \
+         patch('lin_kernighan_tsp_solver.utils.Line2D'), \
          patch('matplotlib.pyplot.tight_layout'), \
          patch('matplotlib.pyplot.show'):
         plot_all_tours(results_data)
@@ -339,7 +341,7 @@ def test_plot_all_tours_turns_off_unused_subplots():
     mock_figure_instance.subplots_adjust = MagicMock()
 
     with patch('matplotlib.pyplot.subplots', return_value=(mock_figure_instance, mock_axes_array_2d)), \
-         patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.Line2D'), \
+         patch('lin_kernighan_tsp_solver.utils.Line2D'), \
          patch('matplotlib.pyplot.tight_layout'), \
          patch('matplotlib.pyplot.show'):
         plot_all_tours(results_data)

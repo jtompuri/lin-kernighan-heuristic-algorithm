@@ -2,15 +2,17 @@ import pytest
 import time
 import numpy as np
 from pathlib import Path
-from lin_kernighan_tsp_solver.lin_kernighan_tsp_solver import (
+from lin_kernighan_tsp_solver.lk_algorithm import (
     Tour,
     lin_kernighan,
     chained_lin_kernighan,
-    LK_CONFIG,
     build_distance_matrix,
-    read_opt_tour,
-    read_tsp_file
 )
+from lin_kernighan_tsp_solver.tsp_io import (
+    read_opt_tour,
+    read_tsp_file,
+)
+from lin_kernighan_tsp_solver.config import LK_CONFIG
 
 # Definition of VERIFICATION_RANDOM_PATH should be here if not in conftest.py
 VERIFICATION_RANDOM_PATH = Path(__file__).resolve().parent.parent / "verifications" / "random"

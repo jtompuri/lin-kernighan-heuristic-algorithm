@@ -3,17 +3,20 @@ import time
 import numpy as np
 from unittest.mock import patch, MagicMock
 
-from lin_kernighan_tsp_solver.lin_kernighan_tsp_solver import (
+from lin_kernighan_tsp_solver.lk_algorithm import (
     Tour,
     step,
     alternate_step,
-    double_bridge,
     lk_search,
     lin_kernighan,
+)
+from lin_kernighan_tsp_solver.lk_algorithm import (
+    build_distance_matrix,
+    delaunay_neighbors,
+)
+from lin_kernighan_tsp_solver.config import (
     LK_CONFIG,
     FLOAT_COMPARISON_TOLERANCE,
-    build_distance_matrix,
-    delaunay_neighbors
 )
 
 
@@ -65,7 +68,7 @@ def test_lin_kernighan_deadline_exceeded(simple_tsp_setup):
 
     expected_initial_tour_obj = Tour(initial_tour_nodes, D_matrix)
     assert result_tour_obj.get_tour() == expected_initial_tour_obj.get_tour()
-    assert np.isclose(result_cost, expected_initial_tour_obj.cost)
+    assert result_cost is not None and expected_initial_tour_obj.cost is not None and np.isclose(result_cost, expected_initial_tour_obj.cost)
 
 
 def test_step_hits_break_due_to_breadth_limit_zero(simple_tsp_setup):
@@ -90,7 +93,7 @@ def test_step_hits_break_due_to_breadth_limit_zero(simple_tsp_setup):
 
     # Mock alternate_step to ensure it doesn't find an improvement,
     # isolating the behavior of 'step' hitting the break.
-    with patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.alternate_step', return_value=(False, None)) as mock_alt_step:
+    with patch('lin_kernighan_tsp_solver.lk_algorithm.alternate_step', return_value=(False, None)) as mock_alt_step:
         final_tour_obj, final_cost = lin_kernighan(
             coords,
             initial_tour_nodes,
@@ -212,7 +215,7 @@ def test_step_no_candidates_for_t1_t2_pair():
 
     deadline = time.time() + 5
 
-    from lin_kernighan_tsp_solver.lin_kernighan_tsp_solver import step
+    from lin_kernighan_tsp_solver.lk_algorithm import step
 
     # Call step.
     # We are interested in the behavior when t1=0.
@@ -287,8 +290,8 @@ def test_lk_search_deadline_after_step_before_alternate(simple_tsp_setup):
     mock_alternate_step_func = MagicMock()
 
     with patch('time.time', mock_time_func), \
-         patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.step', mock_step_func), \
-         patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.alternate_step', mock_alternate_step_func):
+            patch('lin_kernighan_tsp_solver.lk_algorithm.step', mock_step_func), \
+            patch('lin_kernighan_tsp_solver.lk_algorithm.alternate_step', mock_alternate_step_func):
 
         result_sequence = lk_search(
             start_node_for_search=0,
@@ -373,7 +376,7 @@ def test_lk_search_handles_non_improving_alternate_step(simple_tsp_setup):
     deadline_val = time.time() + 5  # Generous deadline for lin_kernighan call
 
     # Patch 'alternate_step' in the module where it's defined and used by lk_search
-    with patch('lin_kernighan_tsp_solver.lin_kernighan_tsp_solver.alternate_step', mock_alternate_step):
+    with patch('lin_kernighan_tsp_solver.lk_algorithm.alternate_step', mock_alternate_step):
         # lin_kernighan calls lk_search, which calls step and potentially alternate_step
         final_tour_obj, final_cost = lin_kernighan(
             coords,
@@ -538,7 +541,6 @@ def test_lin_kernighan_respects_deadline(simple_tsp_setup):
     # Use a callable for side_effect to handle an arbitrary number of calls
     # before returning the timeout value.
     # Let's allow, for example, up to 200 "normal" time checks before timeout.
-    # This number might need adjustment based on typical execution.
     MAX_NORMAL_CALLS = 200
     call_count = 0
 
@@ -577,7 +579,7 @@ def test_step_finds_simple_2_opt(simple_tsp_setup):
 
     original_lk_config = LK_CONFIG.copy()
     # Ensure FLOAT_COMPARISON_TOLERANCE is available if not already imported in this file
-    # from lin_kernighan_tsp_solver.lin_kernighan_tsp_solver import FLOAT_COMPARISON_TOLERANCE
+    # from lin_kernighan_tsp_solver.lk_algorithm import FLOAT_COMPARISON_TOLERANCE
     # (It seems to be imported at the top level of test_lk_core.py already)
 
     LK_CONFIG["MAX_LEVEL"] = 1
@@ -601,10 +603,12 @@ def test_step_finds_simple_2_opt(simple_tsp_setup):
                 best_flip_sequence_found = flip_sequence
 
             temp_tour_check = Tour(initial_tour_obj.get_tour(), dist_matrix)
-            for fs, fe in flip_sequence: temp_tour_check.flip_and_update_cost(fs, fe, dist_matrix)
+            for fs, fe in flip_sequence:
+                temp_tour_check.flip_and_update_cost(fs, fe, dist_matrix)
 
             # Check if this particular improvement matches our expected 2-opt
             if temp_tour_check.get_tour() == expected_tour_after_2_opt_nodes and \
+               temp_tour_check.cost is not None and expected_cost_after_2_opt is not None and \
                abs(temp_tour_check.cost - expected_cost_after_2_opt) < FLOAT_COMPARISON_TOLERANCE * 100:  # Using existing tolerance logic
                 best_flip_sequence_found = flip_sequence  # Ensure this is the one we validate against
                 found_the_specific_2_opt_move = True
@@ -622,7 +626,8 @@ def test_step_finds_simple_2_opt(simple_tsp_setup):
             f"Expected flip involving nodes {expected_flip_nodes}, but got {actual_flip_nodes}"
 
         final_tour_check = Tour(initial_tour_obj.get_tour(), dist_matrix)
-        for fs, fe in best_flip_sequence_found: final_tour_check.flip_and_update_cost(fs, fe, dist_matrix)
+        for fs, fe in best_flip_sequence_found:
+            final_tour_check.flip_and_update_cost(fs, fe, dist_matrix)
         assert final_tour_check.cost == pytest.approx(expected_cost_after_2_opt)
         assert final_tour_check.get_tour() == expected_tour_after_2_opt_nodes
 
@@ -645,6 +650,7 @@ def test_step_no_improvement_on_optimal_tour(simple_tsp_setup):
         nodes_to_iterate_for_base = list(current_processing_tour.order)
         for base_node_val in nodes_to_iterate_for_base:
             cost_before_this_step_attempt = current_processing_tour.cost
+            assert cost_before_this_step_attempt is not None, "Tour cost should be a float, got None"
             tour_for_step_to_modify_order = Tour(current_processing_tour.get_tour(), dist_matrix)
             improved_by_step, flip_sequence_from_step = step(
                 level=1, delta=0.0, base=base_node_val, tour=tour_for_step_to_modify_order,
@@ -657,11 +663,12 @@ def test_step_no_improvement_on_optimal_tour(simple_tsp_setup):
                 for f_start, f_end in flip_sequence_from_step:
                     candidate_tour_after_flips.flip_and_update_cost(f_start, f_end, dist_matrix)
                 actual_new_cost = candidate_tour_after_flips.cost
-                if actual_new_cost < cost_before_this_step_attempt - (FLOAT_COMPARISON_TOLERANCE / 10.0):
+                if actual_new_cost is not None and cost_before_this_step_attempt is not None and actual_new_cost < cost_before_this_step_attempt - (FLOAT_COMPARISON_TOLERANCE / 10.0):
                     current_processing_tour = candidate_tour_after_flips
                     made_improvement_in_this_pass = True
                     break
-        if not made_improvement_in_this_pass: break
+        if not made_improvement_in_this_pass:
+            break
     else:
         print(f"Warning: 2-opt stabilization loop reached max_passes in {test_step_no_improvement_on_optimal_tour.__name__}.")
 
@@ -677,16 +684,18 @@ def test_step_no_improvement_on_optimal_tour(simple_tsp_setup):
 
     for base_node_val_check in order_of_2_optimal_tour:
         tour_arg_for_final_step = Tour(order_of_2_optimal_tour, dist_matrix)
+        assert cost_of_2_optimal_tour is not None, "Tour cost should not be None"
         improved_final, flip_sequence_final = step(
             level=1, delta=0.0, base=base_node_val_check, tour=tour_arg_for_final_step,
             D=dist_matrix, neigh=neighbors, flip_seq=[],
-            start_cost=cost_of_2_optimal_tour, best_cost=cost_of_2_optimal_tour,
+            start_cost=float(cost_of_2_optimal_tour), best_cost=float(cost_of_2_optimal_tour),
             deadline=deadline_for_final_check
         )
         final_tour_cost_after_step_if_improved = cost_of_2_optimal_tour
         if improved_final and flip_sequence_final:
             temp_tour_for_cost_check = Tour(order_of_2_optimal_tour, dist_matrix)
-            for f_s, f_e in flip_sequence_final: temp_tour_for_cost_check.flip_and_update_cost(f_s, f_e, dist_matrix)
+            for f_s, f_e in flip_sequence_final:
+                temp_tour_for_cost_check.flip_and_update_cost(f_s, f_e, dist_matrix)
             final_tour_cost_after_step_if_improved = temp_tour_for_cost_check.cost
         assert not improved_final, \
             (f"Step found improvement from base {base_node_val_check} on 2-optimal tour (cost {cost_of_2_optimal_tour:.10f}). "
@@ -713,25 +722,31 @@ def test_lk_search_finds_optimum_for_simple_tsp(simple_tsp_setup):
 
     while made_change_in_iteration and iter_count < max_iterations:
         if abs(current_tour.cost - optimal_cost_fixture) < FLOAT_COMPARISON_TOLERANCE:
-            overall_improved_flag = True; break
-        made_change_in_iteration = False; iter_count += 1
+            overall_improved_flag = True
+            break
+        made_change_in_iteration = False
+        iter_count += 1
         nodes_to_try_as_base = list(current_tour.order)
         for start_node_for_search in nodes_to_try_as_base:
             tour_for_lk_search_call = Tour(current_tour.get_tour(), dist_matrix)
             improving_sequence = lk_search(start_node_for_search, tour_for_lk_search_call, dist_matrix, neighbors, deadline)
             if improving_sequence:
                 cost_before_flips = current_tour.cost
-                for fs, fe in improving_sequence: current_tour.flip_and_update_cost(fs, fe, dist_matrix)
-                if current_tour.cost < cost_before_flips - FLOAT_COMPARISON_TOLERANCE:
-                    overall_improved_flag, made_change_in_iteration = True, True; break
+                for fs, fe in improving_sequence:
+                    current_tour.flip_and_update_cost(fs, fe, dist_matrix)
+                if current_tour.cost is not None and cost_before_flips is not None and current_tour.cost < cost_before_flips - FLOAT_COMPARISON_TOLERANCE:
+                    overall_improved_flag, made_change_in_iteration = True, True
+                    break
                 else:
                     current_tour = Tour(nodes_to_try_as_base, dist_matrix)  # Revert
-                    made_change_in_iteration = False; break
+                    made_change_in_iteration = False
+                    break
     assert overall_improved_flag or abs(initial_cost_fixture - optimal_cost_fixture) < FLOAT_COMPARISON_TOLERANCE, \
         f"lk_search failed to improve. Initial: {initial_cost_fixture}, Optimal: {optimal_cost_fixture}, Final: {current_tour.cost}"
     assert current_tour.cost == pytest.approx(optimal_cost_fixture)
     assert current_tour.get_tour() == optimal_order_fixture
-    LK_CONFIG.clear(); LK_CONFIG.update(original_lk_config)
+    LK_CONFIG.clear()
+    LK_CONFIG.update(original_lk_config)
 
 
 def test_lk_search_no_improvement_on_optimal_tour(simple_tsp_setup):
@@ -755,7 +770,7 @@ def test_lk_search_no_improvement_on_optimal_tour(simple_tsp_setup):
             start_node_for_search, tour_copy_for_lk_search, dist_matrix, neighbors, deadline_for_test
         )
         assert improving_sequence is None, \
-            f"lk_search found improvement from node {start_node_for_search} on converged tour. Seq: {flip_sequence_final}"
+            f"lk_search found improvement from node {start_node_for_search} on converged tour. Seq: {improving_sequence}"
         assert tour_copy_for_lk_search.get_tour() == converged_tour_obj.get_tour()
         assert tour_copy_for_lk_search.cost == pytest.approx(converged_cost)
     LK_CONFIG.clear()
@@ -1022,7 +1037,7 @@ def test_alternate_step_finds_improvement(simple_tsp_setup):
             for f_start, f_end in sequence:
                 temp_tour.flip_and_update_cost(f_start, f_end, dist_matrix)
 
-            if temp_tour.cost < cost_before_apply - 1e-9: # Check for strict improvement
+            if temp_tour.cost is not None and cost_before_apply is not None and temp_tour.cost < cost_before_apply - 1e-9:  # Check for strict improvement
                 improvement_found = True
                 best_improving_sequence = sequence  # Store the first one found
                 # print(f"Alternate_step from base {current_call_tour.order[base_node_idx]} found sequence: {sequence}, new cost: {temp_tour.cost}")
@@ -1032,10 +1047,11 @@ def test_alternate_step_finds_improvement(simple_tsp_setup):
 
     # Further assertions: apply best_improving_sequence and check cost
     final_tour = Tour(tour_to_test_order, dist_matrix)
-    for f_start, f_end in best_improving_sequence:
-        final_tour.flip_and_update_cost(f_start, f_end, dist_matrix)
+    if best_improving_sequence:
+        for f_start, f_end in best_improving_sequence:
+            final_tour.flip_and_update_cost(f_start, f_end, dist_matrix)
 
-    assert final_tour.cost < initial_test_cost - 1e-9, \
+    assert final_tour.cost is not None and initial_test_cost is not None and final_tour.cost < initial_test_cost - 1e-9, \
         "Applying sequence from alternate_step did not reduce cost."
     # Optionally, assert it reaches the known optimal for simple_tsp_setup if the sequence is powerful enough
     # assert final_tour.cost == pytest.approx(lk_optimal_cost)
@@ -1072,7 +1088,7 @@ def test_alternate_step_no_improvement_on_optimal(simple_tsp_setup):
             temp_tour = Tour(lk_optimal_order, dist_matrix)
             for f_start, f_end in sequence:
                 temp_tour.flip_and_update_cost(f_start, f_end, dist_matrix)
-            assert temp_tour.cost >= cost_before_call - 1e-9, \
+            assert temp_tour.cost is not None and cost_before_call is not None and (temp_tour.cost >= cost_before_call - 1e-9), \
                 f"alternate_step found a sequence {sequence} from base {current_call_tour.order[base_node_idx]} that 'improved' an optimal tour. New cost: {temp_tour.cost}, Optimal: {cost_before_call}"
         # If found is False, or sequence is None, that's the expected behavior (no strict improvement).
 

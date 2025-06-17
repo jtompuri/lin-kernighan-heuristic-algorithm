@@ -9,7 +9,7 @@ cost calculation.
 import pytest
 import numpy as np
 
-from lin_kernighan_tsp_solver.lin_kernighan_tsp_solver import (
+from lin_kernighan_tsp_solver.lk_algorithm import (
     Tour,
     build_distance_matrix
 )
@@ -135,8 +135,7 @@ def test_tour_flip_and_update_cost_basic():
     expected_get_tour_after_flip1 = [0, 3, 2, 1]  # Normalized from [2,1,0,3]
     # Cost of [2,1,0,3]: d(2,1)+d(1,0)+d(0,3)+d(3,2) = 1+1+1+sqrt(2) = 3+sqrt(2) ~ 4.414
     expected_cost_after_flip1 = (
-        dist_matrix[2, 1] + dist_matrix[1, 0] +
-        dist_matrix[0, 3] + dist_matrix[3, 2]
+        dist_matrix[2, 1] + dist_matrix[1, 0] + dist_matrix[0, 3] + dist_matrix[3, 2]
     )
 
     assert delta_cost1 == pytest.approx(expected_cost_after_flip1 - initial_cost), \
@@ -302,7 +301,7 @@ def test_tour_flip_and_update_cost_parametrized(
             v_node = expected_internal_order_after_flip_nodes[(i + 1) % n_exp]
             expected_cost_after_flip += dist_matrix[u_node, v_node]
 
-    expected_delta_cost = expected_cost_after_flip - initial_cost_for_case
+    expected_delta_cost = expected_cost_after_flip - (initial_cost_for_case if initial_cost_for_case is not None else 0.0)
 
     actual_delta_cost = tour.flip_and_update_cost(
         flip_start_node, flip_end_node, dist_matrix
@@ -315,7 +314,7 @@ def test_tour_flip_and_update_cost_parametrized(
     assert tour.cost == pytest.approx(expected_cost_after_flip), \
         (f"Incorrect tour.cost after flip. Expected "
          f"{expected_cost_after_flip}, got {tour.cost}")
-    assert tour.cost == pytest.approx(initial_cost_for_case + actual_delta_cost), \
+    assert tour.cost == pytest.approx((initial_cost_for_case or 0.0) + actual_delta_cost), \
         "tour.cost is not consistent with initial_cost + actual_delta_cost"
     assert list(tour.order) == expected_internal_order_after_flip_nodes, \
         (f"Tour internal order incorrect after flip. "
@@ -407,8 +406,7 @@ def test_tour_init_cost_parametrized(simple_tsp_setup, initial_order_nodes):
             node1 = initial_order_nodes[i]
             node2 = initial_order_nodes[(i + 1) % current_n]
             # Ensure nodes are within bounds of the dist_matrix
-            if not (0 <= node1 < dist_matrix.shape[0] and
-                    0 <= node2 < dist_matrix.shape[0]):
+            if not (0 <= node1 < dist_matrix.shape[0] and 0 <= node2 < dist_matrix.shape[0]):
                 pytest.fail(
                     f"Node {node1} or {node2} out of bounds for "
                     f"dist_matrix of shape {dist_matrix.shape}"

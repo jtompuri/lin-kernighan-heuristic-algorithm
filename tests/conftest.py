@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from lin_kernighan_tsp_solver.lin_kernighan_tsp_solver import (
+from lin_kernighan_tsp_solver.lk_algorithm import (
     Tour,
     build_distance_matrix,
     delaunay_neighbors

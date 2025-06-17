@@ -1,17 +1,18 @@
 # Lin-Kernighan Heuristic for the Traveling Salesperson Problem (TSP)
 
-The script `lin_kernighan_tsp_solver/lin_kernighan_tsp_solver.py` implements the Lin-Kernighan (LK) heuristic, a
+The Python module `lin_kernighan_tsp_solver` implements the Lin-Kernighan (LK) heuristic, a
 powerful local search algorithm for finding high-quality approximate solutions to the TSP.
 The implementation is based on the descriptions and algorithms presented in _The Traveling
 Salesman Problem: A Computational Study_ by Applegate, Bixby, Chvátal & Cook [^1] and
 "An Effective Heuristic Algorithm for the Traveling-Salesman Problem" by Lin & Kernighan [^2].
 
-The script processes TSP instances from the TSPLIB format. It computes heuristic solutions
+The module processes TSP instances from the TSPLIB format. The module supports only fully 
+connected networks with Euclidian 2D geometry. It computes heuristic solutions
 using a chained version of the LK algorithm. If a corresponding optimal tour file
-(e.g., problem_name.opt.tour) is found, the script compares the heuristic solution
+`.opt.tour` is found, the module compares the heuristic solution
 against the known optimal solution and calculates the percentage gap. If no optimal
 tour file is available, the instance is still processed, but no gap calculation is
-performed for it. The script displays a summary table and plots of the tours.
+performed for it. The module displays a summary table and plots of the tours.
 
 ## Usage
 
@@ -20,44 +21,42 @@ performed for it. The script displays a summary table and plots of the tours.
      pip install numpy matplotlib scipy
      ```
 
-  2. Place your TSPLIB .tsp files in a designated folder.
-     Optionally, place corresponding .opt.tour files (if available) in the same
+  2. Place your TSPLIB `.tsp` files in a designated folder.
+     Optionally, place corresponding `.opt.tour` files (if available) in the same
      folder. The default folder is `verifications/tsplib95/` relative to the project root.
 
   3. If using a different folder for TSP instances, update the `TSP_FOLDER_PATH` constant
-     at the top of the `lin_kernighan_tsp_solver/lin_kernighan_tsp_solver.py` script
-     (in the "--- Constants ---" section) to point to your TSPLIB folder.
+     at the top of the `lin_kernighan_tsp_solver/config.py` module to point to your TSPLIB folder.
 
-  4. Run the script from the project's root directory:
+  4. Run the module as a Python module from the project's root directory:
      ```bash
-     python lin_kernighan_tsp_solver/lin_kernighan_tsp_solver.py
+     python -m lin_kernighan_tsp_solver
      ```
 
-The script will then process each EUC_2D TSP instance found in the specified folder. It prints progress
-and results to the console. For instances with an optimal tour, the gap is shown.
+The module will then process each EUC_2D TSP instance found in the specified folder. It prints progress and results to the console. For instances with an optimal tour, the gap is shown.
 For instances without an optimal tour, nothing is displayed for optimal length and gap.
 Finally, a plot of all processed tours is displayed (showing both optimal and heuristic
 tours if the optimal is available, otherwise just the heuristic tour). Configuration
 parameters for the LK algorithm can be adjusted in the `LK_CONFIG` dictionary
-within the script.
+in `config.py`.
 
 ## Helper Algorithms
 
 Create and solve simple (4-12 nodes) TSP problems with Exact TSP Solver:
-```
+```bash
 cd exact_tsp_solver
 python exact_tsp_solver
 ```
 
 Create random TSP problems:
-```
+```bash
 cd problems
 python create_tsp_problem.py 20 my_tsp20.tsp
 python create_tsp_problem.py 50 random50.tsp --max_coord 500 --name Random50
 ```
 
 Solve TSP problems with Simple TSP Solver:
-```
+```bash
 cd simple_tsp_solver
 python simple_tsp_solver
 ```

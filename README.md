@@ -6,7 +6,7 @@ The implementation is based on the descriptions and algorithms presented in _The
 Salesman Problem: A Computational Study_ by Applegate, Bixby, Chvátal & Cook [^1] and
 "An Effective Heuristic Algorithm for the Traveling-Salesman Problem" by Lin & Kernighan [^2].
 
-The module processes TSP instances from the TSPLIB format. The module supports only fully 
+The module processes TSP instances from the TSPLIB format. The module supports only fully
 connected networks with Euclidian 2D geometry. It computes heuristic solutions
 using a chained version of the LK algorithm. If a corresponding optimal tour file
 `.opt.tour` is found, the module compares the heuristic solution
@@ -14,61 +14,64 @@ against the known optimal solution and calculates the percentage gap. If no opti
 tour file is available, the instance is still processed, but no gap calculation is
 performed for it. The module displays a summary table and plots of the tours.
 
-## Usage 
+This project is expected to work with Python 3.7 or newer due to its use of modern Python features like f-strings, pathlib, and extensive type hinting.
 
-1. Create a virtual environment:
-```bash
-python -m venv venv
-```
+## Usage
 
-2. Activate virtual environment:
+1.  Create a virtual environment:
+    ```bash
+    python -m venv venv
+    ```
 
-Linux/Mac:
-```bash
-source venv/bin/activate
-```
+2.  Activate virtual environment:
 
-Windows:
-```bash
-venv\Scripts\activate
-```
+    Linux/Mac:
+    ```bash
+    source venv/bin/activate
+    ```
 
-3. Ensure all dependencies are installed for production environment:
-   ```bash
-   pip install -r requirements.txt
-   ```
+    Windows:
+    ```bash
+    venv\Scripts\activate
+    ```
 
-4. Optionally install dependencies for development environment:
-   ```bash
-   pip install -r requirements-dev.txt
-   ```
+3.  Ensure all dependencies are installed for production environment:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-5. Use default TSPLIB files or place your own TSPLIB `.tsp` files in a designated folder.
-   Optionally, place corresponding `.opt.tour` files (if available) in the same
-   folder. The default folder is `verifications/tsplib95/` relative to the project root.
+4.  Optionally install dependencies for development environment:
+    ```bash
+    pip install -r requirements-dev.txt
+    ```
 
-6. If you are using a different folder for TSP instances, update the `TSP_FOLDER_PATH` 
-   constant at the top of the `lin_kernighan_tsp_solver/config.py` module.
+5.  Use default TSPLIB files or place your own TSPLIB `.tsp` files in a designated folder.
+    Optionally, place corresponding `.opt.tour` files (if available) in the same
+    folder. The default folder is `verifications/tsplib95/` relative to the project root.
 
-7. Run the Python module from the project's root directory:
-   ```bash
-   python -m lin_kernighan_tsp_solver
-   ```
+6.  If you are using a different folder for TSP instances, update the `TSP_FOLDER_PATH`
+    constant at the top of the `lin_kernighan_tsp_solver/config.py` module.
 
-The module will then process each EUC_2D TSP instance found in the specified folder. It 
-prints progress and results to the console. For instances with an optimal tour, the gap is 
-shown. For instances without an optimal tour, nothing is displayed for optimal length and 
-gap. Finally, a plot of all processed tours is displayed (showing both optimal and 
-heuristic tours if the optimal is available, otherwise just the heuristic tour). Configuration 
-parameters for the LK algorithm can be adjusted in the `LK_CONFIG` dictionary
-in `config.py`.
+7.  Run the Python module from the project's root directory:
+    ```bash
+    python -m lin_kernighan_tsp_solver
+    ```
+
+The module will then process each EUC_2D TSP instance found in the specified folder. It
+prints progress and results to the console. The default time limit for each problem is 
+set to 5 seconds. You can increate the time limit for better approximations. For 
+instances with an optimal tour, the gap is shown. For instances without an optimal 
+tour, nothing is displayed for optimal length and gap. Finally, a plot of all processed 
+tours is displayed (showing both optimal and heuristic tours if the optimal is available, 
+otherwise just the heuristic tour). Configuration parameters for the LK algorithm can be 
+adjusted in the `LK_CONFIG` dictionary in `config.py`.
 
 ## Helper Algorithms
 
 Create and solve simple (4-12 nodes) TSP problems with Exact TSP Solver:
 ```bash
 cd exact_tsp_solver
-python exact_tsp_solver
+python exact_tsp_solver.py
 ```
 
 Create random TSP problems:
@@ -81,12 +84,13 @@ python create_tsp_problem.py 50 random50.tsp --max_coord 500 --name Random50
 Solve TSP problems with Simple TSP Solver:
 ```bash
 cd simple_tsp_solver
-python simple_tsp_solver
+python simple_tsp_solver.py
 ```
 
-## Example output using TSPLIB95 
+## Example output using TSPLIB95
 
-Here is the example output using defaults: 
+Here is an example output using TSPLIB95 instances.
+**Note:** The example output below was generated with `TIME_LIMIT` set to 20.0 seconds in `config.py` for illustrative purposes. The default `TIME_LIMIT` in `config.py` is 5.0 seconds, which may yield different heuristic lengths and runtimes.
 
 ![Example output plots](/images/lk_verifications_tsplib95_20s.png)
 
@@ -123,18 +127,17 @@ tsp225      3859.00  3936.55     2.01    20.00
 SUMMARY    910625.92 1014553.02     4.54    13.64
 ```
 
-
 ## Course documentation (in Finnish)
 
-- [Määrittelydokumentti](/documentation/requirements_specification.md)
-- [Toteutusdokumentti](/documentation/implementation_specification.md)
-- [Testausdokumentti](/documentation/testing_specification.md)
-- [Viikkoraportti 1](/reports/weekly_report_1.md)
-- [Viikkoraportti 2](/reports/weekly_report_2.md)
-- [Viikkoraportti 3](/reports/weekly_report_3.md)
-- [Viikkoraportti 4](/reports/weekly_report_4.md)
-- [Viikkoraportti 5](/reports/weekly_report_5.md)
+-   [Määrittelydokumentti](/documentation/requirements_specification.md)
+-   [Toteutusdokumentti](/documentation/implementation_specification.md)
+-   [Testausdokumentti](/documentation/testing_specification.md)
+-   [Viikkoraportti 1](/reports/weekly_report_1.md)
+-   [Viikkoraportti 2](/reports/weekly_report_2.md)
+-   [Viikkoraportti 3](/reports/weekly_report_3.md)
+-   [Viikkoraportti 4](/reports/weekly_report_4.md)
+-   [Viikkoraportti 5](/reports/weekly_report_5.md)
 
-[^1]: Applegate, David L. & Bixby, Robert E. & Chvtal,  Vaek & Cook, William J. (2006): *The Traveling Salesman Problem : A Computational Study*, Princeton University Press.
+[^1]: Applegate, David L. & Bixby, Robert E. & Chvtal, Vaek & Cook, William J. (2006): _The Traveling Salesman Problem : A Computational Study_, Princeton University Press.
 
 [^2]: Lin, Shen & Kernighan, Brian W. (1973): ”An Effective Heuristic Algorithm for the Traveling-Salesman Problem”, Operations Research, Vol. 21, No. 2, s. 498–516.

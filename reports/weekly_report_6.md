@@ -18,7 +18,7 @@ tehdään ohjelmointivirhe.
 
 
 Kävin läpi käytetyt kirjastot ja poistin tarpeettomat, kuten esimerkiksi `tsplib95`
--kirjaston, jota ei ole enää ylläpidetty ja jota käytettiin enää TSP-ohgelmien luonnissa. 
+-kirjaston, jota ei ole enää ylläpidetty ja jota käytin vain TSP-ongelmien luonnissa. 
 Korvasin kirjastosta käytetyt piirteet omalla koodilla. Jaoin asennettavat kirjastot
 ajonaikaisiin kirjastoihin (`requirements.txt`) ja kehitykseen tarvittaviin kirjastoihin 
 (`requirements-dev.txt`). Päivitin asennusohjeet tämän jaon mukaisesti.

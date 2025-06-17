@@ -50,7 +50,7 @@ This project is expected to work with Python 3.7 or newer due to its use of mode
     folder. The default folder is `verifications/tsplib95/` relative to the project root.
 
 6.  If you are using a different folder for TSP instances, update the `TSP_FOLDER_PATH`
-    constant at the top of the `lin_kernighan_tsp_solver/config.py` module.
+    constant at the top of the `lin_kernighan_tsp_solver/config.py`.
 
 7.  Run the Python module from the project's root directory:
     ```bash

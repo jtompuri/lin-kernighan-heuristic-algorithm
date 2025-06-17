@@ -137,6 +137,7 @@ SUMMARY    910625.92 1014553.02     4.54    13.64
 -   [Viikkoraportti 3](/reports/weekly_report_3.md)
 -   [Viikkoraportti 4](/reports/weekly_report_4.md)
 -   [Viikkoraportti 5](/reports/weekly_report_5.md)
+-   [Viikkoraportti 6](/reports/weekly_report_6.md)
 
 [^1]: Applegate, David L. & Bixby, Robert E. & Chvtal, Vaek & Cook, William J. (2006): _The Traveling Salesman Problem : A Computational Study_, Princeton University Press.
 

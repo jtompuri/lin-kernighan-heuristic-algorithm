@@ -279,7 +279,7 @@ def delaunay_neighbors(coords: np.ndarray) -> List[List[int]]:
     }
     # Populate neighbor sets from Delaunay simplices
     for simplex_indices in triangulation.simplices:
-        for u_vertex, v_vertex in combinations(simplex_indices, 2):
+        for u_vertex, v_vertex in combinations(simplex_indices, 2):  # type: ignore[arg-type] # Pylance may incorrectly infer simplex_data as scalar
             neighbor_sets[u_vertex].add(v_vertex)
             neighbor_sets[v_vertex].add(u_vertex)
     # Convert sets to sorted lists

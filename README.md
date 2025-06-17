@@ -14,29 +14,47 @@ against the known optimal solution and calculates the percentage gap. If no opti
 tour file is available, the instance is still processed, but no gap calculation is
 performed for it. The module displays a summary table and plots of the tours.
 
-## Usage
+## Usage 
 
-  1. Ensure all dependencies are installed:
-     ```bash
-     pip install numpy matplotlib scipy
-     ```
+1. Create a virtual environment:
+```bash
+python -m venv venv
+```
 
-  2. Place your TSPLIB `.tsp` files in a designated folder.
-     Optionally, place corresponding `.opt.tour` files (if available) in the same
-     folder. The default folder is `verifications/tsplib95/` relative to the project root.
+2. Activate virtual environment:
 
-  3. If using a different folder for TSP instances, update the `TSP_FOLDER_PATH` constant
-     at the top of the `lin_kernighan_tsp_solver/config.py` module to point to your TSPLIB folder.
+Linux/Mac:
+```bash
+source venv/bin/activate
+```
 
-  4. Run the module as a Python module from the project's root directory:
-     ```bash
-     python -m lin_kernighan_tsp_solver
-     ```
+Windows:
+```bash
+venv\Scripts\activate
+```
 
-The module will then process each EUC_2D TSP instance found in the specified folder. It prints progress and results to the console. For instances with an optimal tour, the gap is shown.
-For instances without an optimal tour, nothing is displayed for optimal length and gap.
-Finally, a plot of all processed tours is displayed (showing both optimal and heuristic
-tours if the optimal is available, otherwise just the heuristic tour). Configuration
+3. Ensure all dependencies are installed for production environment:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Use default TSPLIB files or place your own TSPLIB `.tsp` files in a designated folder.
+   Optionally, place corresponding `.opt.tour` files (if available) in the same
+   folder. The default folder is `verifications/tsplib95/` relative to the project root.
+
+5. If you are using a different folder for TSP instances, update the `TSP_FOLDER_PATH` 
+   constant at the top of the `lin_kernighan_tsp_solver/config.py` module to point to your TSPLIB folder.
+
+6. Run the Python module from the project's root directory:
+   ```bash
+   python -m lin_kernighan_tsp_solver
+   ```
+
+The module will then process each EUC_2D TSP instance found in the specified folder. It 
+prints progress and results to the console. For instances with an optimal tour, the gap is 
+shown. For instances without an optimal tour, nothing is displayed for optimal length and 
+gap. Finally, a plot of all processed tours is displayed (showing both optimal and 
+heuristic tours if the optimal is available, otherwise just the heuristic tour). Configuration 
 parameters for the LK algorithm can be adjusted in the `LK_CONFIG` dictionary
 in `config.py`.
 

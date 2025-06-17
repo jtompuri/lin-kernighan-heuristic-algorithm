@@ -139,7 +139,8 @@ class Tour:
 
     def flip(self, segment_start_node: int, segment_end_node: int) -> None:
         """
-        Reverses the tour segment from segment_start_node to segment_end_node.
+        Reverses the tour segment from segment_start_node to segment_end_node
+        in-place.
 
         Args:
             segment_start_node (int): First vertex of the segment to flip.
@@ -147,25 +148,36 @@ class Tour:
         """
         idx_a, idx_b = self.pos[segment_start_node], self.pos[segment_end_node]
 
-        # Collect array indices in self.order forming the segment
-        segment_indices_in_order = []
-        current_idx = idx_a
-        while True:
-            segment_indices_in_order.append(current_idx)
-            if current_idx == idx_b:
-                break
-            current_idx = (current_idx + 1) % self.n
+        if idx_a == idx_b:  # Segment is a single node, no change needed.
+            return
 
-        # Extract vertex values (nodes) in the segment
-        segment_nodes = self.order[segment_indices_in_order]
-        # Reverse the segment nodes
-        reversed_segment_nodes = segment_nodes[::-1]
+        # Determine the number of elements in the segment to be flipped.
+        # This handles both non-wrapping (idx_a <= idx_b) and wrapping (idx_a > idx_b) segments.
+        if idx_a <= idx_b:
+            segment_len = idx_b - idx_a + 1
+        else:  # Segment wraps around the end of the tour array
+            segment_len = (self.n - idx_a) + (idx_b + 1)
 
-        # Place reversed segment back into self.order and update self.pos
-        for i, order_idx in enumerate(segment_indices_in_order):
-            node_val_to_place = reversed_segment_nodes[i]
-            self.order[order_idx] = node_val_to_place
-            self.pos[node_val_to_place] = order_idx  # Update position map
+        # Perform in-place reversal by swapping pairs of nodes.
+        # We iterate for half the length of the segment.
+        for i in range(segment_len // 2):
+            # Calculate current left and right indices in self.order array
+            # The left index starts at idx_a and moves forward along the segment.
+            # The right index starts at idx_b and moves backward along the segment.
+            # Modulo self.n handles the circular nature of the tour array.
+            current_left_order_idx = (idx_a + i) % self.n
+            current_right_order_idx = (idx_b - i + self.n) % self.n  # Ensure positive before modulo
+
+            # Swap the nodes at these positions in self.order
+            node_at_left = self.order[current_left_order_idx]
+            node_at_right = self.order[current_right_order_idx]
+
+            self.order[current_left_order_idx] = node_at_right
+            self.order[current_right_order_idx] = node_at_left
+
+            # Update their positions in the self.pos mapping
+            self.pos[node_at_right] = current_left_order_idx
+            self.pos[node_at_left] = current_right_order_idx
 
     def get_tour(self) -> List[int]:
         """

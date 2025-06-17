@@ -23,11 +23,19 @@ Korvasin kirjastosta käytetyt piirteet omalla koodilla. Jaoin asennettavat kirj
 ajonaikaisiin kirjastoihin (`requirements.txt`) ja kehitykseen tarvittaviin kirjastoihin 
 (`requirements-dev.txt`). Päivitin asennusohjeet tämän jaon mukaisesti.
 
+Vertaisarvioinnin palautteen perusteella toteutin uudestaan `flip`-metodin ilman uusien
+listojen luontia siten, että polun osan järjestys käännetään ympäri paikallaan. Nyt kun
+testi kattavuus on täydellinen, oli helppo varmistua, ettei mikään mennyt rikki 
+muutosta tehtäessä. Toteutin myös vertailutestin `tests/test_performance.py`, joka 
+suoritetaan komennolla `python -m tests.test_performance`. Testin perusteella uusi
+`flip`-metodi on 50 % nopeampi kuin vanha metodi.
+
 Tein sovelluksesta ajettavan Python moduulin ja muutin README:n ohjeen vastaamaan tätä. 
 
 ## 2. Miten ohjelma on edistynyt?
 
 Sovellus on nyt rakenteeltaan modulaarisempi. Täydellinen testikattavuus on saavutettu. 
+`Flip`-metodi on nyt nopeampi, mutta sen vaikutus TSP-ongelmien ratkaisuihin on marginaalinen.
 
 ## 3. Mitä opin tällä viikolla / tänään?
 

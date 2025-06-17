@@ -17,7 +17,6 @@ Example:
 
 import argparse
 import random
-import tsplib95
 import os
 
 
@@ -37,35 +36,6 @@ def generate_random_coordinates(n_nodes: int, max_coord: int = 1000) -> dict:
         y = random.randint(0, max_coord)
         coords[i] = [x, y]
     return coords
-
-
-def create_tsp_problem_object(
-    name: str,
-    n_nodes: int,
-    coords: dict,
-    comment: str = "Randomly generated TSP instance"
-) -> tsplib95.models.Problem:
-    """Create a tsplib95.models.Problem object from coordinates.
-
-    Args:
-        name (str): Problem name.
-        n_nodes (int): Number of nodes.
-        coords (dict): Node coordinates {id: [x, y], ...}.
-        comment (str): Problem comment.
-
-    Returns:
-        tsplib95.models.Problem: TSPLIB problem object.
-    """
-    problem = tsplib95.models.Problem(
-        name=name,
-        comment=comment,
-        type="TSP",
-        dimension=n_nodes,
-        edge_weight_type="EUC_2D",
-        node_coords=coords,
-        display_data_type='COORD_DISPLAY'
-    )
-    return problem
 
 
 def save_tsp_manually(

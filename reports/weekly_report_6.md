@@ -10,7 +10,7 @@ mikä oli suhteellisen iso työ.
 
 Refaktoroinnin lisäksi kävin läpi yksityiskohtaisesti testikattavuusraportin ja lisäsin
 puuttuvia testejä saavuttaen 100 %:n testikattavuuden. Viimeisten yksittäisten rivien 
-kattaminen osoittautui erittäin työlääksi, sillä ohjelman haaraaraan päätyminen 
+kattaminen osoittautui erittäin työlääksi, sillä ohjelman harvinaiseen haaraan päätyminen 
 edellytti juuri tietynlaista TSP-ongelmaa. Yhden puuttuvan rivin ohitin, sillä koodi 
 ei koskaan päädy tälle riville. Rivi on olemassa puolustavan ohjelmointistrategian 
 vuoksi. Toisin sanoen riville päädytään vain siinä tapauksessa, että muualla koodissa 

@@ -325,3 +325,90 @@ def test_chained_lin_kernighan_stops_on_max_no_improvement(simple_tsp_setup):
 
     LK_CONFIG.clear()
     LK_CONFIG.update(original_lk_config)
+
+
+def test_chained_lin_kernighan_breaks_on_optimum_found_single_call():
+    import numpy as np
+    from lin_kernighan_tsp_solver.lk_algorithm import chained_lin_kernighan, FLOAT_COMPARISON_TOLERANCE, Tour
+
+    coords = np.array([[0, 0], [1, 0], [0, 1]])
+    initial_tour = [0, 1, 2]
+    known_optimal_length = 3.0
+
+    # Patch lin_kernighan to simulate improvement to optimal
+    from lin_kernighan_tsp_solver import lk_algorithm
+
+    class DummyTour(Tour):
+        def __init__(self, order, cost):
+            self._order = order
+            self.cost = cost
+            self.n = len(order)
+
+        def get_tour(self):
+            return self._order
+
+    def fake_lin_kernighan(*args, **kwargs):
+        return (DummyTour([0, 2, 1], known_optimal_length), known_optimal_length)
+
+    original_lk = lk_algorithm.lin_kernighan
+    lk_algorithm.lin_kernighan = fake_lin_kernighan
+
+    try:
+        best_tour, best_cost = chained_lin_kernighan(
+            coords,
+            initial_tour,
+            known_optimal_length=known_optimal_length
+        )
+        assert abs(best_cost - known_optimal_length) < FLOAT_COMPARISON_TOLERANCE * 10
+        assert best_tour == [0, 2, 1]
+    finally:
+        lk_algorithm.lin_kernighan = original_lk
+
+
+def test_chained_lin_kernighan_breaks_on_optimum_found_after_improvement(monkeypatch):
+    import numpy as np
+    from lin_kernighan_tsp_solver.lk_algorithm import chained_lin_kernighan, Tour
+
+    coords = np.array([[0, 0], [1, 0], [0, 1]])
+    initial_tour = [0, 1, 2]
+    known_optimal_length = 3.0
+
+    from lin_kernighan_tsp_solver import lk_algorithm
+
+    class DummyTour(Tour):
+        def __init__(self, order, cost):
+            self._order = order
+            self.cost = cost
+            self.n = len(order)
+
+        def get_tour(self):
+            return self._order
+
+    call_count = {'count': 0}
+
+    def fake_lin_kernighan(*args, **kwargs):
+        call_count['count'] += 1
+        if call_count['count'] == 1:
+            return DummyTour([0, 1, 2], 4.0), 4.0
+        else:
+            return DummyTour([0, 2, 1], known_optimal_length), known_optimal_length
+
+    original_lk = lk_algorithm.lin_kernighan
+    lk_algorithm.lin_kernighan = fake_lin_kernighan
+
+    try:
+        best_tour, best_cost = chained_lin_kernighan(
+            coords,
+            initial_tour,
+            known_optimal_length=known_optimal_length,
+            time_limit_seconds=10
+        )
+        # The best_tour should be [0, 2, 1]
+        assert best_tour == [0, 2, 1]
+        # The best_cost should be the actual cost for this tour
+        expected_cost = (
+            np.linalg.norm(coords[0] - coords[2]) + np.linalg.norm(coords[2] - coords[1]) + np.linalg.norm(coords[1] - coords[0])
+        )
+        assert abs(best_cost - expected_cost) < 1e-9
+    finally:
+        lk_algorithm.lin_kernighan = original_lk

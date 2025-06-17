@@ -1132,3 +1132,423 @@ def test_alternate_step_restrictive_breadth(simple_tsp_setup):
 
     LK_CONFIG.clear()
     LK_CONFIG.update(original_lk_config)
+
+
+def test_alternate_step_deadline_passed():
+    coords = np.array([[0, 0], [1, 1]])
+    D = np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
+    tour = Tour([0, 1], D)
+    neigh = [[1], [0]]
+    deadline = time.time() - 10  # Already passed
+    found, seq = alternate_step(0, tour, D, neigh, deadline)
+    assert not found and seq is None
+
+
+def test_alternate_step_no_candidates():
+    coords = np.array([[0, 0], [1, 1], [2, 2]])
+    D = np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
+    tour = Tour([0, 1, 2], D)
+    # Neighbors such that no candidate is valid
+    neigh = [[1], [0], [1]]
+    deadline = time.time() + 10
+    found, seq = alternate_step(0, tour, D, neigh, deadline)
+    assert not found and seq is None
+
+
+def test_lk_search_deadline_passed():
+    coords = np.array([[0, 0], [1, 1]])
+    D = np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
+    tour = Tour([0, 1], D)
+    neigh = [[1], [0]]
+    deadline = time.time() - 10
+    assert lk_search(0, tour, D, neigh, deadline) is None
+
+
+def test_lk_search_no_improvement():
+    coords = np.array([[0, 0], [1, 1]])
+    D = np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
+    tour = Tour([0, 1], D)
+    neigh = [[1], [0]]
+    deadline = time.time() + 10
+    assert lk_search(0, tour, D, neigh, deadline) is None
+
+
+def test_flip_and_update_cost_recomputes_cost_if_none():
+    from lin_kernighan_tsp_solver.lk_algorithm import Tour
+    import numpy as np
+    D = np.array([[0.0, 1.0], [1.0, 0.0]])
+    # Create Tour without initializing cost
+    tour = Tour([0, 1], None)
+    # At this point, tour.cost is None
+    delta = tour.flip_and_update_cost(0, 1, D)
+    # After the call, cost should be recomputed and not None
+    assert tour.cost == 2.0
+    assert isinstance(delta, float)
+
+
+def test_step_returns_false_none_when_no_candidates():
+    from lin_kernighan_tsp_solver.lk_algorithm import Tour, step
+    import numpy as np
+    D = np.array([[0.0, 1.0], [1.0, 0.0]])
+    tour = Tour([0, 1], D)
+    neigh = [[1], [0]]
+    start_cost = tour.cost if tour.cost is not None else 0.0
+    result = step(1, 0.0, 0, tour, D, neigh, [], start_cost, start_cost, float('inf'))
+    assert result == (False, None)
+
+
+def test_alternate_step_deadline_and_no_candidates():
+    from lin_kernighan_tsp_solver.lk_algorithm import Tour, alternate_step
+    import numpy as np
+    import time
+    D = np.array([[0.0, 1.0], [1.0, 0.0]])
+    tour = Tour([0, 1], D)
+    neigh = [[1], [0]]
+    # Deadline already passed
+    found, seq = alternate_step(0, tour, D, neigh, time.time() - 1)
+    assert not found and seq is None
+
+    # No candidates (neighbors are self)
+    neigh = [[0], [1]]
+    found, seq = alternate_step(0, tour, D, neigh, time.time() + 10)
+    assert not found and seq is None
+
+
+def test_lk_search_deadline_and_no_improvement():
+    from lin_kernighan_tsp_solver.lk_algorithm import Tour, lk_search
+    import numpy as np
+    import time
+    D = np.array([[0.0, 1.0], [1.0, 0.0]])
+    tour = Tour([0, 1], D)
+    neigh = [[1], [0]]
+    # Deadline already passed
+    assert lk_search(0, tour, D, neigh, time.time() - 1) is None
+    # No improvement possible
+    assert lk_search(0, tour, D, neigh, time.time() + 10) is None
+
+
+def test_alternate_step_deadline_returns(monkeypatch):
+    import numpy as np
+    import time
+    from lin_kernighan_tsp_solver.lk_algorithm import Tour, alternate_step
+
+    D = np.array([[0.0, 1.0], [1.0, 0.0]])
+    tour = Tour([0, 1], D)
+    neigh = [[1], [0]]
+
+    # Line 449: Deadline already passed at function entry
+    found, seq = alternate_step(0, tour, D, neigh, time.time() - 10)
+    assert found is False and seq is None
+
+    # Line 465: Deadline passed inside first for-loop
+    # Patch time.time to simulate deadline passing after function entry
+    call_count = {'count': 0}
+    real_time = time.time
+
+    def fake_time():
+        call_count['count'] += 1
+        # First call: not passed, second call: passed
+        return real_time() if call_count['count'] < 2 else real_time() + 1000
+    monkeypatch.setattr('time.time', fake_time)
+    found, seq = alternate_step(0, tour, D, neigh, real_time() + 500)
+    assert found is False and seq is None
+
+    # Line 484: Deadline passed inside second for-loop
+    # To reach this, need at least one candidate for y1 and y2
+    # Use a 3-node tour to ensure candidates exist
+    D3 = np.array([[0, 1, 2], [1, 0, 1], [2, 1, 0]], dtype=float)
+    tour3 = Tour([0, 1, 2], D3)
+    neigh3 = [[1, 2], [0, 2], [0, 1]]
+    call_count['count'] = 0
+
+    def fake_time2():
+        call_count['count'] += 1
+        # Let the first few calls pass, then simulate deadline passed
+        return real_time() if call_count['count'] < 6 else real_time() + 1000
+    monkeypatch.setattr('time.time', fake_time2)
+    found, seq = alternate_step(0, tour3, D3, neigh3, real_time() + 500)
+    assert found is False and seq is None
+
+
+def test_delaunay_neighbors_small_cases():
+    assert delaunay_neighbors(np.empty((0, 2))) == []
+    assert delaunay_neighbors(np.array([[0, 0]])) == [[]]
+    assert delaunay_neighbors(np.array([[0, 0], [1, 1]])) == [[1], [0]]
+
+
+def test_tour_init_cost_empty():
+    from lin_kernighan_tsp_solver.lk_algorithm import Tour
+    import numpy as np
+    tour = Tour([], None)
+    tour.init_cost(np.empty((0, 0)))
+    assert tour.cost == 0.0
+
+
+def test_alternate_step_deadline_in_nested_loops(monkeypatch):
+    import numpy as np
+    from lin_kernighan_tsp_solver.lk_algorithm import Tour, alternate_step
+
+    # Setup a 3-node tour to ensure all loops are entered
+    coords = np.array([[0, 0], [1, 0], [0, 1]])
+    D = np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
+    tour = Tour([0, 1, 2], D)
+    neigh = [[1, 2], [0, 2], [0, 1]]
+    deadline = 1000.0  # Arbitrary future time
+
+    # Patch time.time() to simulate deadline being passed at different loop depths
+    call_counter = {'count': 0}
+    real_time = time.time()
+
+    def fake_time():
+        call_counter['count'] += 1
+        # 1st call: before first for-loop (ok)
+        # 2nd call: inside first for-loop (simulate deadline passed)
+        # 3rd call: inside second for-loop (simulate deadline passed)
+        # 4th call: inside third for-loop (simulate deadline passed)
+        if call_counter['count'] == 2:
+            return deadline + 1  # Triggers line 449
+        elif call_counter['count'] == 4:
+            return deadline + 1  # Triggers line 465
+        elif call_counter['count'] == 6:
+            return deadline + 1  # Triggers line 484
+        return real_time
+
+    monkeypatch.setattr('time.time', fake_time)
+
+    # Line 449: Deadline passed in first for-loop
+    found, seq = alternate_step(0, tour, D, neigh, deadline)
+    assert found is False and seq is None
+
+    # Reset counter for next test
+    call_counter['count'] = 0
+
+    # Line 465: Deadline passed in second for-loop
+    # To reach the second for-loop, we need at least one candidate for y1
+    # So, ensure gain_G1 > 0 for at least one neighbor
+    D2 = np.array([[0, 1, 10], [1, 0, 1], [10, 1, 0]], dtype=float)
+    tour2 = Tour([0, 1, 2], D2)
+    neigh2 = [[1, 2], [0, 2], [0, 1]]
+    monkeypatch.setattr('time.time', lambda: real_time if call_counter['count'] < 4 else deadline + 1)
+    found, seq = alternate_step(0, tour2, D2, neigh2, deadline)
+    assert found is False and seq is None
+
+    # Reset counter for next test
+    call_counter['count'] = 0
+
+    # Line 484: Deadline passed in third for-loop
+    # To reach the third for-loop, we need at least one candidate for y1 and y2
+    D3 = np.array([[0, 1, 10], [1, 0, 0.5], [10, 0.5, 0]], dtype=float)
+    tour3 = Tour([0, 1, 2], D3)
+    neigh3 = [[1, 2], [0, 2], [0, 1]]
+    monkeypatch.setattr('time.time', lambda: real_time if call_counter['count'] < 6 else deadline + 1)
+    found, seq = alternate_step(0, tour3, D3, neigh3, deadline)
+    assert found is False and seq is None
+
+
+def test_lk_search_returns_seq_alt_on_improvement(monkeypatch):
+    import numpy as np
+    from lin_kernighan_tsp_solver.lk_algorithm import Tour, lk_search
+
+    coords = np.array([[0, 0], [1, 0], [0, 1]])
+    D = np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
+    tour = Tour([0, 1, 2], D)
+    neigh = [[1, 2], [0, 2], [0, 1]]
+    deadline = time.time() + 10
+
+    # Patch alternate_step to return a sequence
+    def fake_alternate_step(base_node, tour, D, neigh, deadline):
+        return True, [(0, 1)]
+
+    monkeypatch.setattr('lin_kernighan_tsp_solver.lk_algorithm.alternate_step', fake_alternate_step)
+
+    # Patch Tour.flip_and_update_cost to always reduce cost
+    original_flip_and_update_cost = Tour.flip_and_update_cost
+
+    def fake_flip_and_update_cost(self, node_a, node_b, D):
+        self.cost = 0.0  # Simulate strict improvement
+        return -1.0
+    Tour.flip_and_update_cost = fake_flip_and_update_cost
+
+    try:
+        result = lk_search(0, tour, D, neigh, deadline)
+        assert result == [(0, 1)]
+    finally:
+        Tour.flip_and_update_cost = original_flip_and_update_cost
+
+
+def test_alternate_step_deadline_first_for(monkeypatch):  # Covers line 449
+    import numpy as np
+    from lin_kernighan_tsp_solver.lk_algorithm import Tour, alternate_step, LK_CONFIG
+
+    original_breadth_a = LK_CONFIG["BREADTH_A"]
+    LK_CONFIG["BREADTH_A"] = 1  # Consider only one y1 candidate
+
+    # 3-node tour: [0, 1, 2]. t1=0, t2=1.
+    # To make gain_G1 > 0 for y1_candidate=2: D[0,1] - D[1,2] > TOLERANCE
+    D = np.array([
+        [0, 1.0, 0.1],
+        [1.0, 0, 0.5],  # D[t2=1, y1_cand=2] = 0.5
+        [0.1, 0.5, 0]
+    ], dtype=float)  # gain_G1 = D[0,1] - D[1,2] = 1.0 - 0.5 = 0.5 > TOLERANCE
+    tour = Tour([0, 1, 2], D)
+    neigh = [[1, 2], [0, 2], [0, 1]]  # Ensure y1_candidate=2 is in neigh[t2=1]
+
+    deadline_val = 1000.0
+    call_count = {'count': 0}
+
+    def fake_time():
+        call_count['count'] += 1
+        # Call 1: initial check in alternate_step (line 431) - pass
+        # Call 2: check in first for-loop (line 449) - fail (hit deadline)
+        if call_count['count'] == 1:
+            return deadline_val - 1.0
+        else:
+            return deadline_val + 1.0
+
+    monkeypatch.setattr('time.time', fake_time)
+
+    found, seq = alternate_step(0, tour, D, neigh, deadline_val)
+    assert found is False and seq is None
+    assert call_count['count'] == 2  # Ensure fake_time was called as expected
+
+    LK_CONFIG["BREADTH_A"] = original_breadth_a  # Restore config
+
+
+def test_alternate_step_deadline_second_for(monkeypatch):  # Targets line 465
+    import numpy as np
+    from lin_kernighan_tsp_solver.lk_algorithm import Tour, alternate_step, LK_CONFIG
+
+    original_lk_config = LK_CONFIG.copy()
+    LK_CONFIG["BREADTH_A"] = 1
+    LK_CONFIG["BREADTH_B"] = 1
+
+    # 4-node tour: [0,1,2,3]. t1=0, t2=1.
+    # D matrix from your failing test, which populated candidates but found a 3-opt.
+    # This D ensures candidates_for_y1 and candidates_for_y2 are non-empty.
+    D = np.array([
+        [0, 1.0, 0.1, 1.0],  # Node 0 (t1, also t4)
+        [1.0, 0, 1.0, 0.1],  # Node 1 (t2)
+        [0.1, 1.0, 0, 1.0],  # Node 2 (chosen_y2 if t4=0)
+        [1.0, 0.1, 1.0, 0]  # Node 3 (chosen_y1)
+    ], dtype=float)
+    # With this D and tour [0,1,2,3]:
+    # t1=0, t2=1.
+    # For y1_cand=3 (from neigh[1]): gain_G1 = D[0,1]-D[1,3] = 1.0-0.1 = 0.9. Good.
+    # chosen_y1=3, chosen_t3=tour.prev(3)=2.
+    # t4=tour.next(chosen_y1=3)=0.
+    # For y2_cand from neigh[t4=0]. Let neigh[0]=[1,2,3].
+    # y2_cand=2 (not t1,t2,chosen_y1). chosen_y2=2.
+    # The 3-opt check tour.sequence(t2=1, chosen_y2=2, chosen_y1=3) on tour [0,1,2,3] is True.
+    # The deadline check is BEFORE this 3-opt check.
+    tour = Tour([0, 1, 2, 3], D)
+    neigh = [[1, 2, 3], [0, 2, 3], [0, 1, 3], [0, 1, 2]]
+
+    deadline_val = 100.0
+    call_count = {'value': 0}
+
+    def fake_time():
+        call_count['value'] += 1
+        # Call 1: Initial check (line ~431) -> pass
+        # Call 2: Check in first for-loop (line 449) -> pass (BREADTH_A=1)
+        # Call 3: Check at start of second for-loop (line 465) -> hit deadline
+        if call_count['value'] <= 2:  # Calls 1 and 2
+            return deadline_val - 10.0  # Before deadline
+        else:  # call_count['value'] == 3
+            return deadline_val + 10.0  # After deadline
+
+    monkeypatch.setattr('time.time', fake_time)
+
+    found, seq = alternate_step(0, tour, D, neigh, deadline_val)
+
+    assert found is False and seq is None
+    assert call_count['value'] == 3, "time.time() was not called the expected number of times"
+
+    LK_CONFIG.clear()
+    LK_CONFIG.update(original_lk_config)
+
+
+def test_alternate_step_deadline_third_for(monkeypatch):  # Targets line 484
+    import numpy as np
+    from lin_kernighan_tsp_solver.lk_algorithm import Tour, alternate_step, LK_CONFIG
+
+    original_lk_config = LK_CONFIG.copy()
+    LK_CONFIG["BREADTH_A"] = 1
+    LK_CONFIG["BREADTH_B"] = 1
+    LK_CONFIG["BREADTH_D"] = 1
+
+    # 6-node setup. Tour: [0,1,2,3,4,5]. t1=0, t2=1.
+    # Goal: chosen_y1=2, chosen_y2=4. This makes 3-opt tour.sequence(1,4,2) False.
+
+    D = np.full((6, 6), 100.0)
+    np.fill_diagonal(D, 0)
+
+    def set_dist(i, j, val):
+        D[i, j] = val
+        D[j, i] = val
+
+    # Step 1: Choose chosen_y1 = 2 (from t2=1)
+    # gain_G1 = D[t1=0,t2=1] - D[t2=1,y1_cand=2]
+    set_dist(0, 1, 20)  # D[0,1]
+    set_dist(1, 2, 1)   # D[1,2] -> gain_G1 = 19. chosen_y1=2
+    set_dist(1, 3, 50)
+    set_dist(1, 4, 50)
+    set_dist(1, 5, 50)
+    # chosen_y1=2. chosen_t3=tour.prev(2)=1. t4=tour.next(2)=3.
+
+    # Step 2: Choose chosen_y2 = 4 (from t4=3)
+    # gain_G2 = D[chosen_t3=1,t4=3] - D[t4=3,y2_cand=4]
+    set_dist(1, 3, 20)  # D[chosen_t3=1, t4=3]
+    set_dist(3, 4, 1)   # D[t4=3, y2_cand=4] -> gain_G2 = 19. chosen_y2=4
+    # Excluded for y2: t1=0, t2=1, chosen_y1=2.
+    # Valid y2_cand from t4=3 could be 0,1,4,5. We want 4.
+    set_dist(3, 0, 50)
+    set_dist(3, 1, 50)  # Skipped
+    set_dist(3, 5, 50)
+    # chosen_y2=4.
+    # tour.sequence(t2=1, chosen_y2=4, chosen_y1=2) is False.
+
+    # Step 3: Populate y3_candidates
+    # chosen_t5=tour.prev(chosen_y2=4)=3. chosen_t6=tour.next(chosen_y2=4)=5.
+    # y3_cand from neigh[chosen_t6=5].
+    # Excluded for y3: t1=0, t2=1, chosen_y1=2, chosen_y2=4, chosen_t6=5. (Nodes: 0,1,2,4,5)
+    # Node 3 is available. Let chosen_y3 = 3.
+    # gain_G3 = D[chosen_t5=3,chosen_t6=5] - D[chosen_t6=5,y3_cand=3]
+    # D[3,5] was 50. D[5,3] is 50.
+    # To make gain_G3 positive for y3_cand=3 (from t6=5):
+    set_dist(3, 5, 20)  # D[chosen_t5=3, chosen_t6=5]
+    set_dist(5, 3, 1)  # D[chosen_t6=5, y3_cand=3] -> gain_G3 = 19
+    # Ensure other y3_cand from t6=5 are less attractive or invalid
+    set_dist(5, 0, 50)  # Skipped
+    set_dist(5, 1, 50)  # Skipped
+    set_dist(5, 2, 50)  # Skipped
+    set_dist(5, 4, 50)  # Skipped
+
+    tour_obj = Tour(list(range(6)), D)
+    neigh = [  # Ensure choices are picked by being first in neigh list with BREADTH=1
+        [1, 2, 3, 4, 5],  # 0
+        [2, 0, 3, 4, 5],  # 1 (t2) -> pick 2 for y1
+        [0, 1, 3, 4, 5],  # 2
+        [4, 0, 1, 2, 5],  # 3 (t4) -> pick 4 for y2
+        [0, 1, 2, 3, 5],  # 4
+        [3, 0, 1, 2, 4]  # 5 (chosen_t6) -> pick 3 for y3
+    ]
+
+    deadline_val = 100.0
+    call_count = {'value': 0}
+
+    def fake_time():
+        call_count['value'] += 1
+        if call_count['value'] <= 3:
+            return deadline_val - 10.0
+        else:
+            return deadline_val + 10.0
+
+    monkeypatch.setattr('time.time', fake_time)
+
+    found, seq = alternate_step(0, tour_obj, D, neigh, deadline_val)
+
+    assert found is False and seq is None, f"Expected (False, None), got ({found}, {seq})"
+    assert call_count['value'] == 4, f"time.time() called {call_count['value']} times, expected 4"
+
+    LK_CONFIG.clear()
+    LK_CONFIG.update(original_lk_config)

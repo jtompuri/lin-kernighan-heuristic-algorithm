@@ -54,9 +54,9 @@ def test_process_single_instance_no_opt_tour_loaded(tmp_path, simple_tsp_setup):
     mock_clk_result_cost = initial_cost_fixture
 
     with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=mock_coords) as mock_read_tsp, \
-         patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=None) as mock_read_opt, \
-         patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan',
-               return_value=(mock_clk_result_tour, mock_clk_result_cost)) as mock_clk:
+        patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=None) as mock_read_opt, \
+        patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan',
+              return_value=(mock_clk_result_tour, mock_clk_result_cost)) as mock_clk:
 
         result = process_single_instance(str(tsp_file), str(opt_tour_file))
 
@@ -100,8 +100,8 @@ def test_process_single_instance_handles_chained_lk_exception(tmp_path, simple_t
     error_message = "Simulated CLK Failure"
 
     with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=mock_coords) as mock_read_tsp, \
-         patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=None) as mock_read_opt, \
-         patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', side_effect=Exception(error_message)) as mock_clk:
+            patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=None) as mock_read_opt, \
+            patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', side_effect=Exception(error_message)) as mock_clk:
 
         result = process_single_instance(str(tsp_file), str(opt_tour_file))
 
@@ -117,3 +117,217 @@ def test_process_single_instance_handles_chained_lk_exception(tmp_path, simple_t
         # assert result.get('error_message') == error_message  # This assertion would fail.
         assert result.get('heu_len') == float('inf'), "Heuristic length should be default error value."
         assert result.get('nodes') == len(mock_coords), "Nodes should be set if coords were read."
+
+
+def test_main_tsp_folder_not_found(capsys):
+    with patch('lin_kernighan_tsp_solver.main.TSP_FOLDER_PATH') as mock_path:
+        mock_path.is_dir.return_value = False
+        from lin_kernighan_tsp_solver.main import main
+        main()
+        captured = capsys.readouterr()
+        assert "Error: TSP folder not found" in captured.out
+
+
+def test_main_no_tsp_files(monkeypatch):
+    class DummyPath:
+        def is_dir(self):
+            return True
+
+        def glob(self, pattern):
+            return []
+
+    monkeypatch.setattr('lin_kernighan_tsp_solver.main.TSP_FOLDER_PATH', DummyPath())
+    from lin_kernighan_tsp_solver.main import main
+    with patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
+            patch('lin_kernighan_tsp_solver.main.plot_all_tours') as mock_plot:
+        main()
+        mock_display.assert_called_once_with([])
+        mock_plot.assert_called_once_with([])
+
+
+def test_main_process_single_instance_exception(monkeypatch):
+    class DummyPath:
+        def is_dir(self):
+            return True
+
+        def glob(self, pattern):
+            return [DummyPath()]
+
+        @property
+        def stem(self):
+            return "dummy"
+
+        def __str__(self):
+            return "dummy.tsp"
+
+        def __truediv__(self, other):
+            return self
+
+    monkeypatch.setattr('lin_kernighan_tsp_solver.main.TSP_FOLDER_PATH', DummyPath())
+    from lin_kernighan_tsp_solver.main import main
+    with patch('lin_kernighan_tsp_solver.main.process_single_instance', side_effect=Exception("fail")), \
+            patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
+            patch('lin_kernighan_tsp_solver.main.plot_all_tours'):
+        main()
+        args, _ = mock_display.call_args
+        assert args[0][0]['error'] is True
+
+
+def test_main_process_single_instance_success(monkeypatch):
+    class DummyPath:
+        def is_dir(self):
+            return True
+
+        def glob(self, pattern):
+            return [DummyPath()]
+
+        @property
+        def stem(self):
+            return "dummy"
+
+        def __str__(self):
+            return "dummy.tsp"
+
+        def __truediv__(self, other):
+            return self
+
+    monkeypatch.setattr('lin_kernighan_tsp_solver.main.TSP_FOLDER_PATH', DummyPath())
+    from lin_kernighan_tsp_solver.main import main
+    dummy_result = {'name': 'dummy', 'error': False}
+    with patch('lin_kernighan_tsp_solver.main.process_single_instance', return_value=dummy_result), \
+            patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
+            patch('lin_kernighan_tsp_solver.main.plot_all_tours') as mock_plot:
+        main()
+        mock_display.assert_called_once_with([dummy_result])
+        mock_plot.assert_called_once_with([dummy_result])
+
+
+def test_main_multiple_tsp_files(monkeypatch):
+    class DummyPath:
+        def __init__(self, name):
+            self._name = name
+
+        def is_dir(self):
+            return True
+
+        def glob(self, pattern):
+            return [DummyPath("a"),
+                    DummyPath("b")]
+
+        @property
+        def stem(self):
+            return self._name
+
+        def __str__(self):
+            return f"{self._name}.tsp"
+
+        def __truediv__(self, other):
+            return self
+
+        def __lt__(self, other):
+            return self._name < other._name
+
+    monkeypatch.setattr('lin_kernighan_tsp_solver.main.TSP_FOLDER_PATH', DummyPath("folder"))
+    from lin_kernighan_tsp_solver.main import main
+    dummy_result_a = {'name': 'a', 'error': False}
+    dummy_result_b = {'name': 'b', 'error': False}
+    with patch('lin_kernighan_tsp_solver.main.process_single_instance', side_effect=[dummy_result_a, dummy_result_b]) as mock_proc, \
+            patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
+            patch('lin_kernighan_tsp_solver.main.plot_all_tours') as mock_plot:
+        main()
+        # Should be called for both files
+        assert mock_proc.call_count == 2
+        mock_display.assert_called_once_with([dummy_result_a, dummy_result_b])
+        mock_plot.assert_called_once_with([dummy_result_a, dummy_result_b])
+
+
+def test_process_single_instance_handles_tsp_read_error(capsys):
+    from lin_kernighan_tsp_solver.main import process_single_instance
+    with patch('lin_kernighan_tsp_solver.main.read_tsp_file', side_effect=Exception("read error")), \
+            patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=None):
+        result = process_single_instance("dummy.tsp", "dummy.opt.tour")
+        assert result['error'] is True
+        captured = capsys.readouterr()
+        assert "read error" in captured.out
+
+
+def test_process_single_instance_handles_empty_coords(capsys):
+    from lin_kernighan_tsp_solver.main import process_single_instance
+    with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=np.array([])), \
+            patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=None):
+        result = process_single_instance("dummy.tsp", "dummy.opt.tour")
+        assert result['error'] is True
+        captured = capsys.readouterr()
+        assert "No coordinates loaded" in captured.out
+
+
+def test_process_single_instance_handles_missing_opt_tour(capsys):
+    from lin_kernighan_tsp_solver.main import process_single_instance
+    coords = np.array([[0, 0], [1, 1]])
+    with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=coords), \
+            patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=None), \
+            patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', return_value=([0, 1], 1.0)):
+        result = process_single_instance("dummy.tsp", "dummy.opt.tour")
+        captured = capsys.readouterr()
+        assert "Optimal tour not available" in captured.out
+        assert result['opt_tour'] is None
+        assert result['opt_len'] is None
+
+
+def test_process_single_instance_handles_zero_opt_len():
+    from lin_kernighan_tsp_solver.main import process_single_instance
+    coords = np.array([[0, 0], [1, 1]])
+    opt_tour = [0, 1]
+    # Case 1: heuristic_len == 0.0
+    with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=coords), \
+            patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=opt_tour), \
+            patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', return_value=(opt_tour, 0.0)):
+        result = process_single_instance("dummy.tsp", "dummy.opt.tour")
+        assert result['gap'] == 0.0
+    # Case 2: heuristic_len != 0.0
+    with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=coords), \
+            patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=opt_tour), \
+            patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', return_value=(opt_tour, 1.0)):
+        result = process_single_instance("dummy.tsp", "dummy.opt.tour")
+        assert result['gap'] == 0.0
+
+
+def test_main_calls_summary_and_plot(monkeypatch):
+    class DummyPath:
+        def is_dir(self):
+            return True
+
+        def glob(self, pattern):
+            return []
+
+    monkeypatch.setattr('lin_kernighan_tsp_solver.main.TSP_FOLDER_PATH', DummyPath())
+    from lin_kernighan_tsp_solver.main import main
+    with patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
+            patch('lin_kernighan_tsp_solver.main.plot_all_tours') as mock_plot:
+        main()
+        mock_display.assert_called_once_with([])
+        mock_plot.assert_called_once_with([])
+
+
+def test_process_single_instance_gap_when_optimal_zero(monkeypatch):
+    import numpy as np
+    from lin_kernighan_tsp_solver.main import process_single_instance
+
+    coords = np.array([[0, 0], [1, 0]])
+    opt_tour = [0, 1]
+
+    # Case 1: heuristic_len == 0.0, expect gap == 0.0
+    with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=coords), \
+         patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=opt_tour), \
+         patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', return_value=(opt_tour, 0.0)), \
+         patch('lin_kernighan_tsp_solver.main.build_distance_matrix', return_value=np.zeros((2, 2))):
+        result = process_single_instance("dummy.tsp", "dummy.opt.tour")
+        assert result['gap'] == 0.0
+
+    # Case 2: heuristic_len != 0.0, expect gap == float('inf')
+    with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=coords), \
+         patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=opt_tour), \
+         patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', return_value=(opt_tour, 1.0)), \
+         patch('lin_kernighan_tsp_solver.main.build_distance_matrix', return_value=np.zeros((2, 2))):
+        result = process_single_instance("dummy.tsp", "dummy.opt.tour")
+        assert result['gap'] == float('inf')

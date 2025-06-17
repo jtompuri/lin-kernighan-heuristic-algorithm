@@ -1,0 +1,12 @@
+# .coveragerc
+
+[run]
+omit =
+    lin_kernighan_tsp_solver/__main__.py
+    lin_kernighan_tsp_solver/__init__.py
+
+[report]
+exclude_lines =
+    # Don't cover main entry points or pragma: no cover
+    if __name__ == .__main__.:
+    pragma: no cover

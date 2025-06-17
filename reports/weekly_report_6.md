@@ -25,7 +25,7 @@ ajonaikaisiin kirjastoihin (`requirements.txt`) ja kehitykseen tarvittaviin kirj
 
 Vertaisarvioinnin palautteen perusteella toteutin uudestaan `flip`-metodin ilman uusien
 listojen luontia siten, että polun osan järjestys käännetään ympäri paikallaan. Nyt kun
-testi kattavuus on täydellinen, oli helppo varmistua, ettei mikään mennyt rikki 
+testikattavuus on täydellinen, oli helppo varmistua, ettei mikään mennyt rikki 
 muutosta tehtäessä. Toteutin myös vertailutestin `tests/test_performance.py`, joka 
 suoritetaan komennolla `python -m tests.test_performance`. Testin perusteella uusi
 `flip`-metodi on 50 % nopeampi kuin vanha metodi.

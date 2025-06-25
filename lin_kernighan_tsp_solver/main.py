@@ -10,6 +10,7 @@ Usage:
     python -m lin_kernighan_tsp_solver.main
 """
 
+import time
 import math
 from pathlib import Path
 from typing import Dict, Any
@@ -71,7 +72,6 @@ def process_single_instance(
             print(f"  Optimal tour not available for {problem_name}.")
 
         initial_tour = list(range(len(coords)))  # Simple initial tour: 0,1,2...
-        import time
         start_time = time.time()
 
         heuristic_tour, heuristic_len = chained_lin_kernighan(

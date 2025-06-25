@@ -1,10 +1,7 @@
 """
 Runs the Lin-Kernighan TSP solver package as a module.
 
-This allows execution with:
-    python -m lin_kernighan_tsp_solver
-
-Typical usage example:
+Usage:
     python -m lin_kernighan_tsp_solver
 """
 

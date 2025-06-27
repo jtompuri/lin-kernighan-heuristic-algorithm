@@ -1384,7 +1384,7 @@ def test_alternate_step_deadline_first_for(monkeypatch):  # Covers line 449
     LK_CONFIG["BREADTH_A"] = 1  # Consider only one y1 candidate
 
     # 3-node tour: [0, 1, 2]. t1=0, t2=1.
-    # To make gain_G1 > 0 for y1_candidate=2: D[0,1] - D[1,2] > TOLERANCE
+    # To make gain_G1 > 0 for y1_cand=2: D[0,1] - D[1,2] > TOLERANCE
     D = np.array([
         [0, 1.0, 0.1],
         [1.0, 0, 0.5],  # D[t2=1, y1_cand=2] = 0.5
@@ -1461,7 +1461,7 @@ def test_alternate_step_deadline_second_for(monkeypatch):  # Targets line 465
     found, seq = alternate_step(0, tour, D, neigh, deadline_val)
 
     assert found is False and seq is None
-    assert call_count['value'] == 3, "time.time() was not called the expected number of times"
+    assert call_count['value'] == 3, f"time.time() called {call_count['value']} times, expected 4"
 
     LK_CONFIG.clear()
     LK_CONFIG.update(original_lk_config)
@@ -1552,3 +1552,87 @@ def test_alternate_step_deadline_third_for(monkeypatch):  # Targets line 484
 
     LK_CONFIG.clear()
     LK_CONFIG.update(original_lk_config)
+
+
+def test_step_skips_invalid_y1_candidates(simple_tsp_setup):
+    """
+    Tests that the 'continue' on line 337 of lk_algorithm.py is hit when
+    y1_cand is the same as the base or s1 node.
+    """
+    _coords, dist_matrix, initial_tour_obj, neighbors, \
+        initial_cost, _lk_optimal_cost, _lk_optimal_order = simple_tsp_setup
+
+    base_node = 0
+    s1_node = initial_tour_obj.next(base_node)  # Should be 1 in the fixture
+
+    # Create a mutable copy of the neighbors list to modify it
+    test_neighbors = [list(n) for n in neighbors]
+
+    # Modify the neighbor list for s1_node to only contain invalid candidates (base and s1 itself)
+    test_neighbors[s1_node] = [base_node, s1_node]
+
+    # Also, clear the neighbors for the base_node to prevent the Mak-Morton
+    # part of the step function from finding any candidates, isolating the test.
+    test_neighbors[base_node] = []
+
+    # Call the step function
+    improved, sequence = step(
+        level=1,
+        delta=0.0,
+        base=base_node,
+        tour=initial_tour_obj,
+        D=dist_matrix,
+        neigh=test_neighbors,  # Use the modified neighbors
+        flip_seq=[],
+        start_cost=initial_cost,
+        best_cost=initial_cost,
+        deadline=time.time() + 5
+    )
+
+    # Assert that no improvement was found because all candidates were skipped
+    assert not improved
+    assert sequence is None
+
+
+def test_step_deadline_in_standard_flips_loop(simple_tsp_setup, monkeypatch):
+    """
+    Tests that the step function correctly exits if the deadline is met
+    inside the first candidate generation loop (standard flips). This covers
+    the return statement on line 337 of lk_algorithm.py.
+    """
+    _coords, dist_matrix, initial_tour_obj, neighbors, \
+        initial_cost, _lk_optimal_cost, _lk_optimal_order = simple_tsp_setup
+
+    deadline_val = time.time() + 100  # A fixed future deadline
+    call_count = {'value': 0}
+
+    def fake_time():
+        call_count['value'] += 1
+        # First call is at the start of step(), should pass
+        if call_count['value'] == 1:
+            return deadline_val - 1
+        # Second call is inside the loop, should fail
+        else:
+            return deadline_val + 1
+
+    monkeypatch.setattr('time.time', fake_time)
+
+    # Call the step function
+    improved, sequence = step(
+        level=1,
+        delta=0.0,
+        base=0,  # Using base=0 from the fixture
+        tour=initial_tour_obj,
+        D=dist_matrix,
+        neigh=neighbors,
+        flip_seq=[],
+        start_cost=initial_cost,
+        best_cost=initial_cost,
+        deadline=deadline_val
+    )
+
+    # Assert that the function returned due to the deadline
+    assert not improved
+    assert sequence is None
+    # Ensure the time check inside the loop was actually performed
+    assert call_count['value'] >= 2

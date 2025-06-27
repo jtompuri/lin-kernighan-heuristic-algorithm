@@ -2,9 +2,7 @@
 
 ## 1. Mitä olen tehnyt tällä viikolla?
 
-Päivitin määrittelydokumentin vastaamaan lopullista toteutusta. Päivitin testausdokumentin vastaamaan viimeisiä muutoksia testeissä ja testikattavuudessa. Päivin myös staattisen testikattavuusraportin kansiossa `htmlconv/`. 
-
-Poistin versionhallinnasta `.coverage`-tiedoston, mutta säilytin `htmlcov/` kansion, josta löytyy staattinen raportti testikattavuudesta. Poistin `__main__.py` tiedoston docstringistä ylimääräisen ohjeen moduulin ajamisesta.
+Päivitin määrittelydokumentin vastaamaan lopullista toteutusta. Päivitin testausdokumentin vastaamaan viimeisiä muutoksia testeissä ja testikattavuudessa. Päivin myös staattisen testikattavuusraportin kansiossa `htmlconv/`. Poistin versionhallinnasta `.coverage`-tiedoston, mutta säilytin `htmlcov/` kansion, josta löytyy staattinen raportti testikattavuudesta. Poistin `__main__.py` tiedoston docstringistä ylimääräisen ohjeen moduulin ajamisesta.
 
 ## 2. Miten ohjelma on edistynyt?
 

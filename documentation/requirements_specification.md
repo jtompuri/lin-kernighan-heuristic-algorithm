@@ -211,7 +211,7 @@ Kansiosta `documentation` löytyy `pip freeze > requirements.txt` tehty lista ki
 
 ## 11. Dokumentaation kieli
 
-Harjoitustyön kirjallinen dokumentaatio on suomeksi. Solvelluksen lähdekoodin yhteydessä oleva dokumentaatio sekä versionhallinan kommentit on englanniksi.
+Harjoitustyön kirjallinen dokumentaatio on suomeksi. Solvelluksen lähdekoodin yhteydessä oleva dokumentaatio sekä versionhallinnan kommentit on englanniksi.
 
 ## 12. Lähteet
 

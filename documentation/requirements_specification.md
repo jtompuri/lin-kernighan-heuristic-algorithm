@@ -37,7 +37,7 @@ Keskeisiä TSP-ongelmaan ja LK-algoritmiin liittyviä käsitteitä:
 
 ## 4. Syötteet ja tulosteet
 
-LK-algoritmin syötteenä käytetään tutkimuskirjallisuudessa standardia TSPLIB-tiedostomuotoa (.tsp) ja TSPLIB95-kirjaston TSP-ongelmia, jotka ovat symmetrisiä ja joissa on euklidinen,  kaksiuloitteinen geometria ja joihin löytyy optimaalinen ratkaisu erillisenä tiedostona (.opt.tour). Satunnaisia _n_ solmun verkkoja voi halutessaan luoda _create_tsp_files.py_ ohjelmalla, mutta koska verkkojen optimaalista ratkaisua ei yleensä tunneta, niin satunnaisia verkkoja ei voi käyttää algoritmin laadun arviointiin, mutta niilä voi tutkia algoritmin suorituskykyä. 
+LK-algoritmin syötteenä käytetään tutkimuskirjallisuudessa standardia TSPLIB-tiedostomuotoa (.tsp) ja TSPLIB95-kirjaston TSP-ongelmia, jotka ovat symmetrisiä ja joissa on euklidinen,  kaksiuloitteinen geometria ja joihin löytyy optimaalinen ratkaisu erillisenä tiedostona (.opt.tour). Satunnaisia _n_ solmun verkkoja voi halutessaan luoda `create_tsp_problem.py` ohjelmalla, mutta koska verkkojen optimaalista ratkaisua ei yleensä tunneta, niin satunnaisia verkkoja ei voi käyttää algoritmin laadun arviointiin, mutta niilä voi tutkia algoritmin suorituskykyä. 
 
 Algoritmi tulostaa terminaaliin algoritmin konfiguraation tiedot ja yhteenvedon TSP-ongelmista, joka sisältää ongelman tunnisteen, kierroksen optimaalisen ratkaisun pituuden, heuristisen kierroksen pituuden, poikkeaman prosentteina (Gap) ja suoritusajan. Lisäksi esitetään tulosten summa- tai keskilukuja. Algoritmi piirtää kuvaajat kaikista TSP-ongelmista. Kuvaajissa esitetään heuristinen kierros kiinteänä viivana ja optimaalinen kierros pisteviivana eri värillä sekä poikkeama. Kuvaajista näkee kuinka lähellä heuristinen ratkaisu on optimaalista ratkaisua. 
 
@@ -161,7 +161,7 @@ Tilavaativuus on hallittavissa, sillä tärkeimmät muistia vievät komponentit 
 | Algoritmi             | Aikavaativuus                | Tilavaativuus | Kuvaus |
 |-----------------------|------------------------------|---------------|--------|
 | Brute-force           | $(n-1)!$                     | $O(n)$        | Käy kaikki reitit läpi. |
-| Held–Karp             | $O(n^2 \cdot 2^n)$               | $O(n \cdot 2^n)$  | Täsmällinen algoritmi dynaamisella ohjelmoinnilla. |
+| Held–Karp             | $O(n^2 \cdot 2^n)$           | $O(n \cdot 2^n)$  | Täsmällinen algoritmi dynaamisella ohjelmoinnilla. |
 | Lin–Kernighan         | $O(n^2 \cdot log(n))$ – $O(n^3)$ | $O(n^2)$      | Heuristiikka, joka tekee k-opt-vaihtoja dynaamisesti. |
 | Chained Lin–Kernighan | Hieman suurempi kuin LK      | $O(n^2)$      | Lisää satunnaisia häiriöitä ja toistaa LK-hakuja. |
 
@@ -205,7 +205,7 @@ LK-algoritmia voidaan käyttää joko komentoriviltä ajamalla tiedosto sellaise
 
 LK-algoritmi on toteutettu Python 3.12.5 ohjelmointikiellä.  
 
-Käytössä olevia Python standardikirjastoja ovat os ja time. Asennettavia Python kirjastoja ovat NumPy, matplotlib, tslib95. Lisäksi tarvitaan funktio Delaunay kirjastosta SciPy.Spatial ja combinations kirjastosta itertools.
+Käytössä olevia Python standardikirjastoja ovat `os`, `itertools` ja `time`. Asennettavia Python kirjastoja ovat `NumPy` ja `matplotlib`. Lisäksi tarvitaan funktio `Delaunay` kirjastosta `SciPy.Spatial`.
 
 Kansiosta `documentation` löytyy `pip freeze > requirements.txt` tehty lista kirjastoista versioineen.
 

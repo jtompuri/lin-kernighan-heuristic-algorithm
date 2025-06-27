@@ -68,7 +68,7 @@ LK-algoritmin suunnittelussa on panostettu erityisesti kaarien vaihtojen optimoi
 Funktio `step()` on rekursiivinen funktio, joka etsii parannuksia nykyiseen kierrokseen suorittamalla mahdollisia k-opt-vaihtoja — yksi kerrallaan — niin kauan kuin parannus näyttää mahdolliselta.
 
 Toiminta:
-1. Luo lk-ordering eli lista lupaavista naapureista vertexille base.
+1. Luo lk-ordering eli lista lupaavista naapureista vertexille `base`.
 2. Käy läpi korkeintaan `breadth(level)` lupaavaa naapuria (eli leveys tietyllä tasolla).
     - Jokaiselle kandidaatille yrittää tehdä flip-operaation, jolla kaksi reunaa korvataan kahdella uudella.
     - Jos flip parantaa kierrosta (tai saattaa johtaa parannukseen), funktio kutsuu itseään seuraavalla tasolla (depth-first-haku).
@@ -94,13 +94,13 @@ Toiminnot:
 
 ![Funktio lk_search()](/images/algorithm_15_3.png)
 
-Funktio `lk_search()` äynnistää Lin–Kernighan-parannushaun yksittäisestä solmusta v ja annetusta kierroksesta T. Koostuu `step()`- ja `alternate_step()`-kutsujen ketjusta. Palauttaa parannetun flip-sekvenssin tai ilmoittaa, ettei parannusta löytynyt.
+Funktio `lk_search()` äynnistää Lin–Kernighan-parannushaun yksittäisestä solmusta `v` ja annetusta kierroksesta `T`. Koostuu `step()`- ja `alternate_step()`-kutsujen ketjusta. Palauttaa parannetun flip-sekvenssin tai ilmoittaa, ettei parannusta löytynyt.
 
 Toiminta:
 1.	Alustaa:
-    - Nykyinen kierros = T
+    - Nykyinen kierros = `T`
     - Tyhjä flip-sekvenssi
-    - Asettaa base = v
+    - Asettaa `base = v`
 2.	Kutsuu:
     - `step(1, 0)` – yrittää löytää suoraa parannusta
     - Jos ei löydy, kutsuu `alternate_step()`
@@ -118,16 +118,16 @@ Toiminta:
     - Merkitse kaikki solmut aktiivisiksi (eli kelvollisiksi hakupisteiksi).
 2.	Iteratiivinen parannushaku:
     - Niin kauan kuin löytyy merkittyjä solmuja:
-        - Valitaan merkitty solmu v.
+        - Valitaan merkitty solmu `v`.
         - Kutsutaan `lk_search(v, lk_tour)`:
             - Jos löytyi parantava flip-sekvenssi:
             - Käydään flipit läpi yksi kerrallaan:
                 - Sovelletaan flipiä `flip(x, y)`.
                 - Päivitetään `lk_tour`.
-                - Merkitään solmut x ja y (koska ne saattavat avata uusia parannuksia).
+                - Merkitään solmut `x` ja `y` (koska ne saattavat avata uusia parannuksia).
             - Poistetaan flip-sekvenssi listalta.
         - Jos parannusta ei löytynyt:
-            - Poistetaan v aktiivisista solmuista.
+            - Poistetaan `v` aktiivisista solmuista.
 3.	Palautus:
     - Lopuksi palautetaan `lk_tour`, eli paras löytynyt reitti.
 
@@ -154,15 +154,15 @@ Toiminta:
 
 ## 7. Aika- ja tilavaativuus
 
-Lin–Kernighan-heuristisen algoritmin aikavaativuus ja tilavaativuus ovat merkittävästi parempia kuin tarkkojen ratkaisualgoritmien, kuten Held-Karp-algoritmin. Vaikka Lin–Kernighan-algoritmille ei ole olemassa tiukkaa teoreettista aikarajaa, käytännön havaintojen perusteella sen suorituskyky sijoittuu useimmissa tapauksissa väliin $O(n^2 * log(n))$ ja $O(n^3)$, riippuen muun muassa sallittujen vaihtoehtoisten reittivaihtojen määrästä, rekursion syvyydestä ja käytetyn naapurilistan pituudesta. Ketjutetussa versiossa (Chained Lin–Kernighan) aikavaativuus voi kasvaa hieman suuremmaksi, koska algoritmi suorittaa toistuvia häiriöitä (kick-vaiheita) ja käynnistää Lin–Kernighan-haun useita kertoja, mutta myös sen kohdalla kasvu pysyy käytännössä polynomisena.
+Lin–Kernighan-heuristisen algoritmin aikavaativuus ja tilavaativuus ovat merkittävästi parempia kuin tarkkojen ratkaisualgoritmien, kuten Held-Karp-algoritmin. Vaikka Lin–Kernighan-algoritmille ei ole olemassa tiukkaa teoreettista aikarajaa, käytännön havaintojen perusteella sen suorituskyky sijoittuu useimmissa tapauksissa väliin $O(n^2 \times log(n))$ ja $O(n^3)$, riippuen muun muassa sallittujen vaihtoehtoisten reittivaihtojen määrästä, rekursion syvyydestä ja käytetyn naapurilistan pituudesta. Ketjutetussa versiossa (Chained Lin–Kernighan) aikavaativuus voi kasvaa hieman suuremmaksi, koska algoritmi suorittaa toistuvia häiriöitä (kick-vaiheita) ja käynnistää Lin–Kernighan-haun useita kertoja, mutta myös sen kohdalla kasvu pysyy käytännössä polynomisena.
 
-Tilavaativuus on hallittavissa, sillä tärkeimmät muistia vievät komponentit ovat etäisyysmatriisi, jonka koko on $O(n^2)$, sekä rakenteet reitin esittämiseen ja naapurilistojen ylläpitämiseen, jotka vaativat tyypillisesti $O(n)$ – $O(k * n)$ muistia. Koska k (esimerkiksi lähimmät 10-20 naapuria) on paljon pienempi kuin n, algoritmin muistinkäyttö pysyy maltillisena myös suurilla instansseilla. Tämä tekee Lin–Kernighan-heuristiikasta erittäin käyttökelpoisen erityisesti silloin, kun etsitään hyviä (ei-optimaalisia) ratkaisuja nopeasti suurissa TSP-ongelmissa. Toisin kuin eksponentiaalista aikaa vievät tarkat menetelmät, LK-algoritmi skaalautuu käytännössä tuhansiin solmuihin ja tuottaa laadukkaita reittejä kohtuullisessa ajassa ja muistinkulutuksessa. Näin se tarjoaa tasapainon tehokkuuden ja tuloksen laadun välillä.
+Tilavaativuus on hallittavissa, sillä tärkeimmät muistia vievät komponentit ovat etäisyysmatriisi, jonka koko on $O(n^2)$, sekä rakenteet reitin esittämiseen ja naapurilistojen ylläpitämiseen, jotka vaativat tyypillisesti $O(n)$ – $O(k \times n)$ muistia. Koska k (esimerkiksi lähimmät 10-20 naapuria) on paljon pienempi kuin n, algoritmin muistinkäyttö pysyy maltillisena myös suurilla instansseilla. Tämä tekee Lin–Kernighan-heuristiikasta erittäin käyttökelpoisen erityisesti silloin, kun etsitään hyviä (ei-optimaalisia) ratkaisuja nopeasti suurissa TSP-ongelmissa. Toisin kuin eksponentiaalista aikaa vievät tarkat menetelmät, LK-algoritmi skaalautuu käytännössä tuhansiin solmuihin ja tuottaa laadukkaita reittejä kohtuullisessa ajassa ja muistinkulutuksessa. Näin se tarjoaa tasapainon tehokkuuden ja tuloksen laadun välillä.
 
 | Algoritmi             | Aikavaativuus                | Tilavaativuus | Kuvaus |
 |-----------------------|------------------------------|---------------|--------|
 | Brute-force           | $(n-1)!$                     | $O(n)$        | Käy kaikki reitit läpi. |
-| Held–Karp             | $O(n^2 * 2^n)$               | $O(n * 2^n)$  | Täsmällinen algoritmi dynaamisella ohjelmoinnilla. |
-| Lin–Kernighan         | $O(n^2 * log(n))$ – $O(n^3)$ | $O(n^2)$      | Heuristiikka, joka tekee k-opt-vaihtoja dynaamisesti. |
+| Held–Karp             | $O(n^2 \times 2^n)$               | $O(n \times 2^n)$  | Täsmällinen algoritmi dynaamisella ohjelmoinnilla. |
+| Lin–Kernighan         | $O(n^2 \times log(n))$ – $O(n^3)$ | $O(n^2)$      | Heuristiikka, joka tekee k-opt-vaihtoja dynaamisesti. |
 | Chained Lin–Kernighan | Hieman suurempi kuin LK      | $O(n^2)$      | Lisää satunnaisia häiriöitä ja toistaa LK-hakuja. |
 
 

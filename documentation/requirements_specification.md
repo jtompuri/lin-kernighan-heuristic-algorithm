@@ -53,7 +53,7 @@ Toinen vertailualgoritmi on LK-algoritmin erityistapaus 2-opt-algoritmi. LK-algo
 
 ### 6.2 LK-algoritmin mallitoteutus
 
-_The Traveling Salesman Problem_-kirjan luku 15 _Tour Finding_ esittelee LK-algoritmin tavoitteet ja mallitoteutuksen. Mallitoteutuksessa pyritään lähes optimaaliseen ratkaisuun järkevässä suoritusajassa, mikä on myös tämän harjoitustyön tavoitteena. LK-algoritmista on toisilla kirjoittajilla, kuten esimerkiksi nopeuden korostaminen ja tyytyminen vähemmän optimaalisiin ratkaisuihin. 
+_The Traveling Salesman Problem_-kirjan luku 15 _Tour Finding_ esittelee LK-algoritmin tavoitteet ja mallitoteutuksen. Mallitoteutuksessa pyritään lähes optimaaliseen ratkaisuun järkevässä suoritusajassa, mikä on myös tämän harjoitustyön tavoitteena. LK-algoritmin toteutuksesta on toisilla kirjoittajilla erilaisia painotuksia, kuten esimerkiksi nopeuden korostaminen ja tyytyminen vähemmän optimaalisiin ratkaisuihin. 
 
 ![Kahden kaaren vaihto](/images/figure_15_1.png)
 

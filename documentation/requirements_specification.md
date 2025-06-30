@@ -28,7 +28,7 @@ Keskeisiä TSP-ongelmaan ja LK-algoritmiin liittyviä käsitteitä:
 - _Täysin kytketty verkko (fully connected network)_: graafi, jossa jokaisella solmulla on yhteys jokaiseen muuhun.
 - _K-opt-vaihto (k-opt)_: TSP-heuristiikassa operaatio, jossa katkaistaan ja yhdistetään uudelleen _k_ kaarta uudella tavalla lyhentääkseen kierrosta. LK käyttää vaihtuvaa _k_:ta.
 - _Lin–Kernighan-heuristiikka (Lin–Kernighan heuristic)_: edistynyt TSP-heuristiikka, joka käyttää rekursiivista tai ketjutettua k-opt-rakennetta parantaakseen kierrosta inkrementaalisesti.
-- _Kandidaattireunat (candidate edges)_: valikoidut reunat, joita tarkastellaan mahdollisina vaihdon kohteina (esim. lähimmät _k_ naapurikaupunkia).
+- _Kandidaattikaaret (candidate edges)_: valikoidut kaaret, joita tarkastellaan mahdollisina vaihdon kohteina (esim. lähimmät _k_ naapurikaupunkia).
 - _Hyöty tai parannus (gain)_: kierroksen pituuden vähennys, joka saadaan tietystä k-vaihdosta.
 - _Laillinen vaihto (feasible move)_: vaihto, joka tuottaa kelvollisen, suljetun kierroksen ilman kaksoiskäyntejä tai verkosta irtoavia osia.
 - _Osittainen polku (partial path)_: väliaikainen reittijakso k-opt-vaihdon aikana.
@@ -37,7 +37,7 @@ Keskeisiä TSP-ongelmaan ja LK-algoritmiin liittyviä käsitteitä:
 
 ## 4. Syötteet ja tulosteet
 
-LK-algoritmin syötteenä käytetään tutkimuskirjallisuudessa standardia TSPLIB-tiedostomuotoa (.tsp) ja TSPLIB95-kirjaston TSP-ongelmia, jotka ovat symmetrisiä ja joissa on euklidinen,  kaksiuloitteinen geometria ja joihin löytyy optimaalinen ratkaisu erillisenä tiedostona (.opt.tour). Satunnaisia _n_ solmun verkkoja voi halutessaan luoda `create_tsp_problem.py` ohjelmalla. Koska luotujen satunnaisten verkkojen optimaalista ratkaisua ei yleensä tunneta, niin niitä ei voi käyttää algoritmin laadun arviointiin, mutta niillä voi tutkia algoritmin suorituskykyä. 
+LK-algoritmin syötteenä käytetään tutkimuskirjallisuudessa standardia TSPLIB-tiedostomuotoa (.tsp) ja TSPLIB95-kirjaston TSP-ongelmia, jotka ovat symmetrisiä ja joissa on euklidinen,  kaksiuloitteinen geometria ja joihin löytyy optimaalinen ratkaisu erillisenä tiedostona (.opt.tour). Satunnaisia _n_ solmun verkkoja voi halutessaan luoda `create_tsp_problem.py` ohjelmalla. Koska luotujen satunnaisten verkkojen optimaalista ratkaisua ei yleensä tunneta, joten niitä ei voi käyttää algoritmin laadun arviointiin, mutta niillä voi tutkia algoritmin suorituskykyä. 
 
 Algoritmi tulostaa terminaaliin algoritmin konfiguraation tiedot ja yhteenvedon TSP-ongelmista, joka sisältää ongelman tunnisteen, kierroksen optimaalisen ratkaisun pituuden, heuristisen kierroksen pituuden, poikkeaman prosentteina (Gap) ja suoritusajan. Lisäksi esitetään tulosten summa- tai keskilukuja. Algoritmi piirtää kuvaajat kaikista TSP-ongelmista. Kuvaajissa esitetään heuristinen kierros kiinteänä viivana ja optimaalinen kierros pisteviivana eri värillä sekä poikkeama. Kuvaajista näkee kuinka lähellä heuristinen ratkaisu on optimaalista ratkaisua. 
 
@@ -47,7 +47,7 @@ LK-algoritmin toteutuksessa noudatetaan kirjan _The Traveling Salesman Problem: 
 
 ### 6.1 Vertailualgoritmit
 
-Toteutan vertailua varten algoritmin _Exact TSP Solver_, joka käy läpi annetun verkon kaikki reittiyhdistelmät. Tämä algoritmi tuottaa aina tarkan ratkaisun, mutta sen aika vaativuus on $O(n!)$, sillä reittikombinaatioiden määrä ei-suunnatussa, täysin kytketyssä verkossa saadaan kaavalla (n - 1)!/2. Käytännössä tavallisella tietokoneella voi ratkaista 10 solmun verkon, mutta jo 12 solmun verkko on usein jo liian vaativa etenkin Pythonin kaltaiselle kielelle.  
+Toteutan vertailua varten algoritmin _Exact TSP Solver_, joka käy läpi annetun verkon kaikki reittiyhdistelmät. Tämä algoritmi tuottaa aina tarkan ratkaisun, mutta sen aika vaativuus on $O(n!)$, sillä reittikombinaatioiden määrä ei-suunnatussa, täysin kytketyssä verkossa saadaan kaavalla (n - 1)!/2. Käytännössä tavallisella tietokoneella voi ratkaista 10 solmun verkon, mutta jo 12 solmun verkko on usein jo liian vaativa Pythonin kaltaiselle kielelle.  
 
 Toinen vertailualgoritmi on LK-algoritmin erityistapaus 2-opt-algoritmi. LK-algoritmin idean taustalla oli edeltänyt 2-opt-vaihtojen tutkimus TSP-ongelmien ratkaisussa. Voidaan ajatella, että kun poistetaan LK-algoritmista kaikki muut heuristiikat, niin LK-algoritmista tulee 2-opt algoritmi. Koska 2-opt-algoritmi on merkittävästi yksinkertaisempi, niin se toimii hyvänä johdantona varsinaisen LK-algoritmin toteutukselle. Yksinkertaisuus johtaa toisaalta siihen, että hyvin optimoitu 2-opt-algoritmi on erittäin nopea suorituskyvyltään, toisaalta se tuo esiin heurististen algoritmien keskeisen ongelman eli jumittumisen paikalliseen minimiin. 
 
@@ -70,7 +70,7 @@ Funktio `step()` on rekursiivinen funktio, joka etsii parannuksia nykyiseen kier
 Toiminta:
 1. Luo lk-ordering eli lista lupaavista naapureista vertexille `base`.
 2. Käy läpi korkeintaan `breadth(level)` lupaavaa naapuria (eli leveys tietyllä tasolla).
-    - Jokaiselle kandidaatille yrittää tehdä flip-operaation, jolla kaksi reunaa korvataan kahdella uudella.
+    - Jokaiselle kandidaatille yrittää tehdä flip-operaation, jolla kaksi kaarta korvataan kahdella uudella.
     - Jos flip parantaa kierrosta (tai saattaa johtaa parannukseen), funktio kutsuu itseään seuraavalla tasolla (depth-first-haku).
 3. Jos jokin haara johtaa parempaan reittiin, se palautetaan. Muuten peruuntuu (backtrack) ja yrittää seuraavaa vaihtoehtoa.
 

@@ -285,6 +285,69 @@ def delaunay_neighbors(coords: np.ndarray) -> list[list[int]]:
     return [sorted(list(neighbor_sets[i])) for i in range(num_vertices)]
 
 
+def _generate_standard_flip_candidates(
+    base: int, s1: int, tour: Tour, ctx: SearchContext, delta: float
+) -> list[tuple[str, int, int | None, float]]:
+    """Generates candidates for standard LK flips (u-steps).
+
+    Args:
+        base (int): The current base node (t1).
+        s1 (int): The node following the base node in the tour (t2).
+        tour (Tour): The current tour object.
+        ctx (SearchContext): The search context.
+        delta (float): The accumulated gain from previous flips.
+
+    Returns:
+        list[tuple[str, int, int | None, float]]: A list of candidate moves.
+            Each tuple contains ('flip', y1_cand, t3_node, total_gain).
+    """
+    candidates = []
+    for y1_cand in ctx.neigh[s1]:
+        if time.time() >= ctx.deadline or y1_cand in (base, s1):
+            continue
+
+        gain_G1 = ctx.D[base, s1] - ctx.D[s1, y1_cand]
+        if gain_G1 <= FLOAT_COMPARISON_TOLERANCE:
+            continue
+
+        t3_node = tour.prev(y1_cand)
+        gain_G2 = ctx.D[t3_node, y1_cand] - ctx.D[t3_node, base]
+        total_gain = gain_G1 + gain_G2
+
+        if delta + gain_G1 > FLOAT_COMPARISON_TOLERANCE:
+            candidates.append(('flip', y1_cand, t3_node, total_gain))
+    return candidates
+
+
+def _generate_mak_morton_flip_candidates(
+    base: int, s1: int, tour: Tour, ctx: SearchContext, delta: float
+) -> list[tuple[str, int, int | None, float]]:
+    """Generates candidates for Mak-Morton flips.
+
+    Args:
+        base (int): The current base node (t1).
+        s1 (int): The node following the base node in the tour (t2).
+        tour (Tour): The current tour object.
+        ctx (SearchContext): The search context.
+        delta (float): The accumulated gain from previous flips.
+
+    Returns:
+        list[tuple[str, int, int | None, float]]: A list of candidate moves.
+            Each tuple contains ('makmorton', candidate_a_mm, None, gain).
+    """
+    candidates = []
+    for candidate_a_mm in ctx.neigh[base]:
+        if time.time() >= ctx.deadline or candidate_a_mm in (s1, tour.prev(base), base):
+            continue
+
+        gain_mak_morton = (
+            (ctx.D[base, s1] - ctx.D[base, candidate_a_mm]) + (ctx.D[candidate_a_mm, tour.next(candidate_a_mm)] - ctx.D[tour.next(candidate_a_mm), s1])
+        )
+        if delta + (ctx.D[base, s1] - ctx.D[base, candidate_a_mm]) > FLOAT_COMPARISON_TOLERANCE:
+            candidates.append(('makmorton', candidate_a_mm, None, gain_mak_morton))
+    return candidates
+
+
 def step(level: int, delta: float, base: int, tour: Tour,
          ctx: SearchContext, flip_seq: list[tuple[int, int]]
          ) -> tuple[bool, list[tuple[int, int]] | None]:
@@ -311,46 +374,10 @@ def step(level: int, delta: float, base: int, tour: Tour,
     breadth_limit = (LK_CONFIG["BREADTH"][min(level - 1, len(LK_CONFIG["BREADTH"]) - 1)]
                      if LK_CONFIG["BREADTH"] else 1)
     s1 = tour.next(base)  # s1 is t2 in common LK notation (node after base)
-    candidates = []
 
-    # Standard flips (u-steps):
-    # Try to break (base, s1) and (t3_node, y1_cand), add (s1, y1_cand) and (base, t3_node)
-    for y1_cand in ctx.neigh[s1]:  # y1_cand is a candidate for y1 (t_2i in Helsgaun)
-        if time.time() >= ctx.deadline:
-            return False, None
-        if y1_cand in (base, s1):
-            continue  # y1 cannot be base or s1
-
-        gain_G1 = ctx.D[base, s1] - ctx.D[s1, y1_cand]  # Cost diff: c(t1,t2) - c(t2,y1)
-        if gain_G1 <= FLOAT_COMPARISON_TOLERANCE:
-            continue  # Must be strictly positive gain
-
-        t3_node = tour.prev(y1_cand)  # t3_node is t_2i+1 in notation
-        gain_G2 = ctx.D[t3_node, y1_cand] - ctx.D[t3_node, base]  # Cost diff: c(t3,y1) - c(t3,t1)
-        total_gain_for_2_opt_part = gain_G1 + gain_G2
-
-        # Pruning: accumulated gain (delta) + G1 must be positive.
-        if delta + gain_G1 > FLOAT_COMPARISON_TOLERANCE:
-            candidates.append(
-                ('flip', y1_cand, t3_node, total_gain_for_2_opt_part)
-            )
-
-    # Mak-Morton flips:
-    for candidate_a_mm in ctx.neigh[base]:
-        if time.time() >= ctx.deadline:
-            return False, None
-        if candidate_a_mm in (s1, tour.prev(base), base):
-            continue
-
-        gain_mak_morton = (
-            (ctx.D[base, s1] - ctx.D[base, candidate_a_mm]) + (ctx.D[candidate_a_mm, tour.next(candidate_a_mm)] - ctx.D[tour.next(candidate_a_mm), s1])
-        )
-        # Pruning condition similar to standard flips
-        if delta + (ctx.D[base, s1] - ctx.D[base, candidate_a_mm]) \
-           > FLOAT_COMPARISON_TOLERANCE:
-            candidates.append(
-                ('makmorton', candidate_a_mm, None, gain_mak_morton)
-            )
+    # Generate candidates from both standard and Mak-Morton moves
+    candidates: list[tuple[str, int, int | None, float]] = _generate_standard_flip_candidates(base, s1, tour, ctx, delta)
+    candidates.extend(_generate_mak_morton_flip_candidates(base, s1, tour, ctx, delta))
 
     candidates.sort(key=lambda x: -x[3])  # Sort by gain, descending
     count = 0
@@ -362,6 +389,8 @@ def step(level: int, delta: float, base: int, tour: Tour,
 
         if move_type == 'flip':
             # node1_param is y1_cand, node2_param is t3_node
+            # We assert here because we know 'flip' moves always have an integer node2_param.
+            assert node2_param is not None, "Standard flip move must have a valid t3_node."
             # Flip segment between s1 (t2) and t3_node (prev(y1_cand))
             flip_start_node, flip_end_node = s1, node2_param
             tour.flip(flip_start_node, flip_end_node)
@@ -426,6 +455,62 @@ def _find_y1_candidates(t1: int, t2: int, D: np.ndarray, neigh: list[list[int]],
     return candidates
 
 
+def _find_y2_candidates(t1: int, t2: int, chosen_y1: int, t4: int, D: np.ndarray, neigh: list[list[int]], tour: Tour) -> list[tuple[float, int, int]]:
+    """Finds and sorts candidate nodes for y2 in the alternate_step.
+
+    Args:
+        t1 (int): The base node of the search.
+        t2 (int): The node following t1 in the tour.
+        chosen_y1 (int): The selected y1 candidate from the previous stage.
+        t4 (int): The node following chosen_y1 in the tour.
+        D (np.ndarray): The distance matrix.
+        neigh (list[list[int]]): The neighbor lists.
+        tour (Tour): The current tour object.
+
+    Returns:
+        list[tuple[float, int, int]]: A list of sorted candidates for y2.
+            Each tuple contains (sort_metric, y2_candidate, t6_of_y2_candidate).
+    """
+    candidates = []
+    for y2_candidate in neigh[t4]:
+        if y2_candidate in (t1, t2, chosen_y1):
+            continue
+        t6_of_y2_candidate = tour.next(y2_candidate)
+        sort_metric = D[t6_of_y2_candidate, y2_candidate] - D[t4, y2_candidate]
+        candidates.append((sort_metric, y2_candidate, t6_of_y2_candidate))
+    candidates.sort(reverse=True)
+    return candidates
+
+
+def _find_y3_candidates(t1: int, t2: int, chosen_y1: int, t4: int, chosen_y2: int, chosen_t6: int, D: np.ndarray, neigh: list[list[int]], tour: Tour) -> list[tuple[float, int, int]]:
+    """Finds and sorts candidate nodes for y3 in the alternate_step.
+
+    Args:
+        t1 (int): The base node of the search.
+        t2 (int): The node following t1 in the tour.
+        chosen_y1 (int): The selected y1 candidate.
+        t4 (int): The node following chosen_y1.
+        chosen_y2 (int): The selected y2 candidate.
+        chosen_t6 (int): The node following chosen_y2.
+        D (np.ndarray): The distance matrix.
+        neigh (list[list[int]]): The neighbor lists.
+        tour (Tour): The current tour object.
+
+    Returns:
+        list[tuple[float, int, int]]: A list of sorted candidates for y3.
+            Each tuple contains (sort_metric, y3_candidate, node_after_y3).
+    """
+    candidates = []
+    for y3_candidate in neigh[chosen_t6]:
+        if y3_candidate in (t1, t2, chosen_y1, t4, chosen_y2):
+            continue
+        node_after_y3 = tour.next(y3_candidate)
+        sort_metric = (D[node_after_y3, y3_candidate] - D[chosen_t6, y3_candidate])
+        candidates.append((sort_metric, y3_candidate, node_after_y3))
+    candidates.sort(reverse=True)
+    return candidates
+
+
 def alternate_step(
     base_node: int, tour: Tour, D: np.ndarray, neigh: list[list[int]],
     deadline: float
@@ -460,14 +545,7 @@ def alternate_step(
         t4 = tour.next(chosen_y1)
 
         # --- Stage 2: Find candidate y2 ---
-        candidates_for_y2 = []
-        for y2_candidate in neigh[t4]:
-            if y2_candidate in (t1, t2, chosen_y1):
-                continue
-            t6_of_y2_candidate = tour.next(y2_candidate)
-            sort_metric_y2 = D[t6_of_y2_candidate, y2_candidate] - D[t4, y2_candidate]
-            candidates_for_y2.append((sort_metric_y2, y2_candidate, t6_of_y2_candidate))
-        candidates_for_y2.sort(reverse=True)
+        candidates_for_y2 = _find_y2_candidates(t1, t2, chosen_y1, t4, D, neigh, tour)
 
         for _, chosen_y2, chosen_t6 in candidates_for_y2[:LK_CONFIG["BREADTH_B"]]:
             if time.time() >= deadline:
@@ -477,14 +555,7 @@ def alternate_step(
                 return True, [(t2, chosen_y2), (chosen_y2, chosen_y1)]
 
             # --- Stage 3: Find candidate y3 for a 5-opt move (Type Q in Applegate et al.) ---
-            candidates_for_y3 = []
-            for y3_candidate in neigh[chosen_t6]:
-                if y3_candidate in (t1, t2, chosen_y1, t4, chosen_y2):
-                    continue
-                node_after_y3 = tour.next(y3_candidate)
-                sort_metric_y3 = (D[node_after_y3, y3_candidate] - D[chosen_t6, y3_candidate])
-                candidates_for_y3.append((sort_metric_y3, y3_candidate, node_after_y3))
-            candidates_for_y3.sort(reverse=True)
+            candidates_for_y3 = _find_y3_candidates(t1, t2, chosen_y1, t4, chosen_y2, chosen_t6, D, neigh, tour)
 
             for _, chosen_y3, chosen_node_after_y3 in candidates_for_y3[:LK_CONFIG["BREADTH_D"]]:
                 if time.time() >= deadline:

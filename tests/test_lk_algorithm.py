@@ -9,10 +9,9 @@ from lin_kernighan_tsp_solver.lk_algorithm import (
     alternate_step,
     lk_search,
     lin_kernighan,
-)
-from lin_kernighan_tsp_solver.lk_algorithm import (
     build_distance_matrix,
     delaunay_neighbors,
+    SearchContext,
 )
 from lin_kernighan_tsp_solver.config import (
     LK_CONFIG,
@@ -240,17 +239,15 @@ def test_step_no_candidates_for_t1_t2_pair():
     # pair encountered by step's natural iteration, 'candidates' becomes empty.
     # The current setup for (t1=0, t2=1) should achieve this.
 
+    ctx = SearchContext(D=dist_matrix, neigh=neighbors, start_cost=initial_cost,
+                        best_cost=initial_cost, deadline=deadline)
     improved, best_sequence = step(
         level=1,  # Start at level 1 as per lk_search
         delta=0.0,
         base=0,   # Start with base node 0
         tour=tour_obj,  # Corrected argument name
-        D=dist_matrix,
-        neigh=neighbors,
-        flip_seq=[],
-        start_cost=initial_cost,  # Cost of the tour when step is called
-        best_cost=initial_cost,  # Global best cost known so far
-        deadline=deadline
+        ctx=ctx,
+        flip_seq=[]
     )
 
     assert not improved, "Step should not find an improvement in this specific scenario."
@@ -591,10 +588,11 @@ def test_step_finds_simple_2_opt(simple_tsp_setup):
 
     for base_node_val in initial_tour_obj.order:
         current_tour_for_step = Tour(initial_tour_obj.get_tour(), dist_matrix)
+        ctx = SearchContext(D=dist_matrix, neigh=neighbors, start_cost=initial_cost,
+                            best_cost=initial_cost, deadline=time.time() + 10)
         improved, flip_sequence = step(
             level=1, delta=0.0, base=base_node_val, tour=current_tour_for_step,
-            D=dist_matrix, neigh=neighbors, flip_seq=[],
-            start_cost=initial_cost, best_cost=initial_cost, deadline=time.time() + 10
+            ctx=ctx, flip_seq=[]
         )
         if improved and flip_sequence:
             improved_overall = True
@@ -652,11 +650,13 @@ def test_step_no_improvement_on_optimal_tour(simple_tsp_setup):
             cost_before_this_step_attempt = current_processing_tour.cost
             assert cost_before_this_step_attempt is not None, "Tour cost should be a float, got None"
             tour_for_step_to_modify_order = Tour(current_processing_tour.get_tour(), dist_matrix)
+            ctx = SearchContext(D=dist_matrix, neigh=neighbors,
+                                start_cost=cost_before_this_step_attempt,
+                                best_cost=cost_before_this_step_attempt,
+                                deadline=time.time() + 10)
             improved_by_step, flip_sequence_from_step = step(
                 level=1, delta=0.0, base=base_node_val, tour=tour_for_step_to_modify_order,
-                D=dist_matrix, neigh=neighbors, flip_seq=[],
-                start_cost=cost_before_this_step_attempt, best_cost=cost_before_this_step_attempt,
-                deadline=time.time() + 10
+                ctx=ctx, flip_seq=[]
             )
             if improved_by_step and flip_sequence_from_step:
                 candidate_tour_after_flips = Tour(current_processing_tour.get_tour(), dist_matrix)
@@ -685,17 +685,19 @@ def test_step_no_improvement_on_optimal_tour(simple_tsp_setup):
     for base_node_val_check in order_of_2_optimal_tour:
         tour_arg_for_final_step = Tour(order_of_2_optimal_tour, dist_matrix)
         assert cost_of_2_optimal_tour is not None, "Tour cost should not be None"
+        ctx = SearchContext(D=dist_matrix, neigh=neighbors,
+                            start_cost=float(cost_of_2_optimal_tour),
+                            best_cost=float(cost_of_2_optimal_tour),
+                            deadline=deadline_for_final_check)
         improved_final, flip_sequence_final = step(
             level=1, delta=0.0, base=base_node_val_check, tour=tour_arg_for_final_step,
-            D=dist_matrix, neigh=neighbors, flip_seq=[],
-            start_cost=float(cost_of_2_optimal_tour), best_cost=float(cost_of_2_optimal_tour),
-            deadline=deadline_for_final_check
+            ctx=ctx, flip_seq=[]
         )
         final_tour_cost_after_step_if_improved = cost_of_2_optimal_tour
         if improved_final and flip_sequence_final:
             temp_tour_for_cost_check = Tour(order_of_2_optimal_tour, dist_matrix)
-            for f_s, f_e in flip_sequence_final:
-                temp_tour_for_cost_check.flip_and_update_cost(f_s, f_e, dist_matrix)
+            for fs, fe in flip_sequence_final:
+                temp_tour_for_cost_check.flip_and_update_cost(fs, fe, dist_matrix)
             final_tour_cost_after_step_if_improved = temp_tour_for_cost_check.cost
         assert not improved_final, \
             (f"Step found improvement from base {base_node_val_check} on 2-optimal tour (cost {cost_of_2_optimal_tour:.10f}). "
@@ -1187,13 +1189,14 @@ def test_flip_and_update_cost_recomputes_cost_if_none():
 
 
 def test_step_returns_false_none_when_no_candidates():
-    from lin_kernighan_tsp_solver.lk_algorithm import Tour, step
+    from lin_kernighan_tsp_solver.lk_algorithm import Tour, step, SearchContext
     import numpy as np
     D = np.array([[0.0, 1.0], [1.0, 0.0]])
     tour = Tour([0, 1], D)
     neigh = [[1], [0]]
     start_cost = tour.cost if tour.cost is not None else 0.0
-    result = step(1, 0.0, 0, tour, D, neigh, [], start_cost, start_cost, float('inf'))
+    ctx = SearchContext(D=D, neigh=neigh, start_cost=start_cost, best_cost=start_cost, deadline=float('inf'))
+    result = step(1, 0.0, 0, tour, ctx, [])
     assert result == (False, None)
 
 
@@ -1575,18 +1578,16 @@ def test_step_skips_invalid_y1_candidates(simple_tsp_setup):
     # part of the step function from finding any candidates, isolating the test.
     test_neighbors[base_node] = []
 
+    ctx = SearchContext(D=dist_matrix, neigh=test_neighbors, start_cost=initial_cost,
+                        best_cost=initial_cost, deadline=time.time() + 5)
     # Call the step function
     improved, sequence = step(
         level=1,
         delta=0.0,
         base=base_node,
         tour=initial_tour_obj,
-        D=dist_matrix,
-        neigh=test_neighbors,  # Use the modified neighbors
-        flip_seq=[],
-        start_cost=initial_cost,
-        best_cost=initial_cost,
-        deadline=time.time() + 5
+        ctx=ctx,  # Use the modified neighbors
+        flip_seq=[]
     )
 
     # Assert that no improvement was found because all candidates were skipped
@@ -1617,18 +1618,16 @@ def test_step_deadline_in_standard_flips_loop(simple_tsp_setup, monkeypatch):
 
     monkeypatch.setattr('time.time', fake_time)
 
+    ctx = SearchContext(D=dist_matrix, neigh=neighbors, start_cost=initial_cost,
+                        best_cost=initial_cost, deadline=deadline_val)
     # Call the step function
     improved, sequence = step(
         level=1,
         delta=0.0,
         base=0,  # Using base=0 from the fixture
         tour=initial_tour_obj,
-        D=dist_matrix,
-        neigh=neighbors,
-        flip_seq=[],
-        start_cost=initial_cost,
-        best_cost=initial_cost,
-        deadline=deadline_val
+        ctx=ctx,
+        flip_seq=[]
     )
 
     # Assert that the function returned due to the deadline

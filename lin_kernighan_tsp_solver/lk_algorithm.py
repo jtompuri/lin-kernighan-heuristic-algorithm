@@ -200,9 +200,8 @@ class Tour:
             # Node 0 is in the tour, normalize to start with it.
             position_of_vertex_0 = self.pos[0]
             return list(np.roll(self.order, -position_of_vertex_0))
-        else:
-            # Node 0 not in tour or self.pos not configured for it.
-            return list(self.order)
+        # Node 0 not in tour or self.pos not configured for it.
+        return list(self.order)
 
     def flip_and_update_cost(self, node_a: int, node_b: int,
                              D: np.ndarray) -> float:
@@ -446,7 +445,7 @@ def alternate_step(
     # y1 is chosen from neighbors of t2.
     candidates_for_y1 = []
     for y1_candidate in neigh[t2]:
-        if y1_candidate == t1 or y1_candidate == t2:
+        if y1_candidate in (t1, t2):
             continue
         # G1 = c(t1,t2) - c(t2,y1_candidate). Must be G1 > 0.
         gain_G1 = D[t1, t2] - D[t2, y1_candidate]
@@ -458,7 +457,7 @@ def alternate_step(
         candidates_for_y1.append((sort_metric_y1, y1_candidate, t3_of_y1_candidate))
     candidates_for_y1.sort(reverse=True)  # Best first
 
-    for _, chosen_y1, chosen_t3 in candidates_for_y1[:LK_CONFIG["BREADTH_A"]]:
+    for _, chosen_y1, _ in candidates_for_y1[:LK_CONFIG["BREADTH_A"]]:
         if time.time() >= deadline:
             return False, None
         t4 = tour.next(chosen_y1)  # t4 follows chosen_y1
@@ -466,7 +465,7 @@ def alternate_step(
         # --- Stage 2: Find candidate y2 ---
         candidates_for_y2 = []
         for y2_candidate in neigh[t4]:
-            if y2_candidate == t1 or y2_candidate == t2 or y2_candidate == chosen_y1:
+            if y2_candidate in (t1, t2, chosen_y1):
                 continue
             t6_of_y2_candidate = tour.next(y2_candidate)  # t6 follows y2
             # Sort metric for y2: D[t6,y2] - D[t4,y2]
@@ -485,7 +484,7 @@ def alternate_step(
             # --- Stage 3: Find candidate y3 for a 5-opt move (Type Q in Applegate et al.) ---
             candidates_for_y3 = []
             for y3_candidate in neigh[chosen_t6]:  # y3 from neighbors of t6
-                if (y3_candidate == t1 or y3_candidate == t2 or y3_candidate == chosen_y1 or y3_candidate == t4 or y3_candidate == chosen_y2):
+                if y3_candidate in (t1, t2, chosen_y1, t4, chosen_y2):
                     continue
                 node_after_y3_candidate = tour.next(y3_candidate)  # t8
                 # Sort metric for y3: D[node_after_y3,y3] - D[chosen_t6,y3]

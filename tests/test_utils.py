@@ -467,6 +467,39 @@ def test_read_tsp_file_error_cases(tmp_path: Path):
     assert coords_malformed_few.shape == (1, 2)  # Should parse the one valid line
 
 
+def test_read_tsp_file_dimension_mismatch_warning(tmp_path: Path, capsys):
+    """
+    Tests that a warning is printed if the DIMENSION in the header
+    does not match the number of nodes found.
+    """
+    # Header says DIMENSION is 5, but only 3 nodes are provided.
+    content = """
+NAME: dimension_mismatch
+TYPE: TSP
+DIMENSION: 5
+EDGE_WEIGHT_TYPE: EUC_2D
+NODE_COORD_SECTION
+1 10.0 20.0
+2 30.0 40.0
+3 50.0 60.0
+EOF
+"""
+    tsp_file = tmp_path / "mismatch.tsp"
+    tsp_file.write_text(content)
+
+    # Call the function that should print the warning
+    coords = read_tsp_file(str(tsp_file))
+
+    # Check that the function still parsed the available coordinates
+    expected_coords = np.array([[10.0, 20.0], [30.0, 40.0], [50.0, 60.0]])
+    np.testing.assert_array_almost_equal(coords, expected_coords)
+
+    # Check that the warning was printed to stdout
+    captured = capsys.readouterr()
+    assert "Warning: Dimension mismatch" in captured.out
+    assert "Header said 5, but found 3 nodes" in captured.out
+
+
 def test_kick_function_perturbs_tour(simple_tsp_setup):
     """
     Tests the double_bridge kick function to ensure it perturbs the tour

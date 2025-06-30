@@ -19,6 +19,30 @@ from lin_kernighan_tsp_solver.config import (
 )
 
 
+def test_apply_and_update_best_tour_non_improving_sequence(simple_tsp_setup):
+    """
+    Tests that _apply_and_update_best_tour returns None if the sequence
+    does not strictly improve the tour cost. This covers the final return None.
+    """
+    from lin_kernighan_tsp_solver.lk_algorithm import _apply_and_update_best_tour
+    _coords, dist_matrix, initial_tour_obj, _neighbors, \
+        initial_cost, _, _ = simple_tsp_setup
+
+    # A sequence of flips that results in the same tour (e.g., flip a segment, then flip it back)
+    # This sequence will result in a new_cost equal to cost_before_lk.
+    non_improving_sequence = [(1, 2), (1, 2)]
+
+    result = _apply_and_update_best_tour(
+        improving_sequence=non_improving_sequence,
+        tour_order_before_lk=initial_tour_obj.get_tour(),
+        cost_before_lk=initial_cost,
+        D=dist_matrix
+    )
+
+    # The function should return None because the cost did not strictly decrease.
+    assert result is None
+
+
 def test_alternate_step_deadline_exceeded(simple_tsp_setup):
     """
     Tests that alternate_step returns (False, None) if the deadline is exceeded.

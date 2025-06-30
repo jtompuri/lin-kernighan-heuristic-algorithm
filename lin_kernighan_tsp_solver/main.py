@@ -53,7 +53,7 @@ def process_single_instance(
         if coords.size == 0:  # Check if read_tsp_file returned empty
             raise ValueError("No coordinates loaded from TSP file.")
         results['nodes'] = coords.shape[0]  # Set the number of nodes
-        D_matrix = build_distance_matrix(coords)
+        D = build_distance_matrix(coords)
 
         opt_tour_nodes = read_opt_tour(opt_tour_file_path_str)
         results['opt_tour'] = opt_tour_nodes
@@ -64,7 +64,7 @@ def process_single_instance(
             for i in range(len(opt_tour_nodes)):
                 a = opt_tour_nodes[i]
                 b = opt_tour_nodes[(i + 1) % len(opt_tour_nodes)]
-                current_opt_len += D_matrix[a, b]
+                current_opt_len += D[a, b]
             opt_len = current_opt_len
             results['opt_len'] = opt_len
             print(f"  Optimal length: {opt_len:.2f}")

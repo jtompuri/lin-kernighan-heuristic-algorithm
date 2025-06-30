@@ -47,7 +47,7 @@ LK-algoritmin toteutuksessa noudatetaan kirjan _The Traveling Salesman Problem: 
 
 ### 6.1 Vertailualgoritmit
 
-Toteutan vertailua varten algoritmin (_Exact TSP Solver_), joka käy läpi annetun verkon kaikki reittiyhdistelmät. Tämä algoritmi tuottaa aina tarkan ratkaisun, mutta sen aika vaativuus on $O(n!)$, sillä reittikombinaatioiden määrä ei-suunnatussa, täysin kytketyssä verkossa saadaan kaavalla (n - 1)!/2. Käytännössä tavallisella tietokoneella voi ratkaista 10 solmun verkon, mutta jo 12 solmun verkko on usein jo liian vaativa etenkin Pythonin kaltaiselle kielelle.  
+Toteutan vertailua varten algoritmin _Exact TSP Solver_, joka käy läpi annetun verkon kaikki reittiyhdistelmät. Tämä algoritmi tuottaa aina tarkan ratkaisun, mutta sen aika vaativuus on $O(n!)$, sillä reittikombinaatioiden määrä ei-suunnatussa, täysin kytketyssä verkossa saadaan kaavalla (n - 1)!/2. Käytännössä tavallisella tietokoneella voi ratkaista 10 solmun verkon, mutta jo 12 solmun verkko on usein jo liian vaativa etenkin Pythonin kaltaiselle kielelle.  
 
 Toinen vertailualgoritmi on LK-algoritmin erityistapaus 2-opt-algoritmi. LK-algoritmin idean taustalla oli edeltänyt 2-opt-vaihtojen tutkimus TSP-ongelmien ratkaisussa. Voidaan ajatella, että kun poistetaan LK-algoritmista kaikki muut heuristiikat, niin LK-algoritmista tulee 2-opt algoritmi. Koska 2-opt-algoritmi on merkittävästi yksinkertaisempi, niin se toimii hyvänä johdantona varsinaisen LK-algoritmin toteutukselle. Yksinkertaisuus johtaa toisaalta siihen, että hyvin optimoitu 2-opt-algoritmi on erittäin nopea suorituskyvyltään, toisaalta se tuo esiin heurististen algoritmien keskeisen ongelman eli jumittumisen paikalliseen minimiin. 
 

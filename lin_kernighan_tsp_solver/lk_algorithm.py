@@ -134,8 +134,8 @@ class Tour:
 
         if idx_a <= idx_c:  # Segment does not wrap around
             return idx_a <= idx_b <= idx_c
-        else:  # Segment wraps around (e.g., a=N-1, c=1, b can be N-1,0,1)
-            return idx_a <= idx_b or idx_b <= idx_c
+        # Segment wraps around (e.g., a=N-1, c=1, b can be N-1,0,1)
+        return idx_a <= idx_b or idx_b <= idx_c
 
     def flip(self, segment_start_node: int, segment_end_node: int) -> None:
         """
@@ -361,8 +361,7 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
             continue
 
         gain_mak_morton = (
-            (D[base, s1] - D[base, candidate_a_mm]) + (D[candidate_a_mm, tour.next(candidate_a_mm)]
-                                                       - D[tour.next(candidate_a_mm), s1])
+            (D[base, s1] - D[base, candidate_a_mm]) + (D[candidate_a_mm, tour.next(candidate_a_mm)] - D[tour.next(candidate_a_mm), s1])
         )
         # Pruning condition similar to standard flips
         if delta + (D[base, s1] - D[base, candidate_a_mm]) \
@@ -486,13 +485,11 @@ def alternate_step(
             # --- Stage 3: Find candidate y3 for a 5-opt move (Type Q in Applegate et al.) ---
             candidates_for_y3 = []
             for y3_candidate in neigh[chosen_t6]:  # y3 from neighbors of t6
-                if (y3_candidate == t1 or y3_candidate == t2 or y3_candidate == chosen_y1
-                   or y3_candidate == t4 or y3_candidate == chosen_y2):
+                if (y3_candidate == t1 or y3_candidate == t2 or y3_candidate == chosen_y1 or y3_candidate == t4 or y3_candidate == chosen_y2):
                     continue
                 node_after_y3_candidate = tour.next(y3_candidate)  # t8
                 # Sort metric for y3: D[node_after_y3,y3] - D[chosen_t6,y3]
-                sort_metric_y3 = (D[node_after_y3_candidate, y3_candidate]
-                                  - D[chosen_t6, y3_candidate])
+                sort_metric_y3 = (D[node_after_y3_candidate, y3_candidate] - D[chosen_t6, y3_candidate])
                 candidates_for_y3.append((sort_metric_y3, y3_candidate, node_after_y3_candidate))
             candidates_for_y3.sort(reverse=True)
 

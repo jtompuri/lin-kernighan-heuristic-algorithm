@@ -53,7 +53,7 @@ def read_opt_tour(path: str) -> Optional[List[int]]:
             return None
     except FileNotFoundError:
         return None
-    except Exception:  # Catch other potential errors during file processing
+    except IOError:  # Catch other potential file I/O errors
         # print(f"Error reading optimal tour file {path}: {e}")
         return None
     return tour
@@ -123,9 +123,7 @@ def read_tsp_file(path: str) -> np.ndarray:
         coords_list = [coords_dict[node_id] for node_id in sorted_node_ids]
         return np.array(coords_list, dtype=float)
 
-    except FileNotFoundError:
-        # print(f"Error: TSP file not found at {path}")
-        raise
-    except Exception:  # Catch other errors like ValueError from unsupported EWT
-        # print(f"Error reading TSP file {path}: {e}")
-        raise
+    except (FileNotFoundError, ValueError) as e:
+        # Let specific, expected errors propagate up to be handled by the caller.
+        # The docstring correctly indicates that these can be raised.
+        raise e

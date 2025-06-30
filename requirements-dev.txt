@@ -1,3 +1,7 @@
 -r requirements.txt  # Includes all production dependencies
 pytest==8.4.0
 pytest-cov==6.2.1
+
+# === Linting & Static Analysis ===
+pylint==3.2.5
+flake8==7.3.0

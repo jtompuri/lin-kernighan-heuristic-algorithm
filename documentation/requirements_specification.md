@@ -203,11 +203,11 @@ LK-algoritmia voidaan käyttää joko komentoriviltä ajamalla tiedosto sellaise
 
 ## 10. Suoritusympäristö ja vaatimukset
 
-LK-algoritmi on toteutettu Python 3.12.5 ohjelmointikiellä.  
+LK-algoritmi on toteutettu Python 3.12.5 ohjelmointikiellä.
 
-Käytössä olevia Python standardikirjastoja ovat `os`, `itertools` ja `time`. Asennettavia Python kirjastoja ovat `NumPy` ja `matplotlib`. Lisäksi tarvitaan funktio `Delaunay` kirjastosta `SciPy.Spatial`.
+Käytössä olevia Python standardikirjastoja ovat `os`, `itertools` ja `time`. Asennettavia Python-kirjastoja ovat `NumPy`, `matplotlib` ja `SciPy`.
 
-Kansiosta `documentation` löytyy `pip freeze > requirements.txt` tehty lista kirjastoista versioineen.
+Projektin juurikansiosta löytyy `requirements.txt`-tiedosto, joka määrittelee sovelluksen suorittamiseen vaadittavat kirjastot ja niiden versiot. Tiedosto on luotu `pipreqs`-työkalulla, joka analysoi lähdekoodin ja listaa vain todellisuudessa käytetyt riippuvuudet. Tämä takaa minimaalisen ja puhtaan asennusympäristön. Kehitystyökalut, kuten `pytest`, on määritelty erillisessä `requirements-dev.txt`-tiedostossa.
 
 ## 11. Dokumentaation kieli
 

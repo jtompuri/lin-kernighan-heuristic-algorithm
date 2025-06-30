@@ -291,7 +291,7 @@ def delaunay_neighbors(coords: np.ndarray) -> List[List[int]]:
     }
     # Populate neighbor sets from Delaunay simplices
     for simplex_indices in triangulation.simplices:
-        for u_vertex, v_vertex in combinations(simplex_indices, 2):  # type: ignore[arg-type] # Pylance may incorrectly infer simplex_data as scalar
+        for u_vertex, v_vertex in combinations(simplex_indices, 2):  # type: ignore[arg-type]
             neighbor_sets[u_vertex].add(v_vertex)
             neighbor_sets[v_vertex].add(u_vertex)
     # Convert sets to sorted lists
@@ -320,7 +320,8 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
         deadline (float): Time limit for search.
 
     Returns:
-        Tuple[bool, Optional[List[Tuple[int, int]]]]: (True, improving_flip_sequence) if a tour better than best_cost is found, else (False, None).
+        Tuple[bool, Optional[List[Tuple[int, int]]]]: (True, improving_flip_sequence) if a tour
+        better than best_cost is found, else (False, None).
     """
     if time.time() >= deadline or level > LK_CONFIG["MAX_LEVEL"]:
         return False, None
@@ -360,7 +361,8 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
             continue
 
         gain_mak_morton = (
-            (D[base, s1] - D[base, candidate_a_mm]) + (D[candidate_a_mm, tour.next(candidate_a_mm)] - D[tour.next(candidate_a_mm), s1])
+            (D[base, s1] - D[base, candidate_a_mm]) + (D[candidate_a_mm, tour.next(candidate_a_mm)]
+                                                       - D[tour.next(candidate_a_mm), s1])
         )
         # Pruning condition similar to standard flips
         if delta + (D[base, s1] - D[base, candidate_a_mm]) \
@@ -432,7 +434,8 @@ def alternate_step(
         deadline (float): Time limit for the search.
 
     Returns:
-        Tuple[bool, Optional[List[Tuple[int, int]]]]: (True, flip_sequence) if a potentially improving sequence is identified, else (False, None).
+        Tuple[bool, Optional[List[Tuple[int, int]]]]: (True, flip_sequence) if a potentially
+        improving sequence is identified, else (False, None).
     """
     if time.time() >= deadline:
         return False, None
@@ -480,14 +483,16 @@ def alternate_step(
                 flip_sequence_3_opt = [(t2, chosen_y2), (chosen_y2, chosen_y1)]
                 return True, flip_sequence_3_opt
 
-            # --- Stage 3: Find candidate y3 for a 5-opt move (Type Q in Applegate et al. Fig 15.5) ---
+            # --- Stage 3: Find candidate y3 for a 5-opt move (Type Q in Applegate et al.) ---
             candidates_for_y3 = []
             for y3_candidate in neigh[chosen_t6]:  # y3 from neighbors of t6
-                if (y3_candidate == t1 or y3_candidate == t2 or y3_candidate == chosen_y1 or y3_candidate == t4 or y3_candidate == chosen_y2):
+                if (y3_candidate == t1 or y3_candidate == t2 or y3_candidate == chosen_y1
+                   or y3_candidate == t4 or y3_candidate == chosen_y2):
                     continue
                 node_after_y3_candidate = tour.next(y3_candidate)  # t8
                 # Sort metric for y3: D[node_after_y3,y3] - D[chosen_t6,y3]
-                sort_metric_y3 = D[node_after_y3_candidate, y3_candidate] - D[chosen_t6, y3_candidate]
+                sort_metric_y3 = (D[node_after_y3_candidate, y3_candidate]
+                                  - D[chosen_t6, y3_candidate])
                 candidates_for_y3.append((sort_metric_y3, y3_candidate, node_after_y3_candidate))
             candidates_for_y3.sort(reverse=True)
 
@@ -495,7 +500,8 @@ def alternate_step(
                 if time.time() >= deadline:
                     return False, None
                 # Identified a specific 5-opt move.
-                flip_sequence_5_opt = [(t2, chosen_y3), (chosen_y3, chosen_y1), (t4, chosen_node_after_y3)]
+                flip_sequence_5_opt = [(t2, chosen_y3), (chosen_y3, chosen_y1),
+                                       (t4, chosen_node_after_y3)]
                 return True, flip_sequence_5_opt
     return False, None
 

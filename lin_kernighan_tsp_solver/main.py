@@ -6,7 +6,7 @@ using chained Lin-Kernighan, compares against optimal tours if available,
 and displays results in both tabular and graphical form.
 
 Usage:
-    python -m lin_kernighan_tsp_solver.main
+    python -m lin_kernighan_tsp_solver
 """
 
 import time

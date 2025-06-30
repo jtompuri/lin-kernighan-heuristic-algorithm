@@ -5,7 +5,7 @@ This module provides functions to read TSP instance files (.tsp) and
 optimal tour files (.opt.tour).
 """
 
-from typing import List, Optional, Dict
+from typing import List, Optional
 import numpy as np
 
 
@@ -59,6 +59,28 @@ def read_opt_tour(path: str) -> Optional[List[int]]:
     return tour
 
 
+def _parse_tsp_header(file_handle) -> dict:
+    """Parses the header of a TSPLIB file until NODE_COORD_SECTION."""
+    metadata = {}
+    for line in file_handle:
+        line = line.strip()
+        if not line:
+            continue
+
+        if 'NODE_COORD_SECTION' in line:
+            break  # Header parsing is complete
+
+        parts = line.split(':')
+        if len(parts) == 2:
+            key, value = parts[0].strip(), parts[1].strip()
+            if key == 'DIMENSION':
+                metadata['dimension'] = int(value)
+            elif key == 'EDGE_WEIGHT_TYPE':
+                if value != 'EUC_2D':
+                    raise ValueError(f"Unsupported EDGE_WEIGHT_TYPE: {value}. Only EUC_2D is supported.")
+    return metadata
+
+
 def read_tsp_file(path: str) -> np.ndarray:
     """
     Reads TSPLIB .tsp file (EUC_2D only) and returns coordinates.
@@ -71,54 +93,35 @@ def read_tsp_file(path: str) -> np.ndarray:
 
     Raises:
         FileNotFoundError: If the TSP file is not found.
-        ValueError: If EDGE_WEIGHT_TYPE is not "EUC_2D".
-        Exception: For other parsing errors.
+        ValueError: If EDGE_WEIGHT_TYPE is not "EUC_2D" or for parsing errors.
     """
-    coords_dict: Dict[int, List[float]] = {}
-    reading_nodes = False
-    edge_weight_type = None
-
+    coords_dict = {}
     try:
         with open(path, 'r', encoding='utf-8') as f:
-            for line_content in f:
-                line = line_content.strip()
-                if not line:
-                    continue  # Skip empty lines
+            metadata = _parse_tsp_header(f)
+            dimension = metadata.get('dimension', -1)
 
-                # Read metadata before NODE_COORD_SECTION
-                if ":" in line and not reading_nodes:
-                    key, value = [part.strip() for part in line.split(":", 1)]
-                    if key.upper() == "EDGE_WEIGHT_TYPE":
-                        edge_weight_type = value.upper()
-
-                if line.upper().startswith("NODE_COORD_SECTION"):
-                    if edge_weight_type != "EUC_2D":
-                        raise ValueError(
-                            f"Unsupported EDGE_WEIGHT_TYPE: {edge_weight_type}."
-                            f" Only EUC_2D is supported."
-                        )
-                    reading_nodes = True
-                    continue
-                if line.upper() == "EOF":  # End of file marker
+            # At this point, the file handle is at the start of the node section
+            for line in f:
+                line = line.strip()
+                if not line or line == 'EOF':
                     break
 
-                if reading_nodes:  # Parse node coordinates
-                    parts = line.split()
-                    if len(parts) >= 3:  # node_id x_coord y_coord
-                        try:
-                            node_id = int(parts[0])
-                            x_coord = float(parts[1])
-                            y_coord = float(parts[2])
-                            coords_dict[node_id] = [x_coord, y_coord]
-                        except ValueError:
-                            # Silently skip unparsable node lines, or add warning
-                            # print(f"Warning: Skipping unparsable node line: '{line}' in {path}")
-                            pass
-        if not coords_dict:  # No coordinates found
-            # print(f"Warning: No coordinates found in {path}")
-            return np.array([], dtype=float)
+                tokens = line.split()
+                if len(tokens) < 3:
+                    continue  # Skip malformed lines
 
-        # Sort by node ID to ensure consistent order before creating array
+                node_id, x, y = int(tokens[0]), float(tokens[1]), float(tokens[2])
+                coords_dict[node_id] = (x, y)
+
+        if dimension != -1 and len(coords_dict) != dimension:
+            print(f"Warning: Dimension mismatch in {path}. "
+                  f"Header said {dimension}, but found {len(coords_dict)} nodes.")
+
+        if not coords_dict:
+            return np.array([])
+
+        # Sort nodes by their ID to ensure consistent order
         sorted_node_ids = sorted(coords_dict.keys())
         coords_list = [coords_dict[node_id] for node_id in sorted_node_ids]
         return np.array(coords_list, dtype=float)

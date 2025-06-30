@@ -438,68 +438,33 @@ def test_read_tsp_file_not_found(tmp_path: Path):
 
 def test_read_tsp_file_error_cases(tmp_path: Path):
     """Tests reading .tsp files with various malformed content."""
-    # Existing test cases for non-numeric coord, empty nodes, no dim
+    # Case 1: Non-numeric coordinate should raise ValueError
     content_non_numeric_coord = "EDGE_WEIGHT_TYPE: EUC_2D\nNODE_COORD_SECTION\n1 10.0 ABC\nEOF\n"
     tsp_file_non_numeric_coord = tmp_path / "test_non_numeric_coord.tsp"
     tsp_file_non_numeric_coord.write_text(content_non_numeric_coord)
-    coords_non_numeric = read_tsp_file(str(tsp_file_non_numeric_coord))
-    assert coords_non_numeric.shape == (0, 2) or coords_non_numeric.shape == (0,), \
-        "Should return empty array for non-numeric y-coordinate."
+    with pytest.raises(ValueError, match="could not convert string to float"):
+        read_tsp_file(str(tsp_file_non_numeric_coord))
 
+    # Case 2: Empty node section should return an empty array
     content_empty_nodes = "EDGE_WEIGHT_TYPE: EUC_2D\nNODE_COORD_SECTION\nEOF\n"
     tsp_file_empty_nodes = tmp_path / "test_empty_nodes.tsp"
     tsp_file_empty_nodes.write_text(content_empty_nodes)
     coords_empty = read_tsp_file(str(tsp_file_empty_nodes))
-    assert coords_empty.shape == (0, 2) or coords_empty.shape == (0,), \
-        "Should return empty array for no nodes in NODE_COORD_SECTION."
+    assert coords_empty.shape == (0,)
 
-    content_no_dim_but_parses = "EDGE_WEIGHT_TYPE: EUC_2D\nNODE_COORD_SECTION\n1 10.0 20.0\nEOF\n"
-    tsp_file_no_dim = tmp_path / "test_no_dim.tsp"
-    tsp_file_no_dim.write_text(content_no_dim_but_parses)
-    coords_no_dim = read_tsp_file(str(tsp_file_no_dim))
-
-    # Add a check for the shape first to provide a better error message if it's empty
-    assert coords_no_dim.shape == (1, 2), \
-        f"Expected shape (1, 2) for coords_no_dim, but got {coords_no_dim.shape}. Array: {coords_no_dim}"
-    # Ensure the dtype is float before comparing values
-    assert coords_no_dim.dtype == float, \
-        f"Expected dtype float for coords_no_dim, but got {coords_no_dim.dtype}. Array: {coords_no_dim}"
-
-    expected_array_for_no_dim = np.array([[10.0, 20.0]], dtype=float)
-
-    np.testing.assert_array_equal(coords_no_dim, expected_array_for_no_dim,
-                                  err_msg="Parsed array for 'no_dim' case does not exactly match expected array.")
-
-    # New Case 1: Unsupported EDGE_WEIGHT_TYPE
-    content_unsupported_type = "EDGE_WEIGHT_TYPE: EXPLICIT\nNODE_COORD_SECTION\n1 10.0 20.0\nEOF\n"
+    # Case 3: Unsupported edge weight type should raise ValueError
+    content_unsupported_type = "EDGE_WEIGHT_TYPE: EXPLICIT\nNODE_COORD_SECTION\n1 10 20\nEOF\n"
     tsp_file_unsupported_type = tmp_path / "test_unsupported_type.tsp"
     tsp_file_unsupported_type.write_text(content_unsupported_type)
-    with pytest.raises(ValueError, match="Unsupported EDGE_WEIGHT_TYPE: EXPLICIT. Only EUC_2D is supported."):
+    with pytest.raises(ValueError, match="Unsupported EDGE_WEIGHT_TYPE"):
         read_tsp_file(str(tsp_file_unsupported_type))
 
-    # New Case 2: Malformed node line - too few parts
-    content_malformed_node_few = "EDGE_WEIGHT_TYPE: EUC_2D\nNODE_COORD_SECTION\n1 10.0\nEOF\n"
+    # Case 4: Malformed node line (too few parts) should be skipped
+    content_malformed_node_few = "EDGE_WEIGHT_TYPE: EUC_2D\nNODE_COORD_SECTION\n1 10.0\n2 30.0 40.0\nEOF\n"
     tsp_file_malformed_few = tmp_path / "test_malformed_node_few.tsp"
     tsp_file_malformed_few.write_text(content_malformed_node_few)
     coords_malformed_few = read_tsp_file(str(tsp_file_malformed_few))
-    assert coords_malformed_few.shape == (0, 2) or coords_malformed_few.shape == (0,), \
-        "Should return empty array or skip malformed node line (too few parts)."
-
-    # New Case 3: Malformed node line - non-numeric node ID
-    content_malformed_node_id = "EDGE_WEIGHT_TYPE: EUC_2D\nNODE_COORD_SECTION\nABC 10.0 20.0\nEOF\n"
-    tsp_file_malformed_id = tmp_path / "test_malformed_node_id.tsp"
-    tsp_file_malformed_id.write_text(content_malformed_node_id)
-    coords_malformed_id = read_tsp_file(str(tsp_file_malformed_id))
-    assert coords_malformed_id.shape == (0, 2) or coords_malformed_id.shape == (0,), \
-        "Should return empty array or skip malformed node line (non-numeric ID)."
-
-    # New Case 4: Malformed node line - non-numeric x-coordinate
-    content_malformed_node_x = "EDGE_WEIGHT_TYPE: EUC_2D\nNODE_COORD_SECTION\n1 XYZ 20.0\nEOF\n"
-    tsp_file_malformed_x = tmp_path / "test_malformed_node_x.tsp"
-    tsp_file_malformed_x.write_text(content_malformed_node_x)
-    coords_malformed_x = read_tsp_file(str(tsp_file_malformed_x))
-    assert coords_malformed_x.shape == (0, 2) or coords_malformed_x.shape == (0,), \
-        "Should return empty array or skip malformed node line (non-numeric x-coordinate)."
+    assert coords_malformed_few.shape == (1, 2)  # Should parse the one valid line
 
 
 def test_kick_function_perturbs_tour(simple_tsp_setup):

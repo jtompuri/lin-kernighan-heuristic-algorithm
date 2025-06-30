@@ -20,7 +20,7 @@ Functions and classes:
 import time
 import math
 from itertools import combinations
-from typing import List, Dict, Tuple, Optional, Iterable
+from collections.abc import Iterable
 
 import numpy as np
 from scipy.spatial import Delaunay
@@ -42,7 +42,7 @@ class Tour:
     """
 
     def __init__(self, order: Iterable[int],
-                 D: Optional[np.ndarray] = None) -> None:
+                 D: np.ndarray | None = None) -> None:
         """
         Calculates and stores the tour's total cost using distance matrix D.
 
@@ -56,7 +56,7 @@ class Tour:
             # Handle empty tour initialization
             self.order: np.ndarray = np.array([], dtype=np.int32)
             self.pos: np.ndarray = np.array([], dtype=np.int32)
-            self.cost: Optional[float] = 0.0
+            self.cost: float | None = 0.0
         else:
             self.order: np.ndarray = np.array(order_list, dtype=np.int32)
             # Ensure self.pos is large enough for all actual node labels.
@@ -66,7 +66,7 @@ class Tour:
             for i, v_node in enumerate(self.order):
                 self.pos[v_node] = i
 
-            self.cost: Optional[float] = None
+            self.cost: float | None = None
             if D is not None:
                 self.init_cost(D)
 
@@ -179,29 +179,27 @@ class Tour:
             self.pos[node_at_right] = current_left_order_idx
             self.pos[node_at_left] = current_right_order_idx
 
-    def get_tour(self) -> List[int]:
+    def get_tour(self) -> list[int]:
         """
         Returns tour as a list, normalized to start with node 0 if present.
 
         Returns:
-            List[int]: List of vertex indices. Empty if tour is empty.
+            list[int]: List of vertex indices. Empty if tour is empty.
         """
         if self.n == 0:
             return []
 
-        node_zero_present_and_valid = False
-        # Check if 0 is a potential index for self.pos and actually in tour
+        # Check if node 0 is in the tour. self.pos is guaranteed to be large
+        # enough for all actual node labels due to initialization with max_node_label.
         if 0 <= self.pos.shape[0] - 1:
             idx_of_0_in_order = self.pos[0]
             if (0 <= idx_of_0_in_order < self.n and self.order[idx_of_0_in_order] == 0):
-                node_zero_present_and_valid = True
+                # Node 0 is in the tour, normalize to start with it.
+                position_of_vertex_0 = self.pos[0]
+                return list(np.roll(self.order, -position_of_vertex_0))
 
-        if node_zero_present_and_valid:
-            # Node 0 is in the tour, normalize to start with it.
-            position_of_vertex_0 = self.pos[0]
-            return list(np.roll(self.order, -position_of_vertex_0))
-        # Node 0 not in tour or self.pos not configured for it.
-        return list(self.order)
+        # Node 0 is not in the tour, return the order as is.
+        return self.order.tolist()
 
     def flip_and_update_cost(self, node_a: int, node_b: int,
                              D: np.ndarray) -> float:
@@ -267,7 +265,7 @@ def build_distance_matrix(coords: np.ndarray) -> np.ndarray:
     return np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
 
 
-def delaunay_neighbors(coords: np.ndarray) -> List[List[int]]:
+def delaunay_neighbors(coords: np.ndarray) -> list[list[int]]:
     """
     Generates sorted neighbor lists using Delaunay triangulation.
 
@@ -275,7 +273,7 @@ def delaunay_neighbors(coords: np.ndarray) -> List[List[int]]:
         coords (np.ndarray): Array of shape (n, 2) for n points.
 
     Returns:
-        List[List[int]]: List where List[i] contains sorted neighbors of vertex i.
+        list[list[int]]: List where list[i] contains sorted neighbors of vertex i.
     """
     num_vertices = len(coords)
     if num_vertices < 3:
@@ -285,7 +283,7 @@ def delaunay_neighbors(coords: np.ndarray) -> List[List[int]]:
 
     triangulation = Delaunay(coords)
     # Use sets to automatically handle duplicate edges from shared simplices
-    neighbor_sets: Dict[int, set[int]] = {
+    neighbor_sets: dict[int, set[int]] = {
         i: set() for i in range(num_vertices)
     }
     # Populate neighbor sets from Delaunay simplices
@@ -298,9 +296,9 @@ def delaunay_neighbors(coords: np.ndarray) -> List[List[int]]:
 
 
 def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
-         neigh: List[List[int]], flip_seq: List[Tuple[int, int]],
+         neigh: list[list[int]], flip_seq: list[tuple[int, int]],
          start_cost: float, best_cost: float,
-         deadline: float) -> Tuple[bool, Optional[List[Tuple[int, int]]]]:
+         deadline: float) -> tuple[bool, list[tuple[int, int]] | None]:
     """
     Recursive step of Lin-Kernighan (Algorithm 15.1, Applegate et al.).
 
@@ -312,14 +310,14 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
         base (int): Current base node (t1) for moves.
         tour (Tour): Tour object (modified and reverted during search).
         D (np.ndarray): Distance matrix.
-        neigh (List[List[int]]): Neighbor lists for candidate selection.
-        flip_seq (List[Tuple[int, int]]): Current sequence of flips.
+        neigh (list[list[int]]): Neighbor lists for candidate selection.
+        flip_seq (list[tuple[int, int]]): Current sequence of flips.
         start_cost (float): Cost of tour at the beginning of the current lk_search pass.
         best_cost (float): Globally best tour cost found so far.
         deadline (float): Time limit for search.
 
     Returns:
-        Tuple[bool, Optional[List[Tuple[int, int]]]]: (True, improving_flip_sequence) if a tour
+        tuple[bool, list[tuple[int, int]] | None]: (True, improving_flip_sequence) if a tour
         better than best_cost is found, else (False, None).
     """
     if time.time() >= deadline or level > LK_CONFIG["MAX_LEVEL"]:
@@ -416,9 +414,9 @@ def step(level: int, delta: float, base: int, tour: Tour, D: np.ndarray,
 
 
 def alternate_step(
-    base_node: int, tour: Tour, D: np.ndarray, neigh: List[List[int]],
+    base_node: int, tour: Tour, D: np.ndarray, neigh: list[list[int]],
     deadline: float
-) -> Tuple[bool, Optional[List[Tuple[int, int]]]]:
+) -> tuple[bool, list[tuple[int, int]] | None]:
     """
     Alternative first step of LK (Algorithm 15.2, Applegate et al.).
 
@@ -428,11 +426,11 @@ def alternate_step(
         base_node (int): Current base vertex (t1) for the LK move.
         tour (Tour): The current Tour object.
         D (np.ndarray): Distance matrix.
-        neigh (List[List[int]]): Neighbor lists for candidate selection.
+        neigh (list[list[int]]): Neighbor lists for candidate selection.
         deadline (float): Time limit for the search.
 
     Returns:
-        Tuple[bool, Optional[List[Tuple[int, int]]]]: (True, flip_sequence) if a potentially
+        tuple[bool, list[tuple[int, int]] | None]: (True, flip_sequence) if a potentially
         improving sequence is identified, else (False, None).
     """
     if time.time() >= deadline:
@@ -503,8 +501,8 @@ def alternate_step(
 
 
 def lk_search(start_node_for_search: int, current_tour_obj: Tour,
-              D: np.ndarray, neigh: List[List[int]],
-              deadline: float) -> Optional[List[Tuple[int, int]]]:
+              D: np.ndarray, neigh: list[list[int]],
+              deadline: float) -> list[tuple[int, int]] | None:
     """
     Single Lin-Kernighan search pass (Algorithm 15.3, Applegate et al.).
 
@@ -514,11 +512,11 @@ def lk_search(start_node_for_search: int, current_tour_obj: Tour,
         start_node_for_search (int): Vertex to initiate search from (t1).
         current_tour_obj (Tour): Current tour.
         D (np.ndarray): Distance matrix.
-        neigh (List[List[int]]): Neighbor lists.
+        neigh (list[list[int]]): Neighbor lists.
         deadline (float): Time limit.
 
     Returns:
-        Optional[List[Tuple[int, int]]]: List of (start, end) flips if improvement found, else None.
+        list[tuple[int, int]] | None: List of (start, end) flips if improvement found, else None.
     """
     if time.time() >= deadline:
         return None
@@ -561,9 +559,9 @@ def lk_search(start_node_for_search: int, current_tour_obj: Tour,
     return None
 
 
-def lin_kernighan(coords: np.ndarray, init: List[int], D: np.ndarray,
-                  neigh: List[List[int]],
-                  deadline: float) -> Tuple[Tour, float]:
+def lin_kernighan(coords: np.ndarray, init: list[int], D: np.ndarray,
+                  neigh: list[list[int]],
+                  deadline: float) -> tuple[Tour, float]:
     """
     Main Lin-Kernighan heuristic (Algorithm 15.4, Applegate et al.).
 
@@ -571,13 +569,13 @@ def lin_kernighan(coords: np.ndarray, init: List[int], D: np.ndarray,
 
     Args:
         coords (np.ndarray): Vertex coordinates.
-        init (List[int]): Initial tour permutation.
+        init (list[int]): Initial tour permutation.
         D (np.ndarray): Distance matrix.
-        neigh (List[List[int]]): Neighbor lists.
+        neigh (list[list[int]]): Neighbor lists.
         deadline (float): Time limit.
 
     Returns:
-        Tuple[Tour, float]: (Best Tour object, its cost).
+        tuple[Tour, float]: (Best Tour object, its cost).
     """
     n = len(coords)
     current_best_tour_obj = Tour(init, D)
@@ -617,15 +615,15 @@ def lin_kernighan(coords: np.ndarray, init: List[int], D: np.ndarray,
     return current_best_tour_obj, current_best_tour_cost
 
 
-def double_bridge(order: List[int]) -> List[int]:
+def double_bridge(order: list[int]) -> list[int]:
     """
     Applies a double-bridge 4-opt move to perturb the tour.
 
     Args:
-        order (List[int]): Current tour order.
+        order (list[int]): Current tour order.
 
     Returns:
-        List[int]: New perturbed tour order. Returns original if n <= 4.
+        list[int]: New perturbed tour order. Returns original if n <= 4.
     """
     n = len(order)
     if n <= 4:  # Perturbation is trivial or not possible for small tours
@@ -646,10 +644,10 @@ def double_bridge(order: List[int]) -> List[int]:
 
 
 def chained_lin_kernighan(
-    coords: np.ndarray, initial_tour_order: List[int],
-    known_optimal_length: Optional[float] = None,
-    time_limit_seconds: Optional[float] = None
-) -> Tuple[List[int], float]:
+    coords: np.ndarray, initial_tour_order: list[int],
+    known_optimal_length: float | None = None,
+    time_limit_seconds: float | None = None
+) -> tuple[list[int], float]:
     """
     Chained Lin-Kernighan metaheuristic (Algorithm 15.5, Applegate et al.).
 
@@ -657,12 +655,12 @@ def chained_lin_kernighan(
 
     Args:
         coords (np.ndarray): Vertex coordinates.
-        initial_tour_order (List[int]): Initial tour.
+        initial_tour_order (list[int]): Initial tour.
         known_optimal_length (float, optional): Known optimal length for early stop.
         time_limit_seconds (float, optional): Max run time.
 
     Returns:
-        Tuple[List[int], float]: (Best tour order found, its cost).
+        tuple[list[int], float]: (Best tour order found, its cost).
     """
     effective_time_limit = (time_limit_seconds
                             if time_limit_seconds is not None

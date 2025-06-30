@@ -10,19 +10,19 @@ Functions:
 """
 
 import math
-from typing import List, Dict, Any
+from typing import Any
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 from . import config
 
 
-def display_summary_table(results_data: List[Dict[str, Any]]) -> None:
+def display_summary_table(results_data: list[dict[str, Any]]) -> None:
     """
     Prints a formatted summary table of processing results.
 
     Args:
-        results_data (List[Dict[str, Any]]): List of result dictionaries from instances.
+        results_data (list[dict[str, Any]]): List of result dictionaries from instances.
     """
     print("\nConfiguration parameters:")
     for key, value in config.LK_CONFIG.items():
@@ -80,12 +80,12 @@ def display_summary_table(results_data: List[Dict[str, Any]]) -> None:
     print("Done.")
 
 
-def plot_all_tours(results_data: List[Dict[str, Any]]) -> None:
+def plot_all_tours(results_data: list[dict[str, Any]]) -> None:
     """
     Plots optimal and heuristic tours for processed instances.
 
     Args:
-        results_data (List[Dict[str, Any]]): List of result dictionaries.
+        results_data (list[dict[str, Any]]): List of result dictionaries.
     """
     # Filter for results that are not errored and have coordinates
     valid_results_to_plot = [

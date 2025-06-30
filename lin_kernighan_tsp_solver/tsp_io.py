@@ -5,11 +5,10 @@ This module provides functions to read TSP instance files (.tsp) and
 optimal tour files (.opt.tour).
 """
 
-from typing import List, Optional
 import numpy as np
 
 
-def read_opt_tour(path: str) -> Optional[List[int]]:
+def read_opt_tour(path: str) -> list[int] | None:
     """
     Reads an optimal tour from a .opt.tour file (TSPLIB format).
 
@@ -17,9 +16,9 @@ def read_opt_tour(path: str) -> Optional[List[int]]:
         path (str): Path to .opt.tour file.
 
     Returns:
-        Optional[List[int]]: List of 0-indexed node IDs, or None on error/malformed.
+        list[int] | None: List of 0-indexed node IDs, or None on error/malformed.
     """
-    tour: List[int] = []
+    tour: list[int] = []
     in_tour_section = False
     found_minus_one_terminator = False
     try:

@@ -1,10 +1,9 @@
 """
-main.py
-
 Main entry point for the Lin-Kernighan TSP solver.
 
-This script processes TSPLIB format instances, computes heuristic solutions using chained LK,
-compares against optimal tours if available, and displays results in both tabular and graphical form.
+This script processes TSPLIB format instances, computes heuristic solutions
+using chained Lin-Kernighan, compares against optimal tours if available,
+and displays results in both tabular and graphical form.
 
 Usage:
     python -m lin_kernighan_tsp_solver.main
@@ -13,7 +12,7 @@ Usage:
 import time
 import math
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
 import numpy as np
 
 from .config import TSP_FOLDER_PATH, FLOAT_COMPARISON_TOLERANCE
@@ -25,8 +24,16 @@ from .tsp_io import read_tsp_file, read_opt_tour
 from .utils import display_summary_table, plot_all_tours
 
 
-def _calculate_tour_length(tour_nodes: list, D: np.ndarray) -> float:
-    """Calculates the total length of a given tour based on a distance matrix."""
+def _calculate_tour_length(tour_nodes: list[int], D: np.ndarray) -> float:
+    """Calculates the total length of a given tour.
+
+    Args:
+        tour_nodes (list[int]): A list of node indices representing the tour.
+        D (np.ndarray): The distance matrix.
+
+    Returns:
+        float: The total length of the tour.
+    """
     if not tour_nodes:
         return 0.0
     length = 0.0
@@ -38,7 +45,16 @@ def _calculate_tour_length(tour_nodes: list, D: np.ndarray) -> float:
 
 
 def _calculate_gap(heuristic_len: float, opt_len: float | None) -> float | None:
-    """Calculates the percentage gap, handling division by zero."""
+    """Calculates the percentage gap between heuristic and optimal lengths.
+
+    Args:
+        heuristic_len (float): The length of the tour found by the heuristic.
+        opt_len (float | None): The known optimal tour length.
+
+    Returns:
+        float | None: The percentage gap, or None if the optimal length is not
+            provided or too small for a meaningful calculation.
+    """
     if opt_len is None:
         return None
     if opt_len > FLOAT_COMPARISON_TOLERANCE * 10:
@@ -51,21 +67,24 @@ def _calculate_gap(heuristic_len: float, opt_len: float | None) -> float | None:
 
 def process_single_instance(
         tsp_file_path_str: str, opt_tour_file_path_str: str
-) -> Dict[str, Any]:
-    """
-    Processes one TSP instance: loads, runs LK, calculates stats.
+) -> dict[str, Any]:
+    """Processes a single TSP instance.
+
+    Loads a TSP problem and its optimal tour, runs the chained Lin-Kernighan
+    heuristic, and calculates performance statistics.
 
     Args:
-        tsp_file_path_str (str): Path to .tsp file.
-        opt_tour_file_path_str (str): Path to .opt.tour file.
+        tsp_file_path_str (str): The file path to the .tsp problem file.
+        opt_tour_file_path_str (str): The file path to the .opt.tour solution file.
 
     Returns:
-        Dict[str, Any]: Dictionary with results: name, coords, tours, lengths, gap, time, error.
+        dict[str, Any]: A dictionary containing the results, including problem name,
+            tour lengths, gap, and execution time.
     """
     problem_name = Path(tsp_file_path_str).stem
     print(f"Processing {problem_name} (EUC_2D)...")
     # Initialize results dictionary
-    results: Dict[str, Any] = {
+    results: dict[str, Any] = {
         'name': problem_name, 'coords': np.array([]), 'opt_tour': None,
         'heu_tour': [], 'opt_len': None, 'heu_len': float('inf'),
         'gap': None, 'time': 0.0, 'error': False,
@@ -115,11 +134,10 @@ def process_single_instance(
 
 
 def main():
-    """
-    Main function to process all TSP instances in the configured folder.
+    """Main function to process all TSP instances in the configured folder.
 
-    Finds all .tsp files, processes each instance, displays a summary table,
-    and plots all tours.
+    Finds all .tsp files in the target directory, processes each instance
+    sequentially, and then displays a summary table and plots all tours.
     """
     all_instance_results_list = []
     if not TSP_FOLDER_PATH.is_dir():

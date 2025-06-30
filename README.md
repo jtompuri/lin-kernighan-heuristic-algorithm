@@ -92,7 +92,7 @@ python simple_tsp_solver.py
 Here is an example output using TSPLIB95 instances.
 **Note:** The example output below was generated with `TIME_LIMIT` set to 20.0 seconds in `config.py` for illustrative purposes. The default `TIME_LIMIT` in `config.py` is 5.0 seconds, which may yield different heuristic lengths and runtimes.
 
-![Example output plots](/images/lk_verifications_tsplib95_20s.png)
+![Example output plots](/images/lk_verifications_tsplib95_20s_2025-06-30.png)
 
 ```
 Configuration parameters:
@@ -105,26 +105,26 @@ Configuration parameters:
 
 Instance     OptLen   HeuLen   Gap(%)  Time(s)
 ----------------------------------------------
-a280        2586.77  2617.49     1.19    20.00
-berlin52    7544.37  7544.37     0.00     0.19
-ch130       6110.86  6164.24     0.87    20.00
-ch150       6532.28  6552.30     0.31    20.00
+a280        2586.77  2615.29     1.10    20.00
+berlin52    7544.37  7544.37     0.00     0.15
+ch130       6110.86  6153.70     0.70    20.00
+ch150       6532.28  6533.81     0.02    20.00
 eil101       642.31   640.21     0.00    20.00
-eil51        429.98   428.87     0.00    20.00
+eil51        429.98   428.98     0.00    20.00
 eil76        545.39   544.37     0.00    20.00
-kroA100    21285.44 21285.44     0.00    11.69
-kroC100    20750.76 20750.76     0.00     2.38
-kroD100    21294.29 21294.29     0.00    11.22
-lin105     14383.00 14383.00     0.00     2.70
-pcb442     50783.55 74322.54    46.35    20.00
-pr1002     259066.66 339278.81    30.96    20.00
-pr2392     378062.83 378062.83     0.00    12.97
-pr76       108159.44 108159.44     0.00     2.04
-rd100       7910.40  7910.40     0.00     2.35
+kroA100    21285.44 21285.44     0.00     6.52
+kroC100    20750.76 20750.76     0.00     5.25
+kroD100    21294.29 21375.45     0.38    20.00
+lin105     14383.00 14383.00     0.00     2.25
+pcb442     50783.55 68689.45    35.26    20.00
+pr1002     259066.66 337713.32  30.36    20.00
+pr2392     378062.83 378062.83   0.00    11.37
+pr76       108159.44 108159.44   0.00     1.59
+rd100       7910.40  7910.40     0.00     9.55
 st70         678.60   677.11     0.00    20.00
-tsp225      3859.00  3936.55     2.01    20.00
+tsp225      3859.00  3942.12     2.15    20.00
 ----------------------------------------------
-SUMMARY    910625.92 1014553.02     4.54    13.64
+SUMMARY    910625.92 1007410.04  3.89    14.26
 ```
 
 ## Course documentation (in Finnish)

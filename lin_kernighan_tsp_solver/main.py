@@ -61,9 +61,9 @@ def process_single_instance(
 
         if opt_tour_nodes:  # If an optimal tour was successfully read
             current_opt_len = 0.0
-            for i in range(len(opt_tour_nodes)):
-                a = opt_tour_nodes[i]
-                b = opt_tour_nodes[(i + 1) % len(opt_tour_nodes)]
+            tour_len = len(opt_tour_nodes)
+            for i, a in enumerate(opt_tour_nodes):
+                b = opt_tour_nodes[(i + 1) % tour_len]
                 current_opt_len += D[a, b]
             opt_len = current_opt_len
             results['opt_len'] = opt_len

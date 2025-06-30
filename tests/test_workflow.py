@@ -80,9 +80,8 @@ def test_process_single_instance_no_opt_tour_loaded(tmp_path, simple_tsp_setup):
 
 def test_process_single_instance_handles_chained_lk_exception(tmp_path, simple_tsp_setup):
     """
-    Tests that process_single_instance correctly handles a generic Exception
-    raised by chained_lin_kernighan and sets error flags in the results.
-    This covers the generic 'except Exception' block.
+    Tests that process_single_instance correctly handles an expected error
+    (like ValueError) and sets error flags in the results.
     """
     coords, _, _, _, _, _, _ = simple_tsp_setup
     instance_name = "test_instance_clk_fail"
@@ -99,9 +98,10 @@ def test_process_single_instance_handles_chained_lk_exception(tmp_path, simple_t
     mock_coords = coords
     error_message = "Simulated CLK Failure"
 
+    # Simulate a ValueError, which the function is designed to catch.
     with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=mock_coords) as mock_read_tsp, \
             patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=None) as mock_read_opt, \
-            patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', side_effect=Exception(error_message)) as mock_clk:
+            patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', side_effect=ValueError(error_message)) as mock_clk:
 
         result = process_single_instance(str(tsp_file), str(opt_tour_file))
 
@@ -243,7 +243,8 @@ def test_main_multiple_tsp_files(monkeypatch):
 
 def test_process_single_instance_handles_tsp_read_error(capsys):
     from lin_kernighan_tsp_solver.main import process_single_instance
-    with patch('lin_kernighan_tsp_solver.main.read_tsp_file', side_effect=Exception("read error")), \
+    # Simulate a ValueError, which the function is designed to catch.
+    with patch('lin_kernighan_tsp_solver.main.read_tsp_file', side_effect=ValueError("read error")), \
             patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=None):
         result = process_single_instance("dummy.tsp", "dummy.opt.tour")
         assert result['error'] is True

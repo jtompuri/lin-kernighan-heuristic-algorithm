@@ -93,7 +93,7 @@ def process_single_instance(
         gap_str = f"Gap: {results['gap']:.2f}%  " if results['gap'] is not None else ""
         print(f"  Heuristic length: {heuristic_len:.2f}  {gap_str}Time: {elapsed_time:.2f}s")
 
-    except Exception as e:
+    except (IOError, ValueError) as e:
         print(f"  Skipping {problem_name} due to error: {e}")
         results['error'] = True  # Mark instance as errored
         # Ensure essential keys exist for summary, even on error
@@ -124,7 +124,7 @@ def main():
                     str(tsp_file_path_obj), str(opt_tour_path_obj)
                 )
                 all_instance_results_list.append(result_dict)
-            except Exception as e:  # Catch any unexpected error during processing
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 print(f"Critical error processing {base_name}: {e}")
                 # Append a basic error entry for summary purposes
                 all_instance_results_list.append({

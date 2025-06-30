@@ -25,6 +25,30 @@ from .tsp_io import read_tsp_file, read_opt_tour
 from .utils import display_summary_table, plot_all_tours
 
 
+def _calculate_tour_length(tour_nodes: list, D: np.ndarray) -> float:
+    """Calculates the total length of a given tour based on a distance matrix."""
+    if not tour_nodes:
+        return 0.0
+    length = 0.0
+    tour_len = len(tour_nodes)
+    for i, a in enumerate(tour_nodes):
+        b = tour_nodes[(i + 1) % tour_len]
+        length += D[a, b]
+    return float(length)
+
+
+def _calculate_gap(heuristic_len: float, opt_len: float | None) -> float | None:
+    """Calculates the percentage gap, handling division by zero."""
+    if opt_len is None:
+        return None
+    if opt_len > FLOAT_COMPARISON_TOLERANCE * 10:
+        gap = 100.0 * (heuristic_len - opt_len) / opt_len
+        return max(0.0, gap)
+    if math.isclose(opt_len, 0.0):
+        return 0.0 if math.isclose(heuristic_len, 0.0) else float('inf')
+    return None  # Gap is undefined for very small, non-zero optimal lengths
+
+
 def process_single_instance(
         tsp_file_path_str: str, opt_tour_file_path_str: str
 ) -> Dict[str, Any]:
@@ -57,15 +81,9 @@ def process_single_instance(
 
         opt_tour_nodes = read_opt_tour(opt_tour_file_path_str)
         results['opt_tour'] = opt_tour_nodes
-        opt_len: float | None = None
+        opt_len = _calculate_tour_length(opt_tour_nodes, D) if opt_tour_nodes else None
 
-        if opt_tour_nodes:  # If an optimal tour was successfully read
-            current_opt_len = 0.0
-            tour_len = len(opt_tour_nodes)
-            for i, a in enumerate(opt_tour_nodes):
-                b = opt_tour_nodes[(i + 1) % tour_len]
-                current_opt_len += D[a, b]
-            opt_len = current_opt_len
+        if opt_len is not None:
             results['opt_len'] = opt_len
             print(f"  Optimal length: {opt_len:.2f}")
         else:
@@ -81,14 +99,8 @@ def process_single_instance(
         results['heu_tour'], results['heu_len'] = heuristic_tour, heuristic_len
         results['time'] = elapsed_time
 
-        # Calculate percentage gap if optimal length is known and positive
-        if opt_len is not None:
-            if opt_len > FLOAT_COMPARISON_TOLERANCE * 10:  # Avoid division by zero/small
-                gap_percentage = 100.0 * (heuristic_len - opt_len) / opt_len
-                results['gap'] = max(0.0, gap_percentage)  # Gap cannot be negative
-            elif math.isclose(opt_len, 0.0):  # Optimal is zero
-                results['gap'] = 0.0 if math.isclose(heuristic_len, 0.0) else float('inf')
-        # If opt_len is None, results['gap'] remains None
+        # Calculate percentage gap if optimal length is known
+        results['gap'] = _calculate_gap(heuristic_len, opt_len)
 
         gap_str = f"Gap: {results['gap']:.2f}%  " if results['gap'] is not None else ""
         print(f"  Heuristic length: {heuristic_len:.2f}  {gap_str}Time: {elapsed_time:.2f}s")

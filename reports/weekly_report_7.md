@@ -6,7 +6,7 @@ Päivitin määrittelydokumentin vastaamaan lopullista toteutusta. Korjasin mä�
 
 ## 2. Miten ohjelma on edistynyt?
 
-Osa funktioista tai metodeista on pitkiä ja niitä voisi jakaa pienempiin osiin, kuten esimerkiksi `step` ja `alternate_step`. Päätin kuitenkin säilyttää 1:1-vastaavuuden alkuperäiseen TSP-kirjan pseudokoodiin ja siinä käytettyyn koodin rakenteeseen. Toteutuksen rivimäärä on kasvanut suhteessa alkuperäiseen pseudokoodiin, kun olen lisännyt koodiin esimerkiksi pisimmän sallitun suoritusajan (`deadline`-parametri) vaatimat tarkistukset. 
+Osa funktioista tai metodeista on pitkiä ja niitä voisi jakaa pienempiin osiin, kuten esimerkiksi `step` ja `alternate_step`. Refaktoroin liian pitkät funktiot käyttämään pienempiä apufunktioita. Pidin huolta, että koodin suorituskyky ei kärsinyt refaktoroinnista.  
 
 ## 3. Mitä opin tällä viikolla / tänään?
 

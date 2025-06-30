@@ -56,7 +56,7 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 **Aikavaativuus (arviot):**
 
 *   **`build_distance_matrix`**: $O(n^2)$, missä n on solmujen määrä, koska kaikki solmuparien väliset etäisyydet lasketaan.
-*   **`delaunay_neighbors`**: SciPy:n Delaunay-triangulaatio on tyypillisesti $O(n \log n)$ 2D-tapauksessa.
+*   **`delaunay_neighbors`**: SciPy:n Delaunay-triangulaatio on tyypillisesti $O(n \cdot \log \cdot n)$ 2D-tapauksessa.
 *   **`Tour`-luokan operaatiot:**
     *   `next`, `prev`: $O(1)$ `pos`-taulukon ansiosta.
     *   `flip`: $O(k)$, missä k on käännettävän segmentin pituus (pahimmillaan $O(n)$ ).
@@ -71,7 +71,7 @@ Lin-Kernighan-heuristiikan tarkkaa teoreettista aika- ja tilavaativuutta on vaik
 
 *   **`coords`**: $O(n)$ koordinaateille.
 *   **`D` (etäisyysmatriisi)**: $O(n^2)$. Tämä on usein dominoiva tekijä.
-*   **`neigh` (naapurilistat)**: $O(n \times k_{avg})$, missä kavg on keskimääräinen Delaunay-naapureiden määrä. Pahimmillaan $O(n^2)$, mutta käytännössä paljon vähemmän (lähellä $O(n)$ tasomaisille graafeille).
+*   **`neigh` (naapurilistat)**: $O(n \cdot k_{avg})$, missä kavg on keskimääräinen Delaunay-naapureiden määrä. Pahimmillaan $O(n^2)$, mutta käytännössä paljon vähemmän (lähellä $O(n)$ tasomaisille graafeille).
 *   **`Tour`-olio**: `order`- ja `pos`-taulukot vaativat $O(n)$ tilaa.
 *   **Rekursiopino (`step`)**: Syvyys enintään `MAX_LEVEL`.
 *   **Kokonais_tilavaativuus**: Pääasiassa $O(n^2)$ etäisyysmatriisin vuoksi.

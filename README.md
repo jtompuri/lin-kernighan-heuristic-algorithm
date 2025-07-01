@@ -1,10 +1,10 @@
 # Lin-Kernighan Heuristic for the Traveling Salesperson Problem (TSP)
 
 The Python module `lin_kernighan_tsp_solver` implements the Lin-Kernighan (LK) heuristic, a
-powerful local search algorithm for finding high-quality approximate solutions to the TSP.
-The implementation is based on the descriptions and algorithms presented in _The Traveling
-Salesman Problem: A Computational Study_ by Applegate, Bixby, Chvatál & Cook [^1] and
-"An Effective Heuristic Algorithm for the Traveling-Salesman Problem" by Lin & Kernighan [^2].
+powerful local search algorithm for finding high-quality approximate solutions to the traveling 
+salesperson problem. The implementation is based on the descriptions and algorithms presented in 
+_The Traveling Salesman Problem: A Computational Study_ by Applegate, Bixby, Chvatál & Cook [^1] 
+and "An Effective Heuristic Algorithm for the Traveling-Salesman Problem" by Lin & Kernighan [^2].
 
 The module processes TSP instances from the TSPLIB format. The module supports only fully
 connected networks with Euclidean 2D geometry. It computes heuristic solutions

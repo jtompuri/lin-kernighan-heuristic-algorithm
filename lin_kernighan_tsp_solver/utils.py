@@ -3,14 +3,11 @@ Utility functions for the Lin-Kernighan TSP solver.
 
 This module provides functions to display a summary table of results
 and to plot tours for all processed TSP instances.
-
-Functions:
-    display_summary_table(results_data): Prints a formatted summary table of processing results.
-    plot_all_tours(results_data): Plots optimal and heuristic tours for processed instances.
 """
 
 import math
 from typing import Any
+from dataclasses import fields
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
@@ -25,11 +22,13 @@ def display_summary_table(results_data: list[dict[str, Any]]) -> None:
         results_data (list[dict[str, Any]]): List of result dictionaries from instances.
     """
     print("\nConfiguration parameters:")
-    for key, value in config.LK_CONFIG.items():
+    # Fix: Use dataclass fields instead of .items()
+    for field in fields(config.LK_CONFIG):
+        value = getattr(config.LK_CONFIG, field.name)
         if isinstance(value, float):
-            print(f"  {key:<11s} = {value:.2f}")
+            print(f"  {field.name:<11s} = {value:.2f}")
         else:
-            print(f"  {key:<11s} = {value}")
+            print(f"  {field.name:<11s} = {value}")
     print("")
 
     header = f"{'Instance':<10s} {'OptLen':>8s} {'HeuLen':>8s} " \
@@ -99,19 +98,25 @@ def plot_all_tours(results_data: list[dict[str, Any]]) -> None:
         return
 
     # Limit number of plots
-    results_to_plot_limited = (valid_results_to_plot[:config.MAX_SUBPLOTS_IN_PLOT] if num_valid_results > config.MAX_SUBPLOTS_IN_PLOT else valid_results_to_plot)
-    if num_valid_results > config.MAX_SUBPLOTS_IN_PLOT:
-        print(f"Warning: Plotting first {config.MAX_SUBPLOTS_IN_PLOT} of {num_valid_results} valid results.")
+    max_plots = config.MAX_SUBPLOTS_IN_PLOT
+    results_to_plot_limited = (valid_results_to_plot[:max_plots]
+                               if num_valid_results > max_plots
+                               else valid_results_to_plot)
+
+    if num_valid_results > max_plots:
+        print(f"Warning: Plotting first {max_plots} of {num_valid_results} valid results.")
 
     num_to_plot_actual = len(results_to_plot_limited)
     if num_to_plot_actual == 0:
         print("No tours to plot.")
         return
 
+    # Calculate subplot layout
     cols = int(math.ceil(math.sqrt(num_to_plot_actual)))
     rows = int(math.ceil(num_to_plot_actual / cols))
 
-    fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 4 * rows), squeeze=False)  # Ensure axes is always 2D
+    # Create subplots with proper sizing
+    fig, axes = plt.subplots(rows, cols, figsize=(4 * cols, 4 * rows), squeeze=False)
     axes_list = axes.flatten()
     plotted_heuristic_legend, plotted_optimal_legend = False, False
 
@@ -120,11 +125,13 @@ def plot_all_tours(results_data: list[dict[str, Any]]) -> None:
         coords = r_item['coords']
 
         # Plot heuristic tour if available
-        if r_item['heu_tour']:
-            heu_plot_nodes = r_item['heu_tour'] + [r_item['heu_tour'][0]]  # Close the loop
+        if r_item.get('heu_tour'):  # Use .get() for safer access
+            heu_tour = r_item['heu_tour']
+            heu_plot_nodes = heu_tour + [heu_tour[0]]  # Close the loop
             ax.plot(coords[heu_plot_nodes, 0], coords[heu_plot_nodes, 1],
                     '-', label='Heuristic', zorder=1, color='C0')
             plotted_heuristic_legend = True
+
         # Plot optimal tour if available
         opt_tour_data = r_item.get('opt_tour')
         if opt_tour_data:  # Check if opt_tour_data is not None and not empty
@@ -133,16 +140,16 @@ def plot_all_tours(results_data: list[dict[str, Any]]) -> None:
                     ':', label='Optimal', zorder=2, color='C1')
             plotted_optimal_legend = True
 
-            title = f"{r_item['name']}"
-            # Safely get gap, opt_len, heu_len for the title
-            gap_val = r_item.get('gap')
+        # Set title with gap information
+        title = f"{r_item['name']}"
+        gap_val = r_item.get('gap')
+        if gap_val is not None and gap_val != float('inf'):
+            title += f" gap={gap_val:.2f}%"
 
-            if gap_val is not None and gap_val != float('inf'):
-                title += f" gap={gap_val:.2f}%"
-            ax.set_title(title)
-            ax.set_xticks([])  # Hide ticks and labels
-            ax.set_yticks([])
-            ax.set_aspect('equal', adjustable='box')  # Square aspect ratio
+        ax.set_title(title)
+        ax.set_xticks([])  # Hide ticks and labels
+        ax.set_yticks([])
+        ax.set_aspect('equal', adjustable='box')  # Square aspect ratio
 
     # Turn off unused subplots
     for i in range(num_to_plot_actual, len(axes_list)):
@@ -154,10 +161,12 @@ def plot_all_tours(results_data: list[dict[str, Any]]) -> None:
         legend_elements.append(Line2D([0], [0], color='C0', ls='-', label='Heuristic'))
     if plotted_optimal_legend:
         legend_elements.append(Line2D([0], [0], color='C1', ls=':', label='Optimal'))
+
     if legend_elements:
-        fig.legend(handles=legend_elements, loc='upper center', ncol=len(legend_elements), bbox_to_anchor=(0.5, 1.0))
+        fig.legend(handles=legend_elements, loc='upper center',
+                   ncol=len(legend_elements), bbox_to_anchor=(0.5, 1.0))
         # Adjust top margin if legend is present
         fig.subplots_adjust(top=(0.95 if num_to_plot_actual > cols else 0.90))
 
-    plt.tight_layout(rect=(0, 0, 1, 0.96 if legend_elements else 1.0))  # Adjust for legend
+    plt.tight_layout(rect=(0, 0, 1, 0.96 if legend_elements else 1.0))
     plt.show()

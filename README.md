@@ -68,10 +68,10 @@ python -m lin_kernighan_tsp_solver --sequential
 python -m lin_kernighan_tsp_solver --workers 4
 
 # Set time limit per instance (in seconds)
-python -m lin_kernighan_tsp_solver --time-limit 60.0
+python -m lin_kernighan_tsp_solver --time-limit 20.0
 
 # Combined options
-python -m lin_kernighan_tsp_solver --sequential --time-limit 30.0
+python -m lin_kernighan_tsp_solver --sequential --time-limit 20.0
 
 # Get help on available options
 python -m lin_kernighan_tsp_solver --help

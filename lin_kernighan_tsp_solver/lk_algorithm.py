@@ -7,7 +7,6 @@ and utilities for distance and neighbor calculations.
 
 import time
 import math
-import warnings
 from itertools import combinations
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -15,29 +14,14 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.spatial import Delaunay
 
-from .config import (
-    FLOAT_COMPARISON_TOLERANCE,
-    LK_CONFIG,
-    DOUBLE_BRIDGE_MIN_SIZE,
-    DOUBLE_BRIDGE_CUT_POINTS,
-    OPTIMALITY_REL_TOLERANCE,
-    OPTIMALITY_ABS_TOLERANCE,
-    MIN_DELAUNAY_POINTS,
-    EMPTY_TOUR_SIZE,
-    SINGLE_NODE_TOUR_SIZE,
-    NODE_POSITION_BUFFER,
-    RANDOM_CHOICE_START_INDEX,
-    AXIS_2D,
-    PAIR_COMBINATION_SIZE,
-    EMPTY_MATRIX_SIZE,
-    SINGLE_POINT_DISTANCE,
-    DUPLICATE_POINTS_THRESHOLD
-)
+from .config import FLOAT_COMPARISON_TOLERANCE, LK_CONFIG
 
 
 @dataclass
 class SearchContext:
     """Holds the static data and search parameters for an LK search pass."""
+    __slots__ = ('D', 'neigh', 'start_cost', 'best_cost', 'deadline')
+
     D: np.ndarray
     neigh: list[list[int]]
     start_cost: float
@@ -55,7 +39,9 @@ class Tour:
         order (np.ndarray): Vertex indices in tour order.
         pos (np.ndarray): Mapping vertex index to its position in `order`.
         cost (float | None): Total cost (length) of the tour.
+        n_minus_1 (int): Cached value of n-1 for fast modulo operations.
     """
+    __slots__ = ('n', 'order', 'pos', 'cost', 'n_minus_1')
 
     def __init__(self, order: Iterable[int],
                  D: np.ndarray | None = None) -> None:
@@ -68,17 +54,18 @@ class Tour:
         """
         order_list = list(order)  # Convert iterable to list
         self.n: int = len(order_list)
+        self.n_minus_1: int = self.n - 1  # Cache for fast modulo operations
 
-        if self.n == EMPTY_TOUR_SIZE:  # Changed from 0
+        if self.n == 0:
             # Handle empty tour initialization
             self.order: np.ndarray = np.array([], dtype=np.int32)
             self.pos: np.ndarray = np.array([], dtype=np.int32)
-            self.cost: float | None = SINGLE_POINT_DISTANCE  # Changed from 0.0
+            self.cost: float | None = 0.0
         else:
             self.order: np.ndarray = np.array(order_list, dtype=np.int32)
             # Ensure self.pos is large enough for all actual node labels.
             max_node_label = np.max(self.order)
-            self.pos: np.ndarray = np.empty(max_node_label + NODE_POSITION_BUFFER,  # Changed from + 1
+            self.pos: np.ndarray = np.empty(max_node_label + 1,
                                             dtype=np.int32)
             for i, v_node in enumerate(self.order):
                 self.pos[v_node] = i
@@ -88,20 +75,23 @@ class Tour:
                 self.init_cost(D)
 
     def init_cost(self, D: np.ndarray) -> None:
-        """Calculates and stores the tour's total cost using distance matrix D.
-
-        Args:
-            D (np.ndarray): Distance matrix (D[i, j] = distance between i and j).
-        """
-        if self.n == EMPTY_TOUR_SIZE:  # Changed from 0
-            self.cost = SINGLE_POINT_DISTANCE  # Changed from 0.0
+        """Calculates and stores the tour's total cost using distance matrix D."""
+        if self.n == 0:
+            self.cost = 0.0
             return
-        current_total_cost = sum(
-            # Calculate cost for each segment in the tour
-            float(D[self.order[i], self.order[(i + 1) % self.n]])
-            for i in range(self.n)
-        )
-        self.cost = current_total_cost
+
+        # Use vectorized operations for better performance
+        if self.n > 10:  # Threshold for vectorization benefit
+            indices = np.arange(self.n)
+            current_nodes = self.order[indices]
+            next_nodes = self.order[(indices + 1) % self.n]
+            self.cost = float(np.sum(D[current_nodes, next_nodes]))
+        else:
+            # Original loop for small tours
+            self.cost = sum(
+                float(D[self.order[i], self.order[(i + 1) % self.n]])
+                for i in range(self.n)
+            )
 
     def next(self, v: int) -> int:
         """Returns the vertex immediately following v in the tour.
@@ -111,10 +101,16 @@ class Tour:
 
         Returns:
             int: Next vertex in the tour.
+
+        Raises:
+            IndexError: If the tour is empty.
         """
-        if self.n == EMPTY_TOUR_SIZE:  # Changed from 0
+        if self.n == 0:
             raise IndexError("Cannot get next node from an empty tour.")
-        return int(self.order[(self.pos[v] + 1) % self.n])
+
+        # Fast modulo replacement: avoid expensive modulo operation
+        idx = self.pos[v] + 1
+        return int(self.order[idx if idx < self.n else 0])
 
     def prev(self, v: int) -> int:
         """Returns the vertex immediately preceding v in the tour.
@@ -124,10 +120,16 @@ class Tour:
 
         Returns:
             int: Previous vertex in the tour.
+
+        Raises:
+            IndexError: If the tour is empty.
         """
-        if self.n == EMPTY_TOUR_SIZE:  # Changed from 0
+        if self.n == 0:
             raise IndexError("Cannot get previous node from an empty tour.")
-        return int(self.order[(self.pos[v] - 1 + self.n) % self.n])
+
+        # Fast modulo replacement: avoid expensive modulo operation
+        idx = self.pos[v] - 1
+        return int(self.order[idx if idx >= 0 else self.n_minus_1])
 
     def sequence(self, node_a: int, node_b: int, node_c: int) -> bool:
         """Checks if node_b is on the path from node_a to node_c (inclusive).
@@ -140,9 +142,9 @@ class Tour:
         Returns:
             bool: True if node_b is on the segment [node_a, ..., node_c].
         """
-        if self.n == EMPTY_TOUR_SIZE:  # Changed from 0
+        if self.n == 0:
             return False
-        # Get positions (indices in self.order)
+        # Get positions (indices in self.order) - these are direct array lookups
         idx_a, idx_b, idx_c = self.pos[node_a], self.pos[node_b], self.pos[node_c]
 
         if idx_a <= idx_c:  # Segment does not wrap around
@@ -164,21 +166,23 @@ class Tour:
             return
 
         # Determine the number of elements in the segment to be flipped.
-        # This handles both non-wrapping (idx_a <= idx_b) and wrapping (idx_a > idx_b) segments.
         if idx_a <= idx_b:
             segment_len = idx_b - idx_a + 1
         else:  # Segment wraps around the end of the tour array
             segment_len = (self.n - idx_a) + (idx_b + 1)
 
         # Perform in-place reversal by swapping pairs of nodes.
-        # We iterate for half the length of the segment.
+        # Cache n for fast modulo replacement
+        n = self.n
+
         for i in range(segment_len // 2):
-            # Calculate current left and right indices in self.order array
-            # The left index starts at idx_a and moves forward along the segment.
-            # The right index starts at idx_b and moves backward along the segment.
-            # Modulo self.n handles the circular nature of the tour array.
-            current_left_order_idx = (idx_a + i) % self.n
-            current_right_order_idx = (idx_b - i + self.n) % self.n  # Ensure positive before modulo
+            # Fast modulo replacement for left index
+            left_idx = idx_a + i
+            current_left_order_idx = left_idx if left_idx < n else left_idx - n
+
+            # Fast modulo replacement for right index
+            right_idx = idx_b - i
+            current_right_order_idx = right_idx if right_idx >= 0 else right_idx + n
 
             # Swap the nodes at these positions in self.order
             node_at_left = self.order[current_left_order_idx]
@@ -192,28 +196,19 @@ class Tour:
             self.pos[node_at_left] = current_right_order_idx
 
     def get_tour(self) -> list[int]:
-        """Returns tour as a list, normalized to start with node 0 if present.
-
-        Returns:
-            list[int]: List of vertex indices. Empty if tour is empty.
-        """
-        if self.n == EMPTY_TOUR_SIZE:  # Changed from 0
+        """Returns tour as a list, normalized to start with node 0 if present."""
+        if self.n == 0:
             return []
 
-        # Check if node 0 is in the tour. self.pos is guaranteed to be large
-        # enough for all actual node labels due to initialization with max_node_label.
-        if EMPTY_TOUR_SIZE <= self.pos.shape[0] - 1:  # Changed from 0 <= self.pos.shape[0] - 1
-            idx_of_0_in_order = self.pos[0]
-            if (EMPTY_TOUR_SIZE <= idx_of_0_in_order < self.n and self.order[idx_of_0_in_order] == EMPTY_TOUR_SIZE):  # Changed from 0
-                # Node 0 is in the tour, normalize to start with it.
+        # Check if node 0 is in the tour
+        if 0 < self.pos.shape[0]:  # Check bounds first
+            if 0 <= self.pos[0] < self.n and self.order[self.pos[0]] == 0:
                 position_of_vertex_0 = self.pos[0]
                 return list(np.roll(self.order, -position_of_vertex_0))
 
-        # Node 0 is not in the tour, return the order as is.
         return self.order.tolist()
 
-    def flip_and_update_cost(self, node_a: int, node_b: int,
-                             D: np.ndarray) -> float:
+    def flip_and_update_cost(self, node_a: int, node_b: int, D: np.ndarray) -> float:
         """Flips segment [node_a,...,node_b], updates cost, and returns cost change.
 
         Args:
@@ -224,11 +219,11 @@ class Tour:
         Returns:
             float: Change in tour cost (delta_cost). Positive if cost increased.
         """
-        if self.n == EMPTY_TOUR_SIZE:  # Changed from 0
-            return SINGLE_POINT_DISTANCE  # Changed from 0.0
+        if self.n == 0:  # Should not occur with valid tours
+            return 0.0
 
         if node_a == node_b:  # No change if segment is a single node
-            delta_cost = SINGLE_POINT_DISTANCE  # Changed from 0.0
+            delta_cost = 0.0
         else:
             pos_a = self.pos[node_a]
             pos_b = self.pos[node_b]
@@ -239,19 +234,19 @@ class Tour:
 
             # Handle case where the "segment" is the entire tour (flip is identity)
             if prev_node_of_a == node_b and next_node_of_b == node_a:
-                delta_cost = SINGLE_POINT_DISTANCE  # Changed from 0.0
+                delta_cost = 0.0
             else:
                 # Cost change for a 2-opt move
                 term_removed = (D[prev_node_of_a, node_a] + D[node_b, next_node_of_b])
                 term_added = (D[prev_node_of_a, node_b] + D[node_a, next_node_of_b])
                 delta_cost = term_added - term_removed
 
-        self.flip(node_a, node_b)  # Perform the segment reversal
+        self.flip(node_a, node_b)
 
-        if self.cost is None:  # Should be initialized
-            self.init_cost(D)  # Fallback: recompute full cost
-        else:
-            self.cost += delta_cost
+        if self.cost is None:
+            self.init_cost(D)
+            return 0.0  # Return 0 since we can't calculate delta without initial cost
+        self.cost += delta_cost
         return delta_cost
 
 
@@ -265,20 +260,13 @@ def build_distance_matrix(coords: np.ndarray) -> np.ndarray:
         np.ndarray: Array of shape (n, n) with distances D[i,j].
     """
     # Handle empty or single point cases
-    if coords.shape[0] == EMPTY_TOUR_SIZE:  # Changed from 0
-        return np.empty(EMPTY_MATRIX_SIZE, dtype=float)  # Changed from (0, 0)
-    if coords.shape[0] == SINGLE_NODE_TOUR_SIZE:  # Changed from 1
-        return np.array([[SINGLE_POINT_DISTANCE]], dtype=float)  # Changed from 0.0
+    if coords.shape[0] == 0:
+        return np.empty((0, 0), dtype=float)
+    if coords.shape[0] == 1:
+        return np.array([[0.0]], dtype=float)
 
     # Efficiently compute pairwise distances using broadcasting and linalg.norm
-    distances = np.linalg.norm(coords[:, None] - coords[None, :], axis=AXIS_2D)  # Changed from axis=2
-
-    # Optional: Add warning for very close points
-    min_nonzero_dist = np.min(distances[distances > 0])
-    if min_nonzero_dist < DUPLICATE_POINTS_THRESHOLD:  # Changed from 1e-10
-        warnings.warn("Very close or duplicate points detected in coordinates")
-
-    return distances
+    return np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
 
 
 def delaunay_neighbors(coords: np.ndarray) -> list[list[int]]:
@@ -291,7 +279,7 @@ def delaunay_neighbors(coords: np.ndarray) -> list[list[int]]:
         list[list[int]]: List where list[i] contains sorted neighbors of vertex i.
     """
     num_vertices = len(coords)
-    if num_vertices < MIN_DELAUNAY_POINTS:
+    if num_vertices < 3:
         # Delaunay requires >= 3 points. For fewer, all nodes are neighbors.
         return [[j for j in range(num_vertices) if i != j]
                 for i in range(num_vertices)]
@@ -303,7 +291,7 @@ def delaunay_neighbors(coords: np.ndarray) -> list[list[int]]:
     }
     # Populate neighbor sets from Delaunay simplices
     for simplex_indices in triangulation.simplices:
-        for u_vertex, v_vertex in combinations(simplex_indices, PAIR_COMBINATION_SIZE):  # Changed from 2
+        for u_vertex, v_vertex in combinations(simplex_indices, 2):  # type: ignore[arg-type]
             neighbor_sets[u_vertex].add(v_vertex)
             neighbor_sets[v_vertex].add(u_vertex)
     # Convert sets to sorted lists
@@ -327,16 +315,22 @@ def _generate_standard_flip_candidates(
             Each tuple contains ('flip', y1_cand, t3_node, total_gain).
     """
     candidates = []
-    for y1_cand in ctx.neigh[s1]:
-        if time.time() >= ctx.deadline or y1_cand in (base, s1):
+
+    # Cache frequently accessed attributes in local variables
+    D = ctx.D
+    neigh = ctx.neigh
+    tour_prev = tour.prev  # Cache method reference
+
+    for y1_cand in neigh[s1]:
+        if y1_cand in (base, s1):
             continue
 
-        gain_G1 = ctx.D[base, s1] - ctx.D[s1, y1_cand]
+        gain_G1 = D[base, s1] - D[s1, y1_cand]
         if gain_G1 <= FLOAT_COMPARISON_TOLERANCE:
             continue
 
-        t3_node = tour.prev(y1_cand)
-        gain_G2 = ctx.D[t3_node, y1_cand] - ctx.D[t3_node, base]
+        t3_node = tour_prev(y1_cand)  # Use cached method reference
+        gain_G2 = D[t3_node, y1_cand] - D[t3_node, base]
         total_gain = gain_G1 + gain_G2
 
         if delta + gain_G1 > FLOAT_COMPARISON_TOLERANCE:
@@ -361,14 +355,23 @@ def _generate_mak_morton_flip_candidates(
             Each tuple contains ('makmorton', candidate_a_mm, None, gain).
     """
     candidates = []
-    for candidate_a_mm in ctx.neigh[base]:
-        if time.time() >= ctx.deadline or candidate_a_mm in (s1, tour.prev(base), base):
+
+    # Cache frequently accessed attributes
+    D = ctx.D
+    neigh = ctx.neigh
+    tour_prev = tour.prev
+    tour_next = tour.next
+
+    for candidate_a_mm in neigh[base]:
+        if candidate_a_mm in (s1, tour_prev(base), base):
             continue
 
+        next_candidate = tour_next(candidate_a_mm)
         gain_mak_morton = (
-            (ctx.D[base, s1] - ctx.D[base, candidate_a_mm]) + (ctx.D[candidate_a_mm, tour.next(candidate_a_mm)] - ctx.D[tour.next(candidate_a_mm), s1])
+            (D[base, s1] - D[base, candidate_a_mm]) +
+            (D[candidate_a_mm, next_candidate] - D[next_candidate, s1])
         )
-        if delta + (ctx.D[base, s1] - ctx.D[base, candidate_a_mm]) > FLOAT_COMPARISON_TOLERANCE:
+        if delta + (D[base, s1] - D[base, candidate_a_mm]) > FLOAT_COMPARISON_TOLERANCE:
             candidates.append(('makmorton', candidate_a_mm, None, gain_mak_morton))
     return candidates
 
@@ -390,64 +393,78 @@ def step(level: int, delta: float, base: int, tour: Tour,
 
     Returns:
         tuple[bool, list[tuple[int, int]] | None]: A tuple containing:
-            - True if a tour better than the global best cost is found.
-            - The improving flip sequence, or None.
-    """
-    if time.time() >= ctx.deadline or level > LK_CONFIG.max_level:  # Changed from LK_CONFIG["MAX_LEVEL"]
+            - True if a tour better than the global best cost is found, False otherwise.
+            - The improving flip sequence, or None if no improvement found.
+    """    # Check deadline once per recursion level
+    current_time = time.time()
+    if current_time >= ctx.deadline or level > LK_CONFIG["MAX_LEVEL"]:
         return False, None
 
-    breadth_limit = (LK_CONFIG.breadth[min(level - 1, len(LK_CONFIG.breadth) - 1)]  # Changed from LK_CONFIG["BREADTH"]
-                     if LK_CONFIG.breadth else 1)
-    s1 = tour.next(base)  # s1 is t2 in common LK notation (node after base)
+    # Cache frequently accessed values
+    max_level = LK_CONFIG["MAX_LEVEL"]
+    breadth_config = LK_CONFIG["BREADTH"]
+    start_cost = ctx.start_cost
+    best_cost = ctx.best_cost
+
+    breadth_limit = (breadth_config[min(level - 1, len(breadth_config) - 1)]
+                     if breadth_config else 1)
+
+    s1 = tour.next(base)  # s1 is t2 in common LK notation
 
     # Generate candidates from both standard and Mak-Morton moves
     candidates: list[tuple[str, int, int | None, float]] = _generate_standard_flip_candidates(base, s1, tour, ctx, delta)
     candidates.extend(_generate_mak_morton_flip_candidates(base, s1, tour, ctx, delta))
 
     candidates.sort(key=lambda x: -x[3])  # Sort by gain, descending
-    count = EMPTY_TOUR_SIZE  # Changed from 0
+    count = 0
+
+    # Check time periodically, not every iteration
+    time_check_interval = 32
+    tour_flip = tour.flip  # Cache method reference
+    tour_next = tour.next  # Cache method reference
+
     for move_type, node1_param, node2_param, gain_val in candidates:
-        if time.time() >= ctx.deadline or count >= breadth_limit:
+        if count % time_check_interval == 0:
+            current_time = time.time()
+            if current_time >= ctx.deadline:
+                break
+
+        if count >= breadth_limit:
             break
+
         new_accumulated_gain = delta + gain_val
-        current_flips_this_step = []  # Flips made in this specific call/level
+        current_flips_this_step = []
 
         if move_type == 'flip':
-            # node1_param is y1_cand, node2_param is t3_node
-            # We assert here because we know 'flip' moves always have an integer node2_param.
             assert node2_param is not None, "Standard flip move must have a valid t3_node."
-            # Flip segment between s1 (t2) and t3_node (prev(y1_cand))
             flip_start_node, flip_end_node = s1, node2_param
-            tour.flip(flip_start_node, flip_end_node)
+            tour_flip(flip_start_node, flip_end_node)
             current_flips_this_step.append((flip_start_node, flip_end_node))
-            next_base_for_recursion = base  # For standard flips, base remains t1
+            next_base_for_recursion = base
         else:  # 'makmorton'
-            # node1_param is candidate_a_mm
-            # Flip segment between next(candidate_a_mm) and base (t1)
-            flip_start_node = tour.next(node1_param)
+            flip_start_node = tour_next(node1_param)
             flip_end_node = base
-            tour.flip(flip_start_node, flip_end_node)
+            tour_flip(flip_start_node, flip_end_node)
             current_flips_this_step.append((flip_start_node, flip_end_node))
-            # New base for Mak-Morton is next(candidate_a_mm) after flip
-            next_base_for_recursion = tour.next(node1_param)
+            next_base_for_recursion = tour_next(node1_param)
 
-        flip_seq.extend(current_flips_this_step)  # Add current flip(s) to sequence
+        flip_seq.extend(current_flips_this_step)
 
-        if ctx.start_cost - new_accumulated_gain < \
-           ctx.best_cost - FLOAT_COMPARISON_TOLERANCE:  # Check for global improvement
+        if start_cost - new_accumulated_gain < best_cost - FLOAT_COMPARISON_TOLERANCE:
             return True, flip_seq.copy()
 
-        if level < LK_CONFIG.max_level:  # Changed from LK_CONFIG["MAX_LEVEL"]
+        if level < max_level:
             improved, final_seq = step(
                 level + 1, new_accumulated_gain, next_base_for_recursion,
                 tour, ctx, flip_seq
             )
             if improved:
                 return True, final_seq
+
         # Backtrack: undo flips made in this step, in reverse order
         for f_start, f_end in reversed(current_flips_this_step):
-            tour.flip(f_end, f_start)  # Re-flip to revert
-            flip_seq.pop()  # Remove from overall sequence
+            tour_flip(f_end, f_start)  # Re-flip to revert
+            flip_seq.pop()
         count += 1
     return False, None
 
@@ -553,8 +570,8 @@ def alternate_step(
 
     Returns:
         tuple[bool, list[tuple[int, int]] | None]: A tuple containing:
-            - True if a potentially improving sequence is identified.
-            - The flip sequence, or None.
+            - True if a potentially improving sequence is identified, False otherwise.
+            - The flip sequence, or None if no sequence found.
     """
     if time.time() >= deadline:
         return False, None
@@ -564,7 +581,7 @@ def alternate_step(
 
     y1_candidates = _find_y1_candidates(t1, t2, D, neigh, tour)
 
-    for _, chosen_y1, _ in y1_candidates[:LK_CONFIG.breadth_a]:  # Changed from LK_CONFIG["BREADTH_A"]
+    for _, chosen_y1, _ in y1_candidates[:LK_CONFIG["BREADTH_A"]]:
         if time.time() >= deadline:
             return False, None
         t4 = tour.next(chosen_y1)
@@ -572,7 +589,7 @@ def alternate_step(
         # --- Stage 2: Find candidate y2 ---
         candidates_for_y2 = _find_y2_candidates(t1, t2, chosen_y1, t4, D, neigh, tour)
 
-        for _, chosen_y2, chosen_t6 in candidates_for_y2[:LK_CONFIG.breadth_b]:  # Changed from LK_CONFIG["BREADTH_B"]
+        for _, chosen_y2, chosen_t6 in candidates_for_y2[:LK_CONFIG["BREADTH_B"]]:
             if time.time() >= deadline:
                 return False, None
             # Check for a specific 3-opt move (Type R in Applegate et al. Fig 15.4)
@@ -582,7 +599,7 @@ def alternate_step(
             # --- Stage 3: Find candidate y3 for a 5-opt move (Type Q in Applegate et al.) ---
             candidates_for_y3 = _find_y3_candidates(t1, t2, chosen_y1, t4, chosen_y2, chosen_t6, D, neigh, tour)
 
-            for _, chosen_y3, chosen_node_after_y3 in candidates_for_y3[:LK_CONFIG.breadth_d]:  # Changed from LK_CONFIG["BREADTH_D"]
+            for _, chosen_y3, chosen_node_after_y3 in candidates_for_y3[:LK_CONFIG["BREADTH_D"]]:
                 if time.time() >= deadline:
                     return False, None
                 # Identified a specific 5-opt move.
@@ -606,8 +623,9 @@ def lk_search(start_node_for_search: int, current_tour_obj: Tour,
 
     Returns:
         list[tuple[int, int]] | None: List of (start, end) flips if improvement
-        found, else None.
+            found, None otherwise.
     """
+
     if time.time() >= deadline:
         return None
 
@@ -665,7 +683,8 @@ def _apply_and_update_best_tour(
         D (np.ndarray): The distance matrix.
 
     Returns:
-        A tuple (Tour, float) if the new tour is an improvement, else None.
+        tuple[Tour, float] | None: A tuple containing the new Tour and its cost
+            if the new tour is an improvement, None otherwise.
     """
     candidate_tour = Tour(tour_order_before_lk, D)
     for x_flip, y_flip in improving_sequence:
@@ -695,9 +714,9 @@ def lin_kernighan(coords: np.ndarray, init: list[int], D: np.ndarray,
         deadline (float): Time limit.
 
     Returns:
-        A tuple containing:
-            - Tour: The best Tour object found.
-            - float: The cost of the best tour.
+        tuple[Tour, float]: A tuple containing:
+            - The best Tour object found.
+            - The cost of the best tour.
     """
     n = len(coords)
     best_tour = Tour(init, D)
@@ -739,15 +758,11 @@ def double_bridge(order: list[int]) -> list[int]:
         list[int]: New perturbed tour order. Returns original if n <= 4.
     """
     n = len(order)
-    if n <= DOUBLE_BRIDGE_MIN_SIZE:  # Perturbation is trivial or not possible for small tours
+    if n <= 4:  # Perturbation is trivial or not possible for small tours
         return list(order)
 
     # Choose 4 distinct random indices for cut points.
-    cut_points = sorted(np.random.choice(
-        range(RANDOM_CHOICE_START_INDEX, n),  # Changed from range(1, n)
-        DOUBLE_BRIDGE_CUT_POINTS,
-        replace=False
-    ))
+    cut_points = sorted(np.random.choice(range(1, n), 4, replace=False))
     p1, p2, p3, p4 = cut_points[0], cut_points[1], cut_points[2], cut_points[3]
 
     s0 = order[:p1]
@@ -777,7 +792,8 @@ def _perform_kick_and_lk_run(
         deadline (float): The time limit for the search.
 
     Returns:
-        A tuple (Tour, float) if an improved tour is found, else None.
+        tuple[Tour, float] | None: A tuple containing the improved Tour and its
+            cost if an improved tour is found, None otherwise.
     """
     kicked_order = double_bridge(current_best_tour.get_tour())
     candidate_tour, candidate_cost = lin_kernighan(
@@ -803,7 +819,7 @@ def _check_for_optimality(cost: float, optimal_len: float | None) -> bool:
     if optimal_len is None:
         return False
     # Use relative and absolute tolerance for floating-point comparison
-    return math.isclose(cost, optimal_len, rel_tol=OPTIMALITY_REL_TOLERANCE, abs_tol=OPTIMALITY_ABS_TOLERANCE)
+    return math.isclose(cost, optimal_len, rel_tol=1e-7, abs_tol=FLOAT_COMPARISON_TOLERANCE * 10)
 
 
 def chained_lin_kernighan(
@@ -830,7 +846,7 @@ def chained_lin_kernighan(
     """
     effective_time_limit = (time_limit_seconds
                             if time_limit_seconds is not None
-                            else LK_CONFIG.time_limit)  # Changed from LK_CONFIG["TIME_LIMIT"]
+                            else LK_CONFIG["TIME_LIMIT"])
     deadline = time.time() + effective_time_limit
 
     distance_matrix = build_distance_matrix(coords)
@@ -857,8 +873,8 @@ def chained_lin_kernighan(
 
     # Final cost consistency check before returning
     final_tour_order = best_tour.get_tour()
-    final_recomputed_cost = SINGLE_POINT_DISTANCE  # Changed from 0.0
-    if best_tour.n > EMPTY_TOUR_SIZE:  # Changed from 0
+    final_recomputed_cost = 0.0
+    if best_tour.n > 0:  # Ensure tour is not empty
         for i in range(best_tour.n):
             node1 = final_tour_order[i]
             node2 = final_tour_order[(i + 1) % best_tour.n]

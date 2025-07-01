@@ -230,7 +230,7 @@ def _process_sequential(
     for tsp_file_path_str, opt_tour_path_str in tsp_file_pairs:
         try:
             result_dict = process_single_instance(
-                tsp_file_path_str, opt_tour_path_str, time_limit=time_limit
+                tsp_file_path_str, opt_tour_path_str, time_limit=time_limit, verbose=True  # Enable verbose output
             )
             results.append(result_dict)
         except (IOError, ValueError, OSError, RuntimeError, MemoryError) as e:
@@ -259,9 +259,9 @@ def _process_parallel(
     results = []
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
-        # Submit all jobs with time_limit
+        # Submit all jobs with time_limit and verbose=False for parallel processing
         future_to_files = {
-            executor.submit(process_single_instance, tsp_file, opt_file, time_limit): (tsp_file, opt_file)
+            executor.submit(process_single_instance, tsp_file, opt_file, time_limit, False): (tsp_file, opt_file)
             for tsp_file, opt_file in tsp_file_pairs
         }
 
@@ -281,6 +281,7 @@ def _process_parallel(
             except (IOError, ValueError, OSError, RuntimeError, MemoryError) as e:
                 print(f"[{completed_count}/{total_count}] Error processing {base_name}: {e}")
                 results.append(_create_error_result(base_name))
+
     return results
 
 

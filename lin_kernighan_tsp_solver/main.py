@@ -13,6 +13,8 @@ import time
 import math
 from pathlib import Path
 from typing import Any
+import concurrent.futures
+from multiprocessing import cpu_count
 import numpy as np
 
 from .config import TSP_FOLDER_PATH, FLOAT_COMPARISON_TOLERANCE
@@ -25,7 +27,7 @@ from .utils import display_summary_table, plot_all_tours
 
 
 def _calculate_tour_length(tour_nodes: list[int], D: np.ndarray) -> float:
-    """Calculates the total length of a given tour.
+    """Calculates the total length of a given tour using vectorized operations.
 
     Args:
         tour_nodes (list[int]): A list of node indices representing the tour.
@@ -36,9 +38,21 @@ def _calculate_tour_length(tour_nodes: list[int], D: np.ndarray) -> float:
     """
     if not tour_nodes:
         return 0.0
-    length = 0.0
+
     tour_len = len(tour_nodes)
-    for i, a in enumerate(tour_nodes):
+    if tour_len == 1:
+        return 0.0
+
+    # Use vectorized operations for better performance on larger tours
+    if tour_len > 10:
+        tour_array = np.array(tour_nodes, dtype=np.int32)
+        next_nodes = np.roll(tour_array, -1)  # Shift by one position
+        return float(np.sum(D[tour_array, next_nodes]))
+
+    # Use loop for small tours where overhead isn't worth it
+    length = 0.0
+    for i in range(tour_len):
+        a = tour_nodes[i]
         b = tour_nodes[(i + 1) % tour_len]
         length += D[a, b]
     return float(length)
@@ -66,7 +80,10 @@ def _calculate_gap(heuristic_len: float, opt_len: float | None) -> float | None:
 
 
 def process_single_instance(
-        tsp_file_path_str: str, opt_tour_file_path_str: str
+        tsp_file_path_str: str,
+        opt_tour_file_path_str: str,
+        time_limit: float | None = None,
+        verbose: bool = True
 ) -> dict[str, Any]:
     """Processes a single TSP instance.
 
@@ -76,26 +93,33 @@ def process_single_instance(
     Args:
         tsp_file_path_str (str): The file path to the .tsp problem file.
         opt_tour_file_path_str (str): The file path to the .opt.tour solution file.
+        time_limit (float | None, optional): Time limit for the algorithm.
+            Defaults to None (uses algorithm default).
+        verbose (bool, optional): Whether to print progress messages.
+            Defaults to True.
 
     Returns:
         dict[str, Any]: A dictionary containing the results, including problem name,
             tour lengths, gap, and execution time.
     """
     problem_name = Path(tsp_file_path_str).stem
-    print(f"Processing {problem_name} (EUC_2D)...")
+    if verbose:
+        print(f"Processing {problem_name} (EUC_2D)...")
+
     # Initialize results dictionary
     results: dict[str, Any] = {
         'name': problem_name, 'coords': np.array([]), 'opt_tour': None,
         'heu_tour': [], 'opt_len': None, 'heu_len': float('inf'),
         'gap': None, 'time': 0.0, 'error': False,
-        'nodes': 0  # Initialize 'nodes' key
+        'nodes': 0
     }
+
     try:
         coords = read_tsp_file(tsp_file_path_str)
         results['coords'] = coords
-        if coords.size == 0:  # Check if read_tsp_file returned empty
+        if coords.size == 0:
             raise ValueError("No coordinates loaded from TSP file.")
-        results['nodes'] = coords.shape[0]  # Set the number of nodes
+        results['nodes'] = coords.shape[0]
         D = build_distance_matrix(coords)
 
         opt_tour_nodes = read_opt_tour(opt_tour_file_path_str)
@@ -104,15 +128,18 @@ def process_single_instance(
 
         if opt_len is not None:
             results['opt_len'] = opt_len
-            print(f"  Optimal length: {opt_len:.2f}")
-        else:
+            if verbose:
+                print(f"  Optimal length: {opt_len:.2f}")
+        elif verbose:
             print(f"  Optimal tour not available for {problem_name}.")
 
-        initial_tour = list(range(len(coords)))  # Simple initial tour: 0,1,2...
+        initial_tour = list(range(len(coords)))
         start_time = time.time()
 
         heuristic_tour, heuristic_len = chained_lin_kernighan(
-            coords, initial_tour, known_optimal_length=opt_len
+            coords, initial_tour,
+            known_optimal_length=opt_len,
+            time_limit_seconds=time_limit
         )
         elapsed_time = time.time() - start_time
         results['heu_tour'], results['heu_len'] = heuristic_tour, heuristic_len
@@ -121,48 +148,160 @@ def process_single_instance(
         # Calculate percentage gap if optimal length is known
         results['gap'] = _calculate_gap(heuristic_len, opt_len)
 
-        gap_str = f"Gap: {results['gap']:.2f}%  " if results['gap'] is not None else ""
-        print(f"  Heuristic length: {heuristic_len:.2f}  {gap_str}Time: {elapsed_time:.2f}s")
+        if verbose:
+            gap_str = f"Gap: {results['gap']:.2f}%  " if results['gap'] is not None else ""
+            print(f"  Heuristic length: {heuristic_len:.2f}  {gap_str}Time: {elapsed_time:.2f}s")
 
     except (IOError, ValueError) as e:
-        print(f"  Skipping {problem_name} due to error: {e}")
-        results['error'] = True  # Mark instance as errored
-        # Ensure essential keys exist for summary, even on error
+        if verbose:
+            print(f"  Skipping {problem_name} due to error: {e}")
+        results['error'] = True
         results['heu_len'] = float('inf')
-        results['time'] = results.get('time', 0.0)  # Keep time if partially run
+        results['time'] = results.get('time', 0.0)
+
     return results
 
 
-def main():
-    """Main function to process all TSP instances in the configured folder.
-
-    Finds all .tsp files in the target directory, processes each instance
-    sequentially, and then displays a summary table and plots all tours.
-    """
+def main(
+    use_parallel: bool = True,
+    max_workers: int | None = None,
+    time_limit: float | None = None
+):
+    """Main function with configurable options."""
     all_instance_results_list = []
+
     if not TSP_FOLDER_PATH.is_dir():
         print(f"Error: TSP folder not found at {TSP_FOLDER_PATH}")
+        return
+
+    # Collect all TSP file pairs
+    tsp_file_pairs = []
+    for tsp_file_path_obj in sorted(TSP_FOLDER_PATH.glob('*.tsp')):
+        base_name = tsp_file_path_obj.stem
+        opt_tour_path_obj = TSP_FOLDER_PATH / (base_name + '.opt.tour')
+        tsp_file_pairs.append((str(tsp_file_path_obj), str(opt_tour_path_obj)))
+
+    if not tsp_file_pairs:
+        print("No TSP files found in the specified directory.")
+        return
+
+    print(f"Found {len(tsp_file_pairs)} TSP instances.")
+
+    if use_parallel and len(tsp_file_pairs) > 1:
+        # Parallel processing
+        effective_workers = min(
+            max_workers or cpu_count(),
+            len(tsp_file_pairs)
+        )
+        print(f"Processing using {effective_workers} parallel workers...")
+
+        all_instance_results_list = _process_parallel(
+            tsp_file_pairs, effective_workers, time_limit  # Add time_limit here
+        )
     else:
-        # Iterate over .tsp files in the specified folder
-        for tsp_file_path_obj in sorted(TSP_FOLDER_PATH.glob('*.tsp')):
-            base_name = tsp_file_path_obj.stem
-            # Corresponding .opt.tour file path
-            opt_tour_path_obj = TSP_FOLDER_PATH / (base_name + '.opt.tour')
+        # Sequential processing (original behavior)
+        print("Processing sequentially...")
+        all_instance_results_list = _process_sequential(
+            tsp_file_pairs, time_limit  # Add time_limit here
+        )
 
-            try:
-                result_dict = process_single_instance(
-                    str(tsp_file_path_obj), str(opt_tour_path_obj)
-                )
-                all_instance_results_list.append(result_dict)
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                print(f"Critical error processing {base_name}: {e}")
-                # Append a basic error entry for summary purposes
-                all_instance_results_list.append({
-                    'name': base_name, 'coords': np.array([]),
-                    'opt_tour': None, 'heu_tour': [], 'opt_len': None,
-                    'heu_len': float('inf'), 'gap': None, 'time': 0.0,
-                    'error': True
-                })
+    # Sort results by name for consistent output
+    all_instance_results_list.sort(key=lambda x: x['name'])
 
+    # Display results
     display_summary_table(all_instance_results_list)
     plot_all_tours(all_instance_results_list)
+
+
+def _process_sequential(
+    tsp_file_pairs: list[tuple[str, str]],
+    time_limit: float | None = None
+) -> list[dict[str, Any]]:
+    """Process TSP instances sequentially (original behavior).
+
+    Args:
+        tsp_file_pairs (list[tuple[str, str]]): List of (tsp_file, opt_file) pairs.
+        time_limit (float | None, optional): Time limit per instance. Defaults to None.
+
+    Returns:
+        list[dict[str, Any]]: List of result dictionaries.
+    """
+    results = []
+    for tsp_file_path_str, opt_tour_path_str in tsp_file_pairs:
+        try:
+            result_dict = process_single_instance(
+                tsp_file_path_str, opt_tour_path_str, time_limit=time_limit
+            )
+            results.append(result_dict)
+        except (IOError, ValueError, OSError, RuntimeError, MemoryError) as e:
+            base_name = Path(tsp_file_path_str).stem
+            print(f"Critical error processing {base_name}: {e}")
+            # Append a basic error entry for summary purposes
+            results.append(_create_error_result(base_name))
+    return results
+
+
+def _process_parallel(
+    tsp_file_pairs: list[tuple[str, str]],
+    max_workers: int,
+    time_limit: float | None = None
+) -> list[dict[str, Any]]:
+    """Process TSP instances in parallel using ProcessPoolExecutor.
+
+    Args:
+        tsp_file_pairs (list[tuple[str, str]]): List of (tsp_file, opt_file) pairs.
+        max_workers (int): Maximum number of worker processes.
+        time_limit (float | None, optional): Time limit per instance. Defaults to None.
+
+    Returns:
+        list[dict[str, Any]]: List of result dictionaries.
+    """
+    results = []
+
+    with concurrent.futures.ProcessPoolExecutor(max_workers=max_workers) as executor:
+        # Submit all jobs with time_limit
+        future_to_files = {
+            executor.submit(process_single_instance, tsp_file, opt_file, time_limit): (tsp_file, opt_file)
+            for tsp_file, opt_file in tsp_file_pairs
+        }
+
+        # Collect results as they complete
+        completed_count = 0
+        total_count = len(future_to_files)
+
+        for future in concurrent.futures.as_completed(future_to_files):
+            tsp_file, opt_file = future_to_files[future]
+            base_name = Path(tsp_file).stem
+            completed_count += 1
+
+            try:
+                result_dict = future.result()
+                results.append(result_dict)
+                print(f"[{completed_count}/{total_count}] Completed: {result_dict['name']}")
+            except (IOError, ValueError, OSError, RuntimeError, MemoryError) as e:
+                print(f"[{completed_count}/{total_count}] Error processing {base_name}: {e}")
+                results.append(_create_error_result(base_name))
+    return results
+
+
+def _create_error_result(problem_name: str) -> dict[str, Any]:
+    """Creates a standardized error result dictionary.
+
+    Args:
+        problem_name (str): Name of the problem that failed.
+
+    Returns:
+        dict[str, Any]: Standardized error result dictionary.
+    """
+    return {
+        'name': problem_name,
+        'coords': np.array([]),
+        'opt_tour': None,
+        'heu_tour': [],
+        'opt_len': None,
+        'heu_len': float('inf'),
+        'gap': None,
+        'time': 0.0,
+        'error': True,
+        'nodes': 0
+    }

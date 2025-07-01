@@ -63,25 +63,25 @@ This project is expected to work with Python 3.7 or newer due to its use of mode
 Basic usage (default parallel processing):
 
 ```bash
-    python -m lin_kernighan_tsp_solver
+python -m lin_kernighan_tsp_solver
 ```
 
 Command line options:
 ```bash
-    # Sequential processing (one instance at a time)
-    python -m lin_kernighan_tsp_solver --sequential
+# Sequential processing (one instance at a time)
+python -m lin_kernighan_tsp_solver --sequential
 
-    # Parallel processing with specific number of workers
-    python -m lin_kernighan_tsp_solver --workers 4
+# Parallel processing with specific number of workers
+python -m lin_kernighan_tsp_solver --workers 4
 
-    # Set time limit per instance (in seconds)
-    python -m lin_kernighan_tsp_solver --time-limit 20.0
+# Set time limit per instance (in seconds)
+python -m lin_kernighan_tsp_solver --time-limit 20.0
 
-    # Combined options
-    python -m lin_kernighan_tsp_solver --sequential --time-limit 20.0
+# Combined options
+python -m lin_kernighan_tsp_solver --sequential --time-limit 20.0
 
-    # Get help on available options
-    python -m lin_kernighan_tsp_solver --help
+# Get help on available options
+python -m lin_kernighan_tsp_solver --help
 ```
 
 **Available command line options:**

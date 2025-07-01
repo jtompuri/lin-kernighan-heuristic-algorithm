@@ -368,8 +368,7 @@ def _generate_mak_morton_flip_candidates(
 
         next_candidate = tour_next(candidate_a_mm)
         gain_mak_morton = (
-            (D[base, s1] - D[base, candidate_a_mm]) +
-            (D[candidate_a_mm, next_candidate] - D[next_candidate, s1])
+            (D[base, s1] - D[base, candidate_a_mm]) + (D[candidate_a_mm, next_candidate] - D[next_candidate, s1])
         )
         if delta + (D[base, s1] - D[base, candidate_a_mm]) > FLOAT_COMPARISON_TOLERANCE:
             candidates.append(('makmorton', candidate_a_mm, None, gain_mak_morton))

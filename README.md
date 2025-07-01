@@ -3,11 +3,11 @@
 The Python module `lin_kernighan_tsp_solver` implements the Lin-Kernighan (LK) heuristic, a
 powerful local search algorithm for finding high-quality approximate solutions to the TSP.
 The implementation is based on the descriptions and algorithms presented in _The Traveling
-Salesman Problem: A Computational Study_ by Applegate, Bixby, Chvátal & Cook [^1] and
+Salesman Problem: A Computational Study_ by Applegate, Bixby, Chvatál & Cook [^1] and
 "An Effective Heuristic Algorithm for the Traveling-Salesman Problem" by Lin & Kernighan [^2].
 
 The module processes TSP instances from the TSPLIB format. The module supports only fully
-connected networks with Euclidian 2D geometry. It computes heuristic solutions
+connected networks with Euclidean 2D geometry. It computes heuristic solutions
 using a chained version of the LK algorithm. If a corresponding optimal tour file
 `.opt.tour` is found, the module compares the heuristic solution
 against the known optimal solution and calculates the percentage gap. If no optimal
@@ -67,20 +67,20 @@ python -m lin_kernighan_tsp_solver
 
 **Command line options:**
 ```bash
-# Sequential processing (one instance at a time)
-python -m lin_kernighan_tsp_solver --sequential
+    # Sequential processing (one instance at a time)
+    python -m lin_kernighan_tsp_solver --sequential
 
-# Parallel processing with specific number of workers
-python -m lin_kernighan_tsp_solver --workers 4
+    # Parallel processing with specific number of workers
+    python -m lin_kernighan_tsp_solver --workers 4
 
-# Set time limit per instance (in seconds)
-python -m lin_kernighan_tsp_solver --time-limit 20.0
+    # Set time limit per instance (in seconds)
+    python -m lin_kernighan_tsp_solver --time-limit 20.0
 
-# Combined options
-python -m lin_kernighan_tsp_solver --sequential --time-limit 20.0
+    # Combined options
+    python -m lin_kernighan_tsp_solver --sequential --time-limit 20.0
 
-# Get help on available options
-python -m lin_kernighan_tsp_solver --help
+    # Get help on available options
+    python -m lin_kernighan_tsp_solver --help
 ```
 
 **Available command line options:**
@@ -190,6 +190,6 @@ SUMMARY    910625.92 997510.13     2.86  13.08
 -   [Viikkoraportti 6](/reports/weekly_report_6.md)
 -   [Viikkoraportti 7](/reports/weekly_report_7.md)
 
-[^1]: Applegate, David L. & Bixby, Robert E. & Chvtal, Vaek & Cook, William J. (2006): _The Traveling Salesman Problem : A Computational Study_, Princeton University Press.
+[^1]: Applegate, David L. & Bixby, Robert E. & Chvatál, Vašek & Cook, William J. (2006): _The Traveling Salesman Problem : A Computational Study_, Princeton University Press.
 
 [^2]: Lin, Shen & Kernighan, Brian W. (1973): "An Effective Heuristic Algorithm for the Traveling-Salesman Problem", Operations Research, Vol. 21, No. 2, s. 498–516.

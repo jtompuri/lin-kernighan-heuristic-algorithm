@@ -128,7 +128,7 @@ def test_main_tsp_folder_not_found(capsys):
         assert "Error: TSP folder not found" in captured.out
 
 
-def test_main_no_tsp_files(monkeypatch):
+def test_main_no_tsp_files(monkeypatch, capsys):
     class DummyPath:
         def is_dir(self):
             return True
@@ -138,11 +138,12 @@ def test_main_no_tsp_files(monkeypatch):
 
     monkeypatch.setattr('lin_kernighan_tsp_solver.main.TSP_FOLDER_PATH', DummyPath())
     from lin_kernighan_tsp_solver.main import main
-    with patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
-            patch('lin_kernighan_tsp_solver.main.plot_all_tours') as mock_plot:
-        main()
-        mock_display.assert_called_once_with([])
-        mock_plot.assert_called_once_with([])
+
+    main()
+    captured = capsys.readouterr()
+    assert "No TSP files found in the specified directory." in captured.out
+    # Remove the assertions about display_summary_table and plot_all_tours
+    # since main() returns early when no files are found
 
 
 def test_main_process_single_instance_exception(monkeypatch):
@@ -165,7 +166,9 @@ def test_main_process_single_instance_exception(monkeypatch):
 
     monkeypatch.setattr('lin_kernighan_tsp_solver.main.TSP_FOLDER_PATH', DummyPath())
     from lin_kernighan_tsp_solver.main import main
-    with patch('lin_kernighan_tsp_solver.main.process_single_instance', side_effect=Exception("fail")), \
+
+    # Use ValueError instead of generic Exception (since we catch specific exceptions)
+    with patch('lin_kernighan_tsp_solver.main.process_single_instance', side_effect=ValueError("fail")), \
             patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
             patch('lin_kernighan_tsp_solver.main.plot_all_tours'):
         main()
@@ -234,7 +237,8 @@ def test_main_multiple_tsp_files(monkeypatch):
     with patch('lin_kernighan_tsp_solver.main.process_single_instance', side_effect=[dummy_result_a, dummy_result_b]) as mock_proc, \
             patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
             patch('lin_kernighan_tsp_solver.main.plot_all_tours') as mock_plot:
-        main()
+        # Force sequential processing to avoid pickle issues with mocks
+        main(use_parallel=False)
         # Should be called for both files
         assert mock_proc.call_count == 2
         mock_display.assert_called_once_with([dummy_result_a, dummy_result_b])
@@ -299,15 +303,30 @@ def test_main_calls_summary_and_plot(monkeypatch):
             return True
 
         def glob(self, pattern):
-            return []
+            # Return at least one file so main() doesn't return early
+            return [DummyPath()]
+
+        @property
+        def stem(self):
+            return "test"
+
+        def __str__(self):
+            return "test.tsp"
+
+        def __truediv__(self, other):
+            return self
 
     monkeypatch.setattr('lin_kernighan_tsp_solver.main.TSP_FOLDER_PATH', DummyPath())
     from lin_kernighan_tsp_solver.main import main
-    with patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
+
+    # Mock process_single_instance to return a dummy result
+    dummy_result = {'name': 'test', 'error': False}
+    with patch('lin_kernighan_tsp_solver.main.process_single_instance', return_value=dummy_result), \
+            patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
             patch('lin_kernighan_tsp_solver.main.plot_all_tours') as mock_plot:
         main()
-        mock_display.assert_called_once_with([])
-        mock_plot.assert_called_once_with([])
+        mock_display.assert_called_once_with([dummy_result])
+        mock_plot.assert_called_once_with([dummy_result])
 
 
 def test_process_single_instance_gap_when_optimal_zero(monkeypatch):
@@ -319,16 +338,57 @@ def test_process_single_instance_gap_when_optimal_zero(monkeypatch):
 
     # Case 1: heuristic_len == 0.0, expect gap == 0.0
     with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=coords), \
-         patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=opt_tour), \
-         patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', return_value=(opt_tour, 0.0)), \
-         patch('lin_kernighan_tsp_solver.main.build_distance_matrix', return_value=np.zeros((2, 2))):
+            patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=opt_tour), \
+            patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', return_value=(opt_tour, 0.0)), \
+            patch('lin_kernighan_tsp_solver.main.build_distance_matrix', return_value=np.zeros((2, 2))):
         result = process_single_instance("dummy.tsp", "dummy.opt.tour")
         assert result['gap'] == 0.0
 
     # Case 2: heuristic_len != 0.0, expect gap == float('inf')
     with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=coords), \
-         patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=opt_tour), \
-         patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', return_value=(opt_tour, 1.0)), \
-         patch('lin_kernighan_tsp_solver.main.build_distance_matrix', return_value=np.zeros((2, 2))):
+            patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=opt_tour), \
+            patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', return_value=(opt_tour, 1.0)), \
+            patch('lin_kernighan_tsp_solver.main.build_distance_matrix', return_value=np.zeros((2, 2))):
         result = process_single_instance("dummy.tsp", "dummy.opt.tour")
         assert result['gap'] == float('inf')
+
+
+def test_main_early_return_no_files(monkeypatch):
+    """Test that main() returns early when no TSP files are found."""
+    class DummyPath:
+        def is_dir(self):
+            return True
+
+        def glob(self, pattern):
+            return []
+
+    monkeypatch.setattr('lin_kernighan_tsp_solver.main.TSP_FOLDER_PATH', DummyPath())
+    from lin_kernighan_tsp_solver.main import main
+
+    with patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
+            patch('lin_kernighan_tsp_solver.main.plot_all_tours') as mock_plot:
+        result = main()
+
+        # Verify that display and plot functions are NOT called
+        mock_display.assert_not_called()
+        mock_plot.assert_not_called()
+        assert result is None  # main() returns None when no files found
+
+
+def test_main_early_return_no_folder(monkeypatch):
+    """Test that main() returns early when TSP folder doesn't exist."""
+    class DummyPath:
+        def is_dir(self):
+            return False
+
+    monkeypatch.setattr('lin_kernighan_tsp_solver.main.TSP_FOLDER_PATH', DummyPath())
+    from lin_kernighan_tsp_solver.main import main
+
+    with patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
+            patch('lin_kernighan_tsp_solver.main.plot_all_tours') as mock_plot:
+        result = main()
+
+        # Verify that display and plot functions are NOT called
+        mock_display.assert_not_called()
+        mock_plot.assert_not_called()
+        assert result is None  # main() returns None when folder not found

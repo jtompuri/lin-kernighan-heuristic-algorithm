@@ -9,13 +9,13 @@ Yksikkötestien kattavuus on tällä hetkellä 100%. Yksityiskohtainen kattavuus
 ```bash
 Name                                       Stmts   Miss  Cover   Missing
 ------------------------------------------------------------------------
-lin_kernighan_tsp_solver/config.py             5      0   100%
-lin_kernighan_tsp_solver/lk_algorithm.py     320      0   100%
-lin_kernighan_tsp_solver/main.py              75      0   100%
+lin_kernighan_tsp_solver/config.py            13      0   100%
+lin_kernighan_tsp_solver/lk_algorithm.py     352      0   100%
+lin_kernighan_tsp_solver/main.py             128      0   100%
 lin_kernighan_tsp_solver/tsp_io.py            77      0   100%
 lin_kernighan_tsp_solver/utils.py             84      0   100%
 ------------------------------------------------------------------------
-TOTAL                                        561      0   100%
+TOTAL                                        654      0   100%
 ```
 
 ## 2. Mitä on testattu, miten tämä tehtiin?

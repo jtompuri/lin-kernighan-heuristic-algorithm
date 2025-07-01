@@ -134,7 +134,7 @@ python simple_tsp_solver.py
 Here is an example output using TSPLIB95 instances with optimal tours.
 **Note:** The example output below was generated with `--time-limit 20.0` for illustrative purposes. The default time limit is 5.0 seconds, which may yield different heuristic lengths and runtimes.
 
-![Example output plots](/images/lk_verifications_tsplib95_20s_2025-07-02.png)
+![Example output plots](/images/lk_verifications_tsplib95_20s_2025-07-01.png)
 
 ```
 Found 18 TSP instances.

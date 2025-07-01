@@ -45,11 +45,16 @@ This project is expected to work with Python 3.7 or newer due to its use of mode
     pip install -r requirements-dev.txt
     ```
 
-5.  Use default TSPLIB files or place your own TSPLIB `.tsp` files in a designated folder.
+5.  Linux may require installing `tkinter` for drawing `matplotlib` graphs in OS window:
+    ```bash
+    sudo apt install python3-tk
+    ```
+
+6.  Use default TSPLIB files or place your own TSPLIB `.tsp` files in a designated folder.
     Optionally, place corresponding `.opt.tour` files (if available) in the same
     folder. The default folder is `verifications/tsplib95/` relative to the project root.
 
-6.  If you are using a different folder for TSP instances, update the `TSP_FOLDER_PATH`
+7.  If you are using a different folder for TSP instances, update the `TSP_FOLDER_PATH`
     constant at the top of the `lin_kernighan_tsp_solver/config.py`.
 
 ## Usage

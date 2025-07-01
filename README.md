@@ -54,34 +54,34 @@ This project is expected to work with Python 3.7 or newer due to its use of mode
 
 ## Usage
 
-    **Basic usage (default parallel processing):**
-    ```bash
-    python -m lin_kernighan_tsp_solver
-    ```
+**Basic usage (default parallel processing):**
+```bash
+python -m lin_kernighan_tsp_solver
+```
 
-    **Command line options:**
-    ```bash
-    # Sequential processing (one instance at a time)
-    python -m lin_kernighan_tsp_solver --sequential
+**Command line options:**
+```bash
+# Sequential processing (one instance at a time)
+python -m lin_kernighan_tsp_solver --sequential
 
-    # Parallel processing with specific number of workers
-    python -m lin_kernighan_tsp_solver --workers 4
+# Parallel processing with specific number of workers
+python -m lin_kernighan_tsp_solver --workers 4
 
-    # Set time limit per instance (in seconds)
-    python -m lin_kernighan_tsp_solver --time-limit 60.0
+# Set time limit per instance (in seconds)
+python -m lin_kernighan_tsp_solver --time-limit 60.0
 
-    # Combined options
-    python -m lin_kernighan_tsp_solver --sequential --time-limit 30.0
+# Combined options
+python -m lin_kernighan_tsp_solver --sequential --time-limit 30.0
 
-    # Get help on available options
-    python -m lin_kernighan_tsp_solver --help
-    ```
+# Get help on available options
+python -m lin_kernighan_tsp_solver --help
+```
 
-    **Available command line options:**
-    - `--sequential`: Use sequential processing instead of parallel (useful for debugging)
-    - `--workers N`: Number of parallel workers (default: all CPU cores)
-    - `--time-limit T`: Time limit per instance in seconds (overrides config.py setting)
-    - `--help`: Show help message with all available options
+**Available command line options:**
+- `--sequential`: Use sequential processing instead of parallel (useful for debugging)
+- `--workers N`: Number of parallel workers (default: all CPU cores)
+- `--time-limit T`: Time limit per instance in seconds (overrides config.py setting)
+- `--help`: Show help message with all available options
 
 The module will process each EUC_2D TSP instance found in the specified folder. By default, 
 it uses parallel processing to handle multiple instances simultaneously for better performance.

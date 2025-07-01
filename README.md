@@ -80,7 +80,7 @@ python -m lin_kernighan_tsp_solver --help
 **Available command line options:**
 - `--sequential`: Use sequential processing instead of parallel (useful for debugging)
 - `--workers N`: Number of parallel workers (default: all CPU cores)
-- `--time-limit T`: Time limit per instance in seconds (overrides config.py setting)
+- `--time-limit T`: Time limit per instance in seconds (overrides `config.py` setting)
 - `--help`: Show help message with all available options
 
 The module will process each EUC_2D TSP instance found in the specified folder. By default, 

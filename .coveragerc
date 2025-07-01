@@ -4,6 +4,7 @@
 omit =
     lin_kernighan_tsp_solver/__main__.py
     lin_kernighan_tsp_solver/__init__.py
+    tests/*
 
 [report]
 exclude_lines =

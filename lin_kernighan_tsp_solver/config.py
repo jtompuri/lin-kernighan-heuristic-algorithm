@@ -7,6 +7,7 @@ throughout the project, such as algorithm settings, tolerances, and paths.
 
 from pathlib import Path
 from dataclasses import dataclass
+from typing import Optional
 
 
 # Path to the folder containing TSPLIB .tsp files and optional .opt.tour files
@@ -57,10 +58,15 @@ class LinKernighanConfig:
     time_limit: float = 5.0  # Time limit for LK search (seconds)
 
     # Search breadth parameters
-    breadth: list[int] = [5, 5] + [1] * 20  # Search breadth at each level in step()
+    breadth: Optional[list[int]] = None  # Search breadth at each level in step()
     breadth_a: int = 5  # Search breadth for y1 in alternate_step()
     breadth_b: int = 5  # Search breadth for y2 in alternate_step()
     breadth_d: int = 1  # Search breadth for y4 in alternate_step()
+
+    def __post_init__(self):
+        # Set default breadth if not provided
+        if self.breadth is None:
+            object.__setattr__(self, 'breadth', [5, 5] + [1] * 20)
 
 
 # Global configuration instance

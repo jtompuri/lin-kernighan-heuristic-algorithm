@@ -19,38 +19,37 @@ This project is expected to work with Python 3.7 or newer due to its use of mode
 ## Installation
 
 1.  Create a virtual environment:
-```bash
-python -m venv venv
-```
+    ```bash
+    python -m venv venv
+    ```
 
 2.  Activate virtual environment:
 
-Linux/Mac:
-```bash
-source venv/bin/activate
-```
+    Linux/Mac:
+    ```bash
+    source venv/bin/activate
+    ```
 
-Windows:
-```bash
-venv\Scripts\activate
-```
+    Windows:
+    ```bash
+    venv\Scripts\activate
+    ```
 
 3.  Ensure all dependencies are installed for production environment:
-```bash
-pip install -r requirements.txt
-```
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 4.  Optionally install dependencies for development environment:
-```bash
-pip install -r requirements-dev.txt
-```
+    ```bash
+    pip install -r requirements-dev.txt
+    ```
 
 5.  Linux may require installing `tkinter` for drawing `matplotlib` graphs in OS window:
-
-Debian/Ubuntu:
-```bash
-sudo apt install python3-tk
-```
+    Debian/Ubuntu:
+    ```bash
+    sudo apt install python3-tk
+    ```
 
 6.  Use default TSPLIB files or place your own TSPLIB `.tsp` files in a designated folder.
     Optionally, place corresponding `.opt.tour` files (if available) in the same
@@ -62,27 +61,27 @@ sudo apt install python3-tk
 ## Usage
 
 **Basic usage (default parallel processing):**
-```bash
-python -m lin_kernighan_tsp_solver
-```
+    ```bash
+    python -m lin_kernighan_tsp_solver
+    ```
 
 **Command line options:**
-```bash
-# Sequential processing (one instance at a time)
-python -m lin_kernighan_tsp_solver --sequential
+    ```bash
+    # Sequential processing (one instance at a time)
+    python -m lin_kernighan_tsp_solver --sequential
 
-# Parallel processing with specific number of workers
-python -m lin_kernighan_tsp_solver --workers 4
+    # Parallel processing with specific number of workers
+    python -m lin_kernighan_tsp_solver --workers 4
 
-# Set time limit per instance (in seconds)
-python -m lin_kernighan_tsp_solver --time-limit 20.0
+    # Set time limit per instance (in seconds)
+    python -m lin_kernighan_tsp_solver --time-limit 20.0
 
-# Combined options
-python -m lin_kernighan_tsp_solver --sequential --time-limit 20.0
+    # Combined options
+    python -m lin_kernighan_tsp_solver --sequential --time-limit 20.0
 
-# Get help on available options
-python -m lin_kernighan_tsp_solver --help
-```
+    # Get help on available options
+    python -m lin_kernighan_tsp_solver --help
+    ```
 
 **Available command line options:**
 - `--sequential`: Use sequential processing instead of parallel (useful for debugging)

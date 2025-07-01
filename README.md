@@ -45,7 +45,7 @@ This project is expected to work with Python 3.7 or newer due to its use of mode
     pip install -r requirements-dev.txt
     ```
 
-5.  Linux may require installing `tkinter` for drawing `matplotlib` graphs in OS window:
+5.  Linux may require installing `tkinter` for drawing `matplotlib` graphs in an OS window:
     Debian/Ubuntu:
     ```bash
     sudo apt install python3-tk

@@ -14,7 +14,7 @@ against the known optimal solution and calculates the percentage gap. If no opti
 tour file is available, the instance is still processed, but no gap calculation is
 performed for it. The module displays a summary table and plots of the tours.
 
-This project is expected to work with Python 3.7 or newer due to its use of modern Python features like f-strings, pathlib, and extensive type hinting.
+This project is expected to work with Python 3.12 or newer due to its use of modern Python features like f-strings, pathlib, and extensive type hinting.
 
 ## Installation
 

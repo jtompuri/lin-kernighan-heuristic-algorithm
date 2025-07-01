@@ -39,73 +39,29 @@ class Tour:
         cost (float | None): Total cost (length) of the tour.
     """
 
-    def __init__(self, order: Iterable[int], D: np.ndarray | None = None) -> None:
-        """Initializes a Tour object with comprehensive validation.
+    def __init__(self, order: Iterable[int],
+                 D: np.ndarray | None = None) -> None:
+        """Initializes a Tour object.
 
         Args:
             order (Iterable[int]): An iterable of vertex indices defining the tour.
             D (np.ndarray | None, optional): The distance matrix. If provided,
                 the initial tour cost is calculated. Defaults to None.
-
-        Raises:
-            TypeError: If order is not iterable or contains non-integers.
-            ValueError: If tour contains duplicates, negative indices, or if
-                distance matrix is incompatible.
-            MemoryError: If position array allocation fails for large node indices.
         """
-        try:
-            order_list = list(order)
-        except TypeError as e:
-            raise TypeError(f"order must be iterable: {e}")
-
-        # Validate tour order elements
-        if order_list and not all(isinstance(x, (int, np.integer)) for x in order_list):
-            invalid_types = {type(x).__name__ for x in order_list if not isinstance(x, (int, np.integer))}
-            raise TypeError(f"All elements in order must be integers, found: {invalid_types}")
-
-        if len(set(order_list)) != len(order_list):
-            duplicates = [x for x in set(order_list) if order_list.count(x) > 1]
-            raise ValueError(f"Tour contains duplicate nodes: {duplicates}")
-
-        if order_list and (min(order_list) < 0):
-            negative_nodes = [x for x in order_list if x < 0]
-            raise ValueError(f"Tour contains negative node indices: {negative_nodes}")
-
-        # Validate distance matrix compatibility
-        if D is not None:
-            if not isinstance(D, np.ndarray):
-                raise TypeError("Distance matrix D must be a numpy array")
-
-            if D.ndim != 2 or D.shape[0] != D.shape[1]:
-                raise ValueError(f"Distance matrix must be square, got shape {D.shape}")
-
-            if order_list and max(order_list) >= D.shape[0]:
-                max_node = max(order_list)
-                raise ValueError(f"Node index {max_node} exceeds distance matrix size {D.shape[0]}")
-
+        order_list = list(order)  # Convert iterable to list
         self.n: int = len(order_list)
 
         if self.n == 0:
+            # Handle empty tour initialization
             self.order: np.ndarray = np.array([], dtype=np.int32)
             self.pos: np.ndarray = np.array([], dtype=np.int32)
             self.cost: float | None = 0.0
         else:
-            try:
-                self.order: np.ndarray = np.array(order_list, dtype=np.int32)
-            except (ValueError, OverflowError) as e:
-                raise ValueError(f"Cannot convert order to int32 array: {e}")
-
+            self.order: np.ndarray = np.array(order_list, dtype=np.int32)
+            # Ensure self.pos is large enough for all actual node labels.
             max_node_label = np.max(self.order)
-
-            # Check for reasonable memory requirements
-            if max_node_label > 1_000_000:  # Arbitrary but reasonable limit
-                raise ValueError(f"Maximum node index {max_node_label} too large (>1M)")
-
-            try:
-                self.pos: np.ndarray = np.empty(max_node_label + 1, dtype=np.int32)
-            except (MemoryError, ValueError) as e:
-                raise MemoryError(f"Cannot allocate position array for max node {max_node_label}: {e}")
-
+            self.pos: np.ndarray = np.empty(max_node_label + 1,
+                                            dtype=np.int32)
             for i, v_node in enumerate(self.order):
                 self.pos[v_node] = i
 
@@ -137,27 +93,9 @@ class Tour:
 
         Returns:
             int: Next vertex in the tour.
-
-        Raises:
-            IndexError: If the tour is empty.
-            ValueError: If vertex index is invalid or not in the tour.
         """
         if self.n == 0:
             raise IndexError("Cannot get next node from an empty tour.")
-
-        # Add comprehensive bounds checking
-        if not isinstance(v, (int, np.integer)):
-            raise TypeError(f"Vertex index must be integer, got {type(v).__name__}")
-
-        if v < 0:
-            raise ValueError(f"Vertex index {v} cannot be negative")
-
-        if v >= len(self.pos):
-            raise ValueError(f"Vertex {v} not in tour: position array size {len(self.pos)}")
-
-        if self.pos[v] < 0 or self.pos[v] >= self.n:
-            raise ValueError(f"Invalid position {self.pos[v]} for vertex {v}")
-
         return int(self.order[(self.pos[v] + 1) % self.n])
 
     def prev(self, v: int) -> int:
@@ -168,27 +106,9 @@ class Tour:
 
         Returns:
             int: Previous vertex in the tour.
-
-        Raises:
-            IndexError: If the tour is empty.
-            ValueError: If vertex index is invalid or not in the tour.
         """
         if self.n == 0:
             raise IndexError("Cannot get previous node from an empty tour.")
-
-        # Add same validation as next()
-        if not isinstance(v, (int, np.integer)):
-            raise TypeError(f"Vertex index must be integer, got {type(v).__name__}")
-
-        if v < 0:
-            raise ValueError(f"Vertex index {v} cannot be negative")
-
-        if v >= len(self.pos):
-            raise ValueError(f"Vertex {v} not in tour: position array size {len(self.pos)}")
-
-        if self.pos[v] < 0 or self.pos[v] >= self.n:
-            raise ValueError(f"Invalid position {self.pos[v]} for vertex {v}")
-
         return int(self.order[(self.pos[v] - 1 + self.n) % self.n])
 
     def sequence(self, node_a: int, node_b: int, node_c: int) -> bool:
@@ -213,34 +133,13 @@ class Tour:
         return idx_a <= idx_b or idx_b <= idx_c
 
     def flip(self, segment_start_node: int, segment_end_node: int) -> None:
-        """Reverses the tour segment with comprehensive validation.
+        """Reverses the tour segment from segment_start_node to segment_end_node
+        in-place.
 
         Args:
             segment_start_node (int): First vertex of the segment to flip.
             segment_end_node (int): Last vertex of the segment to flip.
-
-        Raises:
-            ValueError: If tour is empty or node indices are invalid.
-            TypeError: If node indices are not integers.
         """
-        if self.n == 0:
-            raise ValueError("Cannot flip segments in empty tour")
-
-        # Validate node indices
-        for node, name in [(segment_start_node, "segment_start_node"),
-                           (segment_end_node, "segment_end_node")]:
-            if not isinstance(node, (int, np.integer)):
-                raise TypeError(f"{name} must be integer, got {type(node).__name__}")
-
-            if node < 0:
-                raise ValueError(f"{name} {node} cannot be negative")
-
-            if node >= len(self.pos):
-                raise ValueError(f"{name} {node} not in tour: max vertex is {len(self.pos) - 1}")
-
-            if self.pos[node] < 0 or self.pos[node] >= self.n:
-                raise ValueError(f"Invalid position {self.pos[node]} for {name} {node}")
-
         idx_a, idx_b = self.pos[segment_start_node], self.pos[segment_end_node]
 
         if idx_a == idx_b:  # Segment is a single node, no change needed.
@@ -339,49 +238,22 @@ class Tour:
 
 
 def build_distance_matrix(coords: np.ndarray) -> np.ndarray:
-    """Computes pairwise Euclidean distances with comprehensive validation.
+    """Computes pairwise Euclidean distances for coordinates.
 
     Args:
         coords (np.ndarray): Array of shape (n, d) for n points in d dimensions.
 
     Returns:
         np.ndarray: Array of shape (n, n) with distances D[i,j].
-
-    Raises:
-        TypeError: If coords is not a numpy array.
-        ValueError: If coords has wrong dimensions or contains invalid values.
     """
-    # Input validation
-    if not isinstance(coords, np.ndarray):
-        raise TypeError("coords must be a numpy array")
-
-    if coords.ndim != 2:
-        raise ValueError(f"coords must be 2D array, got {coords.ndim}D")
-
-    if coords.shape[1] != 2:
-        raise ValueError(f"coords must have 2 columns (x,y), got {coords.shape[1]}")
-
-    if not np.all(np.isfinite(coords)):
-        invalid_count = np.sum(~np.isfinite(coords))
-        raise ValueError(f"coords contain {invalid_count} infinite or NaN values")
-
     # Handle empty or single point cases
     if coords.shape[0] == 0:
         return np.empty((0, 0), dtype=float)
     if coords.shape[0] == 1:
         return np.array([[0.0]], dtype=float)
 
-    # Compute distances with error checking
-    try:
-        distances = np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
-    except (MemoryError, ValueError) as e:
-        raise ValueError(f"Failed to compute distance matrix: {e}")
-
-    # Validate result
-    if not np.all(np.isfinite(distances)):
-        raise ValueError("Distance matrix contains infinite or NaN values")
-
-    return distances
+    # Efficiently compute pairwise distances using broadcasting and linalg.norm
+    return np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
 
 
 def delaunay_neighbors(coords: np.ndarray) -> list[list[int]]:
@@ -496,7 +368,7 @@ def step(level: int, delta: float, base: int, tour: Tour,
             - bool: True if a tour better than the global best cost is found.
             - list[tuple[int, int]] | None: The improving flip sequence, or None.
     """
-    if _check_deadline_with_margin(ctx.deadline) or level > LK_CONFIG["MAX_LEVEL"]:
+    if time.time() >= ctx.deadline or level > LK_CONFIG["MAX_LEVEL"]:
         return False, None
 
     breadth_limit = (LK_CONFIG["BREADTH"][min(level - 1, len(LK_CONFIG["BREADTH"]) - 1)]
@@ -696,7 +568,9 @@ def alternate_step(
 def lk_search(start_node_for_search: int, current_tour_obj: Tour,
               D: np.ndarray, neigh: list[list[int]],
               deadline: float) -> list[tuple[int, int]] | None:
-    """Single Lin-Kernighan search pass with enhanced error handling.
+    """Single Lin-Kernighan search pass (Algorithm 15.3, Applegate et al.).
+
+    Tries `step` then `alternate_step` to find an improving flip sequence.
 
     Args:
         start_node_for_search (int): Vertex to initiate search from (t1).
@@ -707,77 +581,47 @@ def lk_search(start_node_for_search: int, current_tour_obj: Tour,
 
     Returns:
         list[tuple[int, int]] | None: List of (start, end) flips if improvement
-            found, else None.
-
-    Raises:
-        TypeError: If input types are incorrect.
-        ValueError: If input values are invalid.
+        found, else None.
     """
-    # Validate inputs
-    if not isinstance(start_node_for_search, (int, np.integer)):
-        raise TypeError(f"start_node_for_search must be integer, got {type(start_node_for_search)}")
+    if time.time() >= deadline:
+        return None
 
-    if start_node_for_search < 0 or start_node_for_search >= current_tour_obj.n:
-        raise ValueError(f"start_node_for_search {start_node_for_search} not in tour of size {current_tour_obj.n}")
+    # Attempt 1: Standard Recursive Step Search on a copy of the tour
+    search_tour_copy = Tour(current_tour_obj.get_tour(), D)
+    cost_at_search_start = search_tour_copy.cost
+    assert cost_at_search_start is not None, "Tour cost must be initialized."
 
-    if not isinstance(deadline, (int, float)):
-        raise TypeError(f"deadline must be numeric, got {type(deadline)}")
+    ctx = SearchContext(D=D, neigh=neigh, start_cost=cost_at_search_start,
+                        best_cost=cost_at_search_start, deadline=deadline)
 
-    if deadline <= time.time():
-        return None  # Already past deadline
+    found_step, seq_step = step(
+        level=1, delta=0.0, base=start_node_for_search,
+        tour=search_tour_copy, ctx=ctx, flip_seq=[]
+    )
+    if found_step and seq_step:
+        return seq_step  # `step` found a sequence improving on its `best_cost`
+    if time.time() >= deadline:
+        return None
 
-    try:
-        # Attempt 1: Standard Recursive Step Search
-        search_tour_copy = Tour(current_tour_obj.get_tour(), D)
-        cost_at_search_start = search_tour_copy.cost
-
-        if cost_at_search_start is None:
-            raise RuntimeError("Tour cost initialization failed")
-
-        ctx = SearchContext(D=D, neigh=neigh, start_cost=cost_at_search_start,
-                            best_cost=cost_at_search_start, deadline=deadline)
-
-        found_step, seq_step = step(
-            level=1, delta=0.0, base=start_node_for_search,
-            tour=search_tour_copy, ctx=ctx, flip_seq=[]
-        )
-
-        if found_step and seq_step:
-            return seq_step
-
-        if time.time() >= deadline:
+    # Attempt 2: Alternate Step Search
+    # `alternate_step` identifies candidate sequences based on `current_tour_obj`.
+    found_alt, seq_alt = alternate_step(
+        base_node=start_node_for_search, tour=current_tour_obj,
+        D=D, neigh=neigh, deadline=deadline
+    )
+    if found_alt and seq_alt:
+        # Verify if the sequence from alternate_step is strictly improving
+        cost_before_alt_check = current_tour_obj.cost
+        if cost_before_alt_check is None:  # pragma: no cover
             return None
 
-        # Attempt 2: Alternate Step Search
-        found_alt, seq_alt = alternate_step(
-            base_node=start_node_for_search, tour=current_tour_obj,
-            D=D, neigh=neigh, deadline=deadline
-        )
+        temp_check_tour = Tour(current_tour_obj.get_tour(), D)
+        for f_start, f_end in seq_alt:
+            temp_check_tour.flip_and_update_cost(f_start, f_end, D)
 
-        if found_alt and seq_alt:
-            # Verify improvement
-            cost_before_alt_check = current_tour_obj.cost
-            if cost_before_alt_check is None:
-                return None
-
-            temp_check_tour = Tour(current_tour_obj.get_tour(), D)
-            for f_start, f_end in seq_alt:
-                temp_check_tour.flip_and_update_cost(f_start, f_end, D)
-
-            if (temp_check_tour.cost is not None and
-                    temp_check_tour.cost < cost_before_alt_check - FLOAT_COMPARISON_TOLERANCE):
-                return seq_alt
-
-    except (ValueError, IndexError, RuntimeError) as e:
-        # Log error and return None for graceful degradation
-        # In production, you might want to use proper logging
-        print(f"Warning: LK search failed for node {start_node_for_search}: {e}")
-        return None
-    except Exception as e:
-        # Catch any unexpected errors
-        print(f"Unexpected error in LK search for node {start_node_for_search}: {e}")
-        return None
-
+        if temp_check_tour.cost is not None and \
+           temp_check_tour.cost < cost_before_alt_check - FLOAT_COMPARISON_TOLERANCE:
+            return seq_alt  # Sequence is strictly improving
     return None
 
 
@@ -933,129 +777,62 @@ def _check_for_optimality(cost: float, optimal_len: float | None) -> bool:
     return math.isclose(cost, optimal_len, rel_tol=1e-7, abs_tol=FLOAT_COMPARISON_TOLERANCE * 10)
 
 
-class ResourceLimits:
-    """Resource limits to prevent excessive memory usage or computation."""
-    MAX_NODES = 50000
-    MAX_TIME_LIMIT = 7200  # 2 hours
-    MAX_MEMORY_ESTIMATE_MB = 2000
-
-
-def _validate_resource_requirements(coords: np.ndarray, time_limit: float) -> None:
-    """Validate that the problem size is within resource limits.
-
-    Args:
-        coords (np.ndarray): Coordinate array.
-        time_limit (float): Time limit in seconds.
-
-    Raises:
-        ValueError: If resource requirements exceed limits.
-    """
-    n_nodes = len(coords)
-
-    if n_nodes > ResourceLimits.MAX_NODES:
-        raise ValueError(f"Too many nodes: {n_nodes} > {ResourceLimits.MAX_NODES}")
-
-    if time_limit > ResourceLimits.MAX_TIME_LIMIT:
-        raise ValueError(f"Time limit too large: {time_limit} > {ResourceLimits.MAX_TIME_LIMIT}")
-
-    # Estimate memory usage (distance matrix is O(n²))
-    estimated_memory_mb = (n_nodes * n_nodes * 8) / (1024 * 1024)  # 8 bytes per float64
-    if estimated_memory_mb > ResourceLimits.MAX_MEMORY_ESTIMATE_MB:
-        raise ValueError(f"Estimated memory usage {estimated_memory_mb:.1f}MB > {ResourceLimits.MAX_MEMORY_ESTIMATE_MB}MB")
-
-
 def chained_lin_kernighan(
     coords: np.ndarray, initial_tour_order: list[int],
     known_optimal_length: float | None = None,
     time_limit_seconds: float | None = None
 ) -> tuple[list[int], float]:
-    """Enhanced chained LK with comprehensive validation.
+    """Chained Lin-Kernighan metaheuristic (Algorithm 15.5, Applegate et al.).
+
+    Repeatedly applies LK, with double-bridge kicks to escape local optima.
 
     Args:
         coords (np.ndarray): Vertex coordinates.
         initial_tour_order (list[int]): Initial tour.
-        known_optimal_length (float | None, optional): Known optimal length.
-        time_limit_seconds (float | None, optional): Max run time.
+        known_optimal_length (float | None, optional): Known optimal length for
+            early stop. Defaults to None.
+        time_limit_seconds (float | None, optional): Max run time. Defaults to
+            None, which uses the value from LK_CONFIG.
 
     Returns:
-        tuple[list[int], float]: Best tour order and cost.
-
-    Raises:
-        TypeError: If input types are incorrect.
-        ValueError: If input values are invalid or resource limits exceeded.
+        A tuple containing:
+            - list[int]: The best tour order found.
+            - float: The cost of the best tour.
     """
-    # Validate inputs
-    if not isinstance(coords, np.ndarray):
-        raise TypeError("coords must be a numpy array")
-
-    if coords.ndim != 2 or coords.shape[1] != 2:
-        raise ValueError("coords must be a 2D array with shape (n, 2)")
-
-    if not isinstance(initial_tour_order, list):
-        raise TypeError("initial_tour_order must be a list")
-
-    if len(initial_tour_order) != len(coords):
-        raise ValueError(f"Tour length {len(initial_tour_order)} != coordinate count {len(coords)}")
-
-    effective_time_limit = (time_limit_seconds if time_limit_seconds is not None
+    effective_time_limit = (time_limit_seconds
+                            if time_limit_seconds is not None
                             else LK_CONFIG["TIME_LIMIT"])
+    deadline = time.time() + effective_time_limit
 
-    if effective_time_limit <= 0:
-        raise ValueError("Time limit must be positive")
+    distance_matrix = build_distance_matrix(coords)
+    neighbor_list = delaunay_neighbors(coords)
 
-    # Check resource requirements
-    _validate_resource_requirements(coords, effective_time_limit)
+    # Initial LK run
+    best_tour, best_cost = lin_kernighan(
+        coords, initial_tour_order, distance_matrix, neighbor_list, deadline
+    )
 
-    # Rest of existing logic with enhanced error handling...
-    try:
-        deadline = time.time() + effective_time_limit
+    if _check_for_optimality(best_cost, known_optimal_length):
+        return best_tour.get_tour(), best_cost
 
-        distance_matrix = build_distance_matrix(coords)
-        neighbor_list = delaunay_neighbors(coords)
-
-        # Initial LK run
-        best_tour, best_cost = lin_kernighan(
-            coords, initial_tour_order, distance_matrix, neighbor_list, deadline
+    # Main chain loop: kick and re-run LK
+    while time.time() < deadline:
+        update_result = _perform_kick_and_lk_run(
+            best_tour, coords, distance_matrix, neighbor_list, deadline
         )
 
-        if _check_for_optimality(best_cost, known_optimal_length):
-            return best_tour.get_tour(), best_cost
+        if update_result:
+            best_tour, best_cost = update_result
+            if _check_for_optimality(best_cost, known_optimal_length):
+                break  # Optimum found
 
-        # Main chain loop: kick and re-run LK
-        while time.time() < deadline:
-            update_result = _perform_kick_and_lk_run(
-                best_tour, coords, distance_matrix, neighbor_list, deadline
-            )
-
-            if update_result:
-                best_tour, best_cost = update_result
-                if _check_for_optimality(best_cost, known_optimal_length):
-                    break  # Optimum found
-
-        # Final cost consistency check before returning
-        final_tour_order = best_tour.get_tour()
-        final_recomputed_cost = 0.0
-        if best_tour.n > 0:  # Ensure tour is not empty
-            for i in range(best_tour.n):
-                node1 = final_tour_order[i]
-                node2 = final_tour_order[(i + 1) % best_tour.n]
-                final_recomputed_cost += float(distance_matrix[node1, node2])
-        # best_tour.cost = final_recomputed_cost  # Update object if needed
-        return final_tour_order, final_recomputed_cost
-
-    except Exception as e:
-        # Provide meaningful error context
-        raise RuntimeError(f"Chained Lin-Kernighan failed: {e}") from e
-
-
-def _check_deadline_with_margin(deadline: float, margin_seconds: float = 0.1) -> bool:
-    """Check if we're approaching the deadline with a safety margin.
-
-    Args:
-        deadline (float): The deadline timestamp.
-        margin_seconds (float): Safety margin in seconds.
-
-    Returns:
-        bool: True if we're within the margin of the deadline.
-    """
-    return time.time() >= deadline - margin_seconds
+    # Final cost consistency check before returning
+    final_tour_order = best_tour.get_tour()
+    final_recomputed_cost = 0.0
+    if best_tour.n > 0:  # Ensure tour is not empty
+        for i in range(best_tour.n):
+            node1 = final_tour_order[i]
+            node2 = final_tour_order[(i + 1) % best_tour.n]
+            final_recomputed_cost += float(distance_matrix[node1, node2])
+    # best_tour.cost = final_recomputed_cost  # Update object if needed
+    return final_tour_order, final_recomputed_cost

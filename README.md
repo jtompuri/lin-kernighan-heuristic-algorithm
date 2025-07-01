@@ -53,18 +53,54 @@ This project is expected to work with Python 3.7 or newer due to its use of mode
     constant at the top of the `lin_kernighan_tsp_solver/config.py`.
 
 7.  Run the Python module from the project's root directory:
+
+    **Basic usage (default parallel processing):**
     ```bash
     python -m lin_kernighan_tsp_solver
     ```
 
-The module will then process each EUC_2D TSP instance found in the specified folder. It
-prints progress and results to the console. The default time limit for each problem is 
-set to 5 seconds. You can increate the time limit for better approximations. For 
-instances with an optimal tour, the gap is shown. For instances without an optimal 
-tour, nothing is displayed for optimal length and gap. Finally, a plot of all processed 
-tours is displayed (showing both optimal and heuristic tours if the optimal is available, 
-otherwise just the heuristic tour). Configuration parameters for the LK algorithm can be 
-adjusted in the `LK_CONFIG` dictionary in `config.py`.
+    **Command line options:**
+    ```bash
+    # Sequential processing (one instance at a time)
+    python -m lin_kernighan_tsp_solver --sequential
+
+    # Parallel processing with specific number of workers
+    python -m lin_kernighan_tsp_solver --workers 4
+
+    # Set time limit per instance (in seconds)
+    python -m lin_kernighan_tsp_solver --time-limit 60.0
+
+    # Combined options
+    python -m lin_kernighan_tsp_solver --sequential --time-limit 30.0
+
+    # Get help on available options
+    python -m lin_kernighan_tsp_solver --help
+    ```
+
+    **Available command line options:**
+    - `--sequential`: Use sequential processing instead of parallel (useful for debugging)
+    - `--workers N`: Number of parallel workers (default: all CPU cores)
+    - `--time-limit T`: Time limit per instance in seconds (overrides config.py setting)
+    - `--help`: Show help message with all available options
+
+The module will process each EUC_2D TSP instance found in the specified folder. By default, 
+it uses parallel processing to handle multiple instances simultaneously for better performance.
+Progress and results are printed to the console. The default time limit for each problem is 
+set to 5 seconds in `config.py`, but can be overridden using the `--time-limit` option.
+
+For instances with an optimal tour, the gap percentage is calculated and displayed. For 
+instances without an optimal tour, the gap column shows nothing. Finally, a plot of all 
+processed tours is displayed (showing both optimal and heuristic tours if the optimal is 
+available, otherwise just the heuristic tour).
+
+Configuration parameters for the LK algorithm can be adjusted in the `LK_CONFIG` dictionary 
+in `config.py`.
+
+## Performance Notes
+
+- **Parallel processing** (default): Processes multiple TSP instances simultaneously using all available CPU cores. Recommended for processing multiple instances.
+- **Sequential processing** (`--sequential`): Processes instances one at a time. Useful for debugging or when system resources are limited.
+- **Custom worker count** (`--workers N`): Limits parallel processing to N workers. Useful for controlling resource usage.
 
 ## Helper Algorithms
 
@@ -90,11 +126,19 @@ python simple_tsp_solver.py
 ## Example output using TSPLIB95
 
 Here is an example output using TSPLIB95 instances.
-**Note:** The example output below was generated with `TIME_LIMIT` set to 20.0 seconds in `config.py` for illustrative purposes. The default `TIME_LIMIT` in `config.py` is 5.0 seconds, which may yield different heuristic lengths and runtimes.
+**Note:** The example output below was generated with `--time-limit 20.0` for illustrative purposes. The default time limit is 5.0 seconds, which may yield different heuristic lengths and runtimes.
 
 ![Example output plots](/images/lk_verifications_tsplib95_20s_2025-06-30.png)
 
 ```
+Found 18 TSP instances.
+Processing using 8 parallel workers...
+[1/18] Completed: a280
+[2/18] Completed: berlin52
+[3/18] Completed: ch130
+...
+[18/18] Completed: tsp225
+
 Configuration parameters:
   MAX_LEVEL   = 12
   BREADTH     = [5, 5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
@@ -105,26 +149,26 @@ Configuration parameters:
 
 Instance     OptLen   HeuLen   Gap(%)  Time(s)
 ----------------------------------------------
-a280        2586.77  2615.29     1.10    20.00
-berlin52    7544.37  7544.37     0.00     0.15
-ch130       6110.86  6153.70     0.70    20.00
-ch150       6532.28  6533.81     0.02    20.00
+a280        2586.77  2617.51     1.19    20.00
+berlin52    7544.37  7544.37     0.00     0.13
+ch130       6110.86  6152.99     0.69    20.00
+ch150       6532.28  6566.55     0.52    20.00
 eil101       642.31   640.21     0.00    20.00
-eil51        429.98   428.98     0.00    20.00
+eil51        429.98   428.87     0.00    20.00
 eil76        545.39   544.37     0.00    20.00
-kroA100    21285.44 21285.44     0.00     6.52
-kroC100    20750.76 20750.76     0.00     5.25
-kroD100    21294.29 21375.45     0.38    20.00
-lin105     14383.00 14383.00     0.00     2.25
-pcb442     50783.55 68689.45    35.26    20.00
-pr1002     259066.66 337713.32  30.36    20.00
-pr2392     378062.83 378062.83   0.00    11.37
-pr76       108159.44 108159.44   0.00     1.59
-rd100       7910.40  7910.40     0.00     9.55
+kroA100    21285.44 21285.44     0.00     5.90
+kroC100    20750.76 20750.76     0.00     4.57
+kroD100    21294.29 21294.29     0.00     8.72
+lin105     14383.00 14383.00     0.00     1.85
+pcb442     50783.55 59765.25    17.69    20.00
+pr1002     259066.66 336815.79  30.01    20.00
+pr2392     378062.83 378062.83   0.00     8.97
+pr76       108159.44 108159.44   0.00     3.68
+rd100       7910.40  7910.40     0.00     1.66
 st70         678.60   677.11     0.00    20.00
-tsp225      3859.00  3942.12     2.15    20.00
+tsp225      3859.00  3910.96     1.35    20.00
 ----------------------------------------------
-SUMMARY    910625.92 1007410.04  3.89    14.26
+SUMMARY    910625.92 997510.13     2.86  13.08
 ```
 
 ## Course documentation (in Finnish)
@@ -142,4 +186,4 @@ SUMMARY    910625.92 1007410.04  3.89    14.26
 
 [^1]: Applegate, David L. & Bixby, Robert E. & Chvtal, Vaek & Cook, William J. (2006): _The Traveling Salesman Problem : A Computational Study_, Princeton University Press.
 
-[^2]: Lin, Shen & Kernighan, Brian W. (1973): ”An Effective Heuristic Algorithm for the Traveling-Salesman Problem”, Operations Research, Vol. 21, No. 2, s. 498–516.
+[^2]: Lin, Shen & Kernighan, Brian W. (1973): "An Effective Heuristic Algorithm for the Traveling-Salesman Problem", Operations Research, Vol. 21, No. 2, s. 498–516.

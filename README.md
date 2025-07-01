@@ -16,7 +16,7 @@ performed for it. The module displays a summary table and plots of the tours.
 
 This project is expected to work with Python 3.7 or newer due to its use of modern Python features like f-strings, pathlib, and extensive type hinting.
 
-## Usage
+## Installation
 
 1.  Create a virtual environment:
     ```bash
@@ -53,6 +53,8 @@ This project is expected to work with Python 3.7 or newer due to its use of mode
     constant at the top of the `lin_kernighan_tsp_solver/config.py`.
 
 7.  Run the Python module from the project's root directory:
+
+## Usage
 
     **Basic usage (default parallel processing):**
     ```bash

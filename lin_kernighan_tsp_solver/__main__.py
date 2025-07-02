@@ -10,7 +10,10 @@ from .main import main
 from .config import STARTING_CYCLE_CONFIG
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Lin-Kernighan TSP Solver")
+    parser = argparse.ArgumentParser(
+        prog="python -m lin_kernighan_tsp_solver",
+        description="Lin-Kernighan TSP Solver"
+    )
     parser.add_argument("files", nargs="*",
                         help="TSP files to solve (optional). If not provided, processes all files in the TSP folder")
     parser.add_argument("--sequential", action="store_true",

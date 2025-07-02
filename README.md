@@ -8,8 +8,8 @@ and "An Effective Heuristic Algorithm for the Traveling-Salesman Problem" by Lin
 
 The module processes TSP instances from the TSPLIB format. The module supports only fully
 connected networks with Euclidean 2D geometry. It computes heuristic solutions
-using a chained version of the LK algorithm. If a corresponding optimal tour file
-`.opt.tour` is found, the module compares the heuristic solution
+using a chained version of the LK algorithm with configurable starting cycle algorithms.
+If a corresponding optimal tour file is found, the module compares the heuristic solution
 against the known optimal solution and calculates the percentage gap. If no optimal
 tour file is available, the instance is still processed, but no gap calculation is
 performed for it. The module displays a summary table and plots of the tours.
@@ -60,13 +60,31 @@ This project is expected to work with Python 3.12 or newer due to its use of mod
 
 ## Usage
 
-Basic usage (default parallel processing):
+The solver can be used in several ways depending on your needs:
 
+### Process All TSP Files (Default Behavior)
+
+Process all TSP files in the configured folder with default settings:
 ```bash
 python -m lin_kernighan_tsp_solver
 ```
 
-Command line options:
+### Process Specific Files
+
+Process one or more specific TSP files:
+```bash
+# Single file (automatically uses sequential processing)
+python -m lin_kernighan_tsp_solver path/to/file.tsp
+
+# Multiple files (uses parallel processing by default)
+python -m lin_kernighan_tsp_solver file1.tsp file2.tsp file3.tsp
+
+# Force sequential processing for multiple files
+python -m lin_kernighan_tsp_solver --sequential file1.tsp file2.tsp
+```
+
+### Command Line Options
+
 ```bash
 # Sequential processing (one instance at a time)
 python -m lin_kernighan_tsp_solver --sequential
@@ -77,37 +95,97 @@ python -m lin_kernighan_tsp_solver --workers 4
 # Set time limit per instance (in seconds)
 python -m lin_kernighan_tsp_solver --time-limit 20.0
 
-# Combined options
-python -m lin_kernighan_tsp_solver --sequential --time-limit 20.0
+# Choose starting cycle algorithm
+python -m lin_kernighan_tsp_solver --starting-cycle nearest_neighbor
+
+# Combined options with specific files
+python -m lin_kernighan_tsp_solver --starting-cycle greedy --time-limit 10.0 file1.tsp file2.tsp
 
 # Get help on available options
 python -m lin_kernighan_tsp_solver --help
 ```
 
 **Available command line options:**
-- `--sequential`: Use sequential processing instead of parallel (useful for debugging)
+- `files`: Positional arguments for specific TSP files to process (optional)
+- `--sequential`: Use sequential processing instead of parallel
 - `--workers N`: Number of parallel workers (default: all CPU cores)
 - `--time-limit T`: Time limit per instance in seconds (overrides `config.py` setting)
+- `--starting-cycle METHOD`: Starting cycle algorithm (see Starting Cycle Algorithms section)
 - `--help`: Show help message with all available options
 
-The module will process each EUC_2D TSP instance found in the specified folder. By default, 
-it uses parallel processing to handle multiple instances simultaneously for better performance.
-Progress and results are printed to the console. The default time limit for each problem is 
-set to 5 seconds in `config.py`, but can be overridden using the `--time-limit` option.
+### Starting Cycle Algorithms
 
-For instances with an optimal tour, the gap percentage is calculated and displayed. For 
-instances without an optimal tour, the gap column shows nothing. Finally, a plot of all 
-processed tours is displayed (showing both optimal and heuristic tours if the optimal is 
-available, otherwise just the heuristic tour).
+The solver supports multiple starting cycle algorithms that generate the initial tour for the Lin-Kernighan heuristic:
 
-Configuration parameters for the LK algorithm can be adjusted in the `LK_CONFIG` dictionary 
-in `config.py`.
+- **`natural`** (fastest): Uses the natural order [0, 1, 2, ..., n-1]. Fastest for large instances.
+- **`random`**: Random permutation of cities. Good for diversity in multiple runs.
+- **`nearest_neighbor`**: Greedy nearest neighbor heuristic. Often produces good initial tours.
+- **`greedy`**: Greedy edge selection (shortest edges first). Can produce very good initial tours but is slower for large instances.
+- **`boruvka`**: Borůvka's minimum spanning tree algorithm with 2-opt improvement. Balanced performance.
+- **`qboruvka`** (default): Quick Borůvka - Concorde's default method. Good balance of quality and speed.
+
+**Performance characteristics:**
+- **Speed**: `natural` > `random` > `nearest_neighbor` > `qboruvka` > `boruvka` > `greedy`
+- **Quality**: Often `greedy` ≥ `qboruvka` ≥ `boruvka` ≥ `nearest_neighbor` > `random` > `natural`
+
+Choose based on your needs:
+- For maximum speed: `--starting-cycle natural`
+- For best quality initial tours: `--starting-cycle greedy`
+- For balanced performance (default): `--starting-cycle qboruvka`
+
+### File Discovery
+
+When processing specific files, the solver automatically looks for optimal tour files in this order:
+1. `filename.opt.tour` (TSPLIB standard)
+2. `filename.opt` (alternative format)
+3. `filename.tour` (simple format)
+
+If no optimal tour file is found, the instance is still processed but no gap calculation is performed.
+
+The module will process each EUC_2D TSP instance found in the specified folder or from the provided file list. By default, it uses parallel processing to handle multiple instances simultaneously for better performance. When processing a single file, sequential processing is automatically used for optimal performance.
+
+Progress and results are printed to the console. The default time limit for each problem is set to 5 seconds in `config.py`, but can be overridden using the `--time-limit` option.
+
+For instances with an optimal tour, the gap percentage is calculated and displayed. For instances without an optimal tour, the gap column shows "N/A". Finally, a plot of all processed tours is displayed (showing both optimal and heuristic tours if the optimal is available, otherwise just the heuristic tour).
+
+Configuration parameters for the LK algorithm can be adjusted in the `LK_CONFIG` dictionary in `config.py`. Starting cycle algorithm preferences can be set in the `STARTING_CYCLE_CONFIG` dictionary.
 
 ## Performance Notes
 
 - **Parallel processing** (default): Processes multiple TSP instances simultaneously using all available CPU cores. Recommended for processing multiple instances.
-- **Sequential processing** (`--sequential`): Processes instances one at a time. Useful for debugging or when system resources are limited.
+- **Sequential processing** (`--sequential` or single file): Processes instances one at a time. Automatically used for single files and useful for debugging or when system resources are limited.
 - **Custom worker count** (`--workers N`): Limits parallel processing to N workers. Useful for controlling resource usage.
+- **Starting cycle performance**: Different starting cycle algorithms have varying speed/quality trade-offs (see Starting Cycle Algorithms section above).
+- **Time limits**: For expensive starting cycle algorithms (greedy, qboruvka), time limits and fallbacks are implemented to prevent excessive computation times on large instances.
+
+## Testing
+
+The project includes comprehensive test coverage:
+
+```bash
+# Run all tests
+python -m pytest
+
+# Run tests with coverage report
+python -m pytest --cov=lin_kernighan_tsp_solver --cov-report=html
+
+# Run specific test modules
+python -m pytest tests/test_starting_cycles.py -v
+python -m pytest tests/test_workflow.py -v
+python -m pytest tests/test_cli_files.py -v
+
+# Run performance comparison tests
+python -m pytest test_starting_performance.py -v
+```
+
+**Test modules:**
+- `test_starting_cycles.py`: Tests for all starting cycle algorithms
+- `test_workflow.py`: Integration and workflow tests
+- `test_cli_files.py`: Tests for file-specific CLI functionality
+- `test_lk_*.py`: Tests for Lin-Kernighan algorithm components
+- `test_starting_performance.py`: Performance comparison tests
+
+The test suite includes unit tests, integration tests, CLI tests, and performance benchmarks with nearly 100% code coverage.
 
 ## Helper Algorithms
 
@@ -153,6 +231,7 @@ Configuration parameters:
   BREADTH_B   = 5
   BREADTH_D   = 1
   TIME_LIMIT  = 20.00
+  STARTING_CYCLE = qboruvka
 
 Instance     OptLen   HeuLen   Gap(%)  Time(s)
 ----------------------------------------------
@@ -178,11 +257,43 @@ tsp225      3859.00  3910.96     1.35    20.00
 SUMMARY    910625.92 997510.13     2.86  13.08
 ```
 
+### Example: Processing Specific Files
+
+```bash
+# Process a single file with natural starting cycle
+$ python -m lin_kernighan_tsp_solver --starting-cycle natural my_problem.tsp
+Single file specified, using sequential processing.
+Found 1 TSP instances.
+Processing sequentially...
+Processing my_problem (EUC_2D)...
+  Optimal tour not available for my_problem.
+  Heuristic length: 4162.62  Time: 5.00s
+
+# Process multiple files with different starting cycle
+$ python -m lin_kernighan_tsp_solver --starting-cycle greedy --time-limit 2.0 berlin52.tsp eil51.tsp
+Found 2 TSP instances.
+Processing using 2 parallel workers...
+[1/2] Completed: berlin52
+[2/2] Completed: eil51
+
+Configuration parameters:
+  STARTING_CYCLE = greedy
+  TIME_LIMIT = 2.00
+
+Instance     OptLen   HeuLen   Gap(%)  Time(s)
+----------------------------------------------
+berlin52    7544.37  7544.37     0.00     0.15
+eil51        429.98   429.12     0.00     2.00
+----------------------------------------------
+SUMMARY     7974.35  7973.48     0.00     1.08
+```
+
 ## Course documentation (in Finnish)
 
 -   [Määrittelydokumentti](/documentation/requirements_specification.md)
 -   [Toteutusdokumentti](/documentation/implementation_specification.md)
 -   [Testausdokumentti](/documentation/testing_specification.md)
+-   [Starting Cycle Algorithms Documentation](/documentation/starting_cycles.md)
 -   [Viikkoraportti 1](/reports/weekly_report_1.md)
 -   [Viikkoraportti 2](/reports/weekly_report_2.md)
 -   [Viikkoraportti 3](/reports/weekly_report_3.md)

@@ -201,7 +201,7 @@ def test_main_process_single_instance_success(monkeypatch):
             patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
             patch('lin_kernighan_tsp_solver.main.plot_all_tours') as mock_plot:
         main()
-        mock_display.assert_called_once_with([dummy_result])
+        mock_display.assert_called_once_with([dummy_result], override_config={'TIME_LIMIT': None})
         mock_plot.assert_called_once_with([dummy_result])
 
 
@@ -241,7 +241,7 @@ def test_main_multiple_tsp_files(monkeypatch):
         main(use_parallel=False)
         # Should be called for both files
         assert mock_proc.call_count == 2
-        mock_display.assert_called_once_with([dummy_result_a, dummy_result_b])
+        mock_display.assert_called_once_with([dummy_result_a, dummy_result_b], override_config={'TIME_LIMIT': None})
         mock_plot.assert_called_once_with([dummy_result_a, dummy_result_b])
 
 
@@ -325,7 +325,7 @@ def test_main_calls_summary_and_plot(monkeypatch):
             patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
             patch('lin_kernighan_tsp_solver.main.plot_all_tours') as mock_plot:
         main()
-        mock_display.assert_called_once_with([dummy_result])
+        mock_display.assert_called_once_with([dummy_result], override_config={'TIME_LIMIT': None})
         mock_plot.assert_called_once_with([dummy_result])
 
 

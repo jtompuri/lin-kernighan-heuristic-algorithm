@@ -18,7 +18,6 @@ from typing import Any
 import numpy as np
 import time
 from scipy.spatial.distance import pdist, squareform
-from scipy.sparse.csgraph import minimum_spanning_tree
 from .config import STARTING_CYCLE_CONFIG
 
 
@@ -179,6 +178,11 @@ def _edges_to_tour(edges: list[tuple[int, int]], n_nodes: int) -> list[int]:
             for neighbor in reversed(adj[node]):
                 if not visited[neighbor]:
                     stack.append(neighbor)
+
+    # Add any unvisited nodes (disconnected components or empty edge list)
+    for i in range(n_nodes):
+        if not visited[i]:
+            tour.append(i)
 
     return tour
 
@@ -434,8 +438,6 @@ def _improve_tour_2opt(tour: list[int], distances: np.ndarray, max_time: float =
     Returns:
         list[int]: Improved tour.
     """
-    import time
-
     n = len(tour)
     if n <= 3:
         return tour[:]

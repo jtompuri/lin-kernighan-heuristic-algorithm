@@ -10,22 +10,29 @@ Functions:
 """
 
 import math
-from typing import Any
+from typing import Any, Optional
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 from . import config
 
 
-def display_summary_table(results_data: list[dict[str, Any]]) -> None:
+def display_summary_table(
+    results_data: list[dict[str, Any]],
+    override_config: Optional[dict[str, Any]] = None
+) -> None:
     """
     Prints a formatted summary table of processing results.
 
     Args:
         results_data (list[dict[str, Any]]): List of result dictionaries from instances.
+        override_config (dict[str, Any], optional): Runtime config values (e.g., from CLI args).
     """
     print("\nConfiguration parameters:")
-    for key, value in config.LK_CONFIG.items():
+    config_to_print = config.LK_CONFIG.copy()
+    if override_config:
+        config_to_print.update(override_config)
+    for key, value in config_to_print.items():
         if isinstance(value, float):
             print(f"  {key:<11s} = {value:.2f}")
         else:

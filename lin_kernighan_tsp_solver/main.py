@@ -209,7 +209,7 @@ def main(
     all_instance_results_list.sort(key=lambda x: x['name'])
 
     # Display results
-    display_summary_table(all_instance_results_list)
+    display_summary_table(all_instance_results_list, override_config={'TIME_LIMIT': time_limit})
     plot_all_tours(all_instance_results_list)
 
 

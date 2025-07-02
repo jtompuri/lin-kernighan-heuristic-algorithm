@@ -130,7 +130,7 @@ def plot_all_tours(results_data: list[dict[str, Any]]) -> None:
         if r_item['heu_tour']:
             heu_plot_nodes = r_item['heu_tour'] + [r_item['heu_tour'][0]]  # Close the loop
             ax.plot(coords[heu_plot_nodes, 0], coords[heu_plot_nodes, 1],
-                    '-', label='Heuristic', zorder=1, color='C0')
+                    '-', label='Heuristic', zorder=1, color='black')
             plotted_heuristic_legend = True
 
         # Plot optimal tour if available
@@ -138,7 +138,7 @@ def plot_all_tours(results_data: list[dict[str, Any]]) -> None:
         if opt_tour_data:  # Check if opt_tour_data is not None and not empty
             opt_plot_nodes = opt_tour_data + [opt_tour_data[0]]  # Close the loop
             ax.plot(coords[opt_plot_nodes, 0], coords[opt_plot_nodes, 1],
-                    ':', label='Optimal', zorder=2, color='C1')
+                    ':', label='Optimal', zorder=2, color='red')
             plotted_optimal_legend = True
 
         title = f"{r_item['name']}"
@@ -159,9 +159,9 @@ def plot_all_tours(results_data: list[dict[str, Any]]) -> None:
     # Create legend for the figure
     legend_elements = []
     if plotted_heuristic_legend:
-        legend_elements.append(Line2D([0], [0], color='C0', ls='-', label='Heuristic'))
+        legend_elements.append(Line2D([0], [0], color='black', ls='-', label='Heuristic'))
     if plotted_optimal_legend:
-        legend_elements.append(Line2D([0], [0], color='C1', ls=':', label='Optimal'))
+        legend_elements.append(Line2D([0], [0], color='red', ls=':', label='Optimal'))
     if legend_elements:
         fig.legend(handles=legend_elements, loc='upper center', ncol=len(legend_elements), bbox_to_anchor=(0.5, 1.0))
         # Adjust top margin if legend is present

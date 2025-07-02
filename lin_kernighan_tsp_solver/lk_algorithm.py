@@ -20,8 +20,6 @@ from .config import FLOAT_COMPARISON_TOLERANCE, LK_CONFIG
 @dataclass
 class SearchContext:
     """Holds the static data and search parameters for an LK search pass."""
-    __slots__ = ('D', 'neigh', 'start_cost', 'best_cost', 'deadline')
-
     D: np.ndarray
     neigh: list[list[int]]
     start_cost: float

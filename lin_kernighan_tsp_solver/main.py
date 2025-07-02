@@ -167,28 +167,71 @@ def main(
     use_parallel: bool = True,
     max_workers: int | None = None,
     time_limit: float | None = None,
-    starting_cycle_method: str | None = None
+    starting_cycle_method: str | None = None,
+    tsp_files: list[str] | None = None
 ):
-    """Main function with configurable options."""
+    """Main function with configurable options.
+
+    Args:
+        use_parallel: Whether to use parallel processing.
+        max_workers: Maximum number of parallel workers.
+        time_limit: Time limit per instance in seconds.
+        starting_cycle_method: Starting cycle algorithm to use.
+        tsp_files: List of specific TSP files to process. If None, processes all files in TSP_FOLDER_PATH.
+    """
     # Update LK_CONFIG with starting cycle method if provided
     if starting_cycle_method is not None:
         LK_CONFIG["STARTING_CYCLE"] = starting_cycle_method
 
     all_instance_results_list = []
 
-    if not TSP_FOLDER_PATH.is_dir():
-        print(f"Error: TSP folder not found at {TSP_FOLDER_PATH}")
-        return
+    # Collect TSP file pairs based on input
+    if tsp_files:
+        # Process specific files provided via command line
+        tsp_file_pairs = []
+        for tsp_file in tsp_files:
+            tsp_path = Path(tsp_file)
+            if not tsp_path.exists():
+                print(f"Error: TSP file not found: {tsp_file}")
+                continue
 
-    # Collect all TSP file pairs
-    tsp_file_pairs = []
-    for tsp_file_path_obj in sorted(TSP_FOLDER_PATH.glob('*.tsp')):
-        base_name = tsp_file_path_obj.stem
-        opt_tour_path_obj = TSP_FOLDER_PATH / (base_name + '.opt.tour')
-        tsp_file_pairs.append((str(tsp_file_path_obj), str(opt_tour_path_obj)))
+            # Look for corresponding .opt.tour file
+            base_name = tsp_path.stem
+            opt_file_candidates = [
+                tsp_path.parent / f"{base_name}.opt.tour",
+                tsp_path.parent / f"{base_name}.opt",
+                tsp_path.parent / f"{base_name}.tour"
+            ]
+
+            opt_file = None
+            for candidate in opt_file_candidates:
+                if candidate.exists():
+                    opt_file = str(candidate)
+                    break
+
+            if opt_file is None:
+                print(f"Warning: No optimal tour file found for {tsp_file}, using dummy path")
+                opt_file = str(tsp_path.parent / f"{base_name}.opt.tour")
+
+            tsp_file_pairs.append((str(tsp_path), opt_file))
+    else:
+        # Process all files in TSP_FOLDER_PATH (original behavior)
+        if not TSP_FOLDER_PATH.is_dir():
+            print(f"Error: TSP folder not found at {TSP_FOLDER_PATH}")
+            return
+
+        # Collect all TSP file pairs
+        tsp_file_pairs = []
+        for tsp_file_path_obj in sorted(TSP_FOLDER_PATH.glob('*.tsp')):
+            base_name = tsp_file_path_obj.stem
+            opt_tour_path_obj = TSP_FOLDER_PATH / (base_name + '.opt.tour')
+            tsp_file_pairs.append((str(tsp_file_path_obj), str(opt_tour_path_obj)))
 
     if not tsp_file_pairs:
-        print("No TSP files found in the specified directory.")
+        if tsp_files:
+            print("No valid TSP files found from the provided list.")
+        else:
+            print("No TSP files found in the specified directory.")
         return
 
     print(f"Found {len(tsp_file_pairs)} TSP instances.")

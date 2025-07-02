@@ -132,6 +132,7 @@ def plot_all_tours(results_data: list[dict[str, Any]]) -> None:
             ax.plot(coords[heu_plot_nodes, 0], coords[heu_plot_nodes, 1],
                     '-', label='Heuristic', zorder=1, color='C0')
             plotted_heuristic_legend = True
+
         # Plot optimal tour if available
         opt_tour_data = r_item.get('opt_tour')
         if opt_tour_data:  # Check if opt_tour_data is not None and not empty
@@ -140,16 +141,16 @@ def plot_all_tours(results_data: list[dict[str, Any]]) -> None:
                     ':', label='Optimal', zorder=2, color='C1')
             plotted_optimal_legend = True
 
-            title = f"{r_item['name']}"
-            # Safely get gap, opt_len, heu_len for the title
-            gap_val = r_item.get('gap')
+        title = f"{r_item['name']}"
+        # Safely get gap, opt_len, heu_len for the title
+        gap_val = r_item.get('gap')
 
-            if gap_val is not None and gap_val != float('inf'):
-                title += f" gap={gap_val:.2f}%"
-            ax.set_title(title)
-            ax.set_xticks([])  # Hide ticks and labels
-            ax.set_yticks([])
-            ax.set_aspect('equal', adjustable='box')  # Square aspect ratio
+        if gap_val is not None and gap_val != float('inf'):
+            title += f" gap={gap_val:.2f}%"
+        ax.set_title(title)
+        ax.set_xticks([])  # Hide ticks and labels
+        ax.set_yticks([])
+        ax.set_aspect('equal', adjustable='box')  # Square aspect ratio
 
     # Turn off unused subplots
     for i in range(num_to_plot_actual, len(axes_list)):

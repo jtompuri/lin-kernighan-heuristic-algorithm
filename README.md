@@ -213,14 +213,14 @@ python simple_tsp_solver.py
 Here is an example output using TSPLIB95 instances with optimal tours.
 **Note:** The example output below was generated with `--time-limit 20.0` for illustrative purposes. The default time limit is 5.0 seconds, which may yield different heuristic lengths and runtimes.
 
-![Example output plots](/images/lk_verifications_tsplib95_20s_2025-07-01.png)
+![Example output plots](/images/lin-kernighan-example-output-20s-parallel.png)
 
 ```
 Found 18 TSP instances.
-Processing using 8 parallel workers...
-[1/18] Completed: a280
-[2/18] Completed: berlin52
-[3/18] Completed: ch130
+Processing using 12 parallel workers...
+[1/18] Completed: berlin52
+[2/18] Completed: kroC100
+[3/18] Completed: kroA100
 ...
 [18/18] Completed: tsp225
 
@@ -235,26 +235,26 @@ Configuration parameters:
 
 Instance     OptLen   HeuLen   Gap(%)  Time(s)
 ----------------------------------------------
-a280        2586.77  2617.51     1.19    20.00
-berlin52    7544.37  7544.37     0.00     0.13
-ch130       6110.86  6152.99     0.69    20.00
-ch150       6532.28  6566.55     0.52    20.00
+a280        2586.77  2614.62     1.08    20.00
+berlin52    7544.37  7544.37     0.00     0.45
+ch130       6110.86  6134.56     0.39    20.00
+ch150       6532.28  6552.30     0.31    20.00
 eil101       642.31   640.21     0.00    20.00
-eil51        429.98   428.87     0.00    20.00
+eil51        429.98   428.98     0.00    20.00
 eil76        545.39   544.37     0.00    20.00
-kroA100    21285.44 21285.44     0.00     5.90
-kroC100    20750.76 20750.76     0.00     4.57
-kroD100    21294.29 21294.29     0.00     8.72
-lin105     14383.00 14383.00     0.00     1.85
-pcb442     50783.55 59765.25    17.69    20.00
-pr1002     259066.66 336815.79  30.01    20.00
-pr2392     378062.83 378062.83   0.00     8.97
-pr76       108159.44 108159.44   0.00     3.68
-rd100       7910.40  7910.40     0.00     1.66
+kroA100    21285.44 21285.44     0.00     4.07
+kroC100    20750.76 20750.76     0.00     0.62
+kroD100    21294.29 21294.29     0.00    10.61
+lin105     14383.00 14383.00     0.00    19.62
+pcb442     50783.55 52109.68     2.61    20.00
+pr1002     259066.66 323584.12    24.90    20.00
+pr2392     378062.83 506459.61    33.96    20.00
+pr76       108159.44 108159.44     0.00    16.81
+rd100       7910.40  7910.40     0.00     1.38
 st70         678.60   677.11     0.00    20.00
-tsp225      3859.00  3910.96     1.35    20.00
+tsp225      3859.00  3865.77     0.18    20.00
 ----------------------------------------------
-SUMMARY    910625.92 997510.13     2.86  13.08
+SUMMARY    910625.92 1104939.02     3.52    15.20
 ```
 
 ### Example: Processing Specific Files

@@ -483,12 +483,12 @@ if __name__ == '__main__':
                     if 'heu_tour' in res_item and res_item['heu_tour']:
                         h_tour = res_item['heu_tour'] + [res_item['heu_tour'][0]]
                         ax.plot(item_coords[h_tour, 0], item_coords[h_tour, 1],
-                                '-', label='Heuristic', zorder=1, color='C0')
+                                '-', label='Heuristic', zorder=1, color='black')
                         has_plotted_heuristic = True
                     if 'opt_tour' in res_item and res_item['opt_tour']:
                         o_tour = res_item['opt_tour'] + [res_item['opt_tour'][0]]
                         ax.plot(item_coords[o_tour, 0], item_coords[o_tour, 1],
-                                ':', label='Optimal', zorder=2, color='C1')
+                                ':', label='Optimal', zorder=2, color='red')
                         has_plotted_optimal = True
 
                     title_str_parts = [res_item['name']]
@@ -504,9 +504,9 @@ if __name__ == '__main__':
 
                 legend_handles = []
                 if has_plotted_heuristic:
-                    legend_handles.append(Line2D([0], [0], color='C0', ls='-', label='Heuristic'))
+                    legend_handles.append(Line2D([0], [0], color='black', ls='-', label='Heuristic'))
                 if has_plotted_optimal:
-                    legend_handles.append(Line2D([0], [0], color='C1', ls=':', label='Optimal'))
+                    legend_handles.append(Line2D([0], [0], color='red', ls=':', label='Optimal'))
 
                 if legend_handles:
                     fig.legend(handles=legend_handles, loc='upper center',

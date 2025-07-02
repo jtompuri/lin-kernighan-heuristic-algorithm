@@ -17,13 +17,14 @@ import concurrent.futures
 from multiprocessing import cpu_count
 import numpy as np
 
-from .config import TSP_FOLDER_PATH, FLOAT_COMPARISON_TOLERANCE
+from .config import TSP_FOLDER_PATH, FLOAT_COMPARISON_TOLERANCE, LK_CONFIG
 from .lk_algorithm import (
     build_distance_matrix,
     chained_lin_kernighan
 )
 from .tsp_io import read_tsp_file, read_opt_tour
 from .utils import display_summary_table, plot_all_tours
+from .starting_cycles import generate_starting_cycle
 
 
 def _calculate_tour_length(tour_nodes: list[int], D: np.ndarray) -> float:
@@ -133,7 +134,7 @@ def process_single_instance(
         elif verbose:
             print(f"  Optimal tour not available for {problem_name}.")
 
-        initial_tour = list(range(len(coords)))
+        initial_tour = generate_starting_cycle(coords, method=LK_CONFIG["STARTING_CYCLE"])
         start_time = time.time()
 
         heuristic_tour, heuristic_len = chained_lin_kernighan(
@@ -165,9 +166,14 @@ def process_single_instance(
 def main(
     use_parallel: bool = True,
     max_workers: int | None = None,
-    time_limit: float | None = None
+    time_limit: float | None = None,
+    starting_cycle_method: str | None = None
 ):
     """Main function with configurable options."""
+    # Update LK_CONFIG with starting cycle method if provided
+    if starting_cycle_method is not None:
+        LK_CONFIG["STARTING_CYCLE"] = starting_cycle_method
+
     all_instance_results_list = []
 
     if not TSP_FOLDER_PATH.is_dir():

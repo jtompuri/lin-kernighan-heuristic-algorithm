@@ -10,6 +10,7 @@ from pathlib import Path
 # Path to the folder containing TSPLIB .tsp files and optional .opt.tour files
 TSP_FOLDER_PATH = (
     Path(__file__).resolve().parent.parent / "verifications" / "tsplib95"
+    # Path(__file__).resolve().parent.parent / "tsp"
 )
 
 # Tolerance for floating point comparisons
@@ -26,6 +27,23 @@ LK_CONFIG = {
     "BREADTH_B": 5,  # Search breadth for y2 in alternate_step()
     "BREADTH_D": 1,  # Search breadth for y4 in alternate_step()
     "TIME_LIMIT": 5.0,  # Time limit for LK search (seconds)
+    "STARTING_CYCLE": "qboruvka",  # Starting cycle algorithm: random, nearest_neighbor, greedy, boruvka, qboruvka
+}
+
+# Starting cycle algorithm configuration
+STARTING_CYCLE_CONFIG = {
+    "AVAILABLE_METHODS": [
+        "natural",            # Natural order (0,1,2,...,n-1) - fastest, original behavior
+        "random",             # Random permutation
+        "nearest_neighbor",   # Nearest neighbor heuristic
+        "greedy",             # Greedy edge selection
+        "boruvka",            # Boruvka's MST-based construction
+        "qboruvka"            # Quick Boruvka (Concorde default)
+    ],
+    "DEFAULT_METHOD": "qboruvka",      # Concorde default
+    "NEAREST_NEIGHBOR_START": 0,       # Starting node for nearest neighbor
+    "GREEDY_MAX_EDGES": None,          # None = all edges, or limit for large instances
+    "QBORUVKA_ITERATIONS": 3,          # Number of QBoruvka refinement iterations
 }
 
 # Tour class configuration constants

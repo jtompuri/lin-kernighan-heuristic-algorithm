@@ -7,6 +7,7 @@ Usage:
 
 import argparse
 from .main import main
+from .config import STARTING_CYCLE_CONFIG
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Lin-Kernighan TSP Solver")
@@ -16,11 +17,16 @@ if __name__ == "__main__":
                         help="Number of parallel workers (default: all CPU cores)")
     parser.add_argument("--time-limit", type=float, default=None,
                         help="Time limit per instance in seconds")
+    parser.add_argument("--starting-cycle", type=str,
+                        choices=STARTING_CYCLE_CONFIG["AVAILABLE_METHODS"],
+                        default=None,
+                        help=f"Starting cycle algorithm (default: {STARTING_CYCLE_CONFIG['DEFAULT_METHOD']})")
 
     args = parser.parse_args()
 
     main(
         use_parallel=not args.sequential,
         max_workers=args.workers,
-        time_limit=args.time_limit
+        time_limit=args.time_limit,
+        starting_cycle_method=args.starting_cycle
     )

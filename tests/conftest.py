@@ -8,7 +8,7 @@ from lin_kernighan_tsp_solver.lk_algorithm import (
 )
 
 # simple_tsp_setup fixture is automatically available from conftest.py
-VERIFICATION_RANDOM_PATH = Path(__file__).resolve().parent.parent / "verifications" / "random"
+VERIFICATION_RANDOM_PATH = Path(__file__).resolve().parent.parent / "problems" / "random"
 
 
 @pytest.fixture

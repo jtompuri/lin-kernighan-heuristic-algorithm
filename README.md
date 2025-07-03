@@ -53,7 +53,7 @@ This project is expected to work with Python 3.12 or newer due to its use of mod
 
 6.  Use default TSPLIB files or place your own TSPLIB `.tsp` files in a designated folder.
     Optionally, place corresponding `.opt.tour` files (if available) in the same
-    folder. The default folder is `verifications/tsplib95/` relative to the project root.
+    folder. The default folder is `problems/tsplib95/` relative to the project root.
 
 7.  If you are using a different folder for TSP instances, update the `TSP_FOLDER_PATH`
     constant at the top of the `lin_kernighan_tsp_solver/config.py`.
@@ -237,20 +237,20 @@ The test suite includes unit tests, integration tests, CLI tests, and performanc
 
 Create and solve simple (4-12 nodes) TSP problems with Exact TSP Solver:
 ```bash
-cd exact_tsp_solver
+cd helpers
 python exact_tsp_solver.py
 ```
 
 Create random TSP problems:
 ```bash
-cd problems
+cd helpers
 python create_tsp_problem.py 20 my_tsp20.tsp
 python create_tsp_problem.py 50 random50.tsp --max_coord 500 --name Random50
 ```
 
 Solve TSP problems with Simple TSP Solver:
 ```bash
-cd simple_tsp_solver
+cd helpers
 python simple_tsp_solver.py
 ```
 
@@ -316,7 +316,7 @@ Processing my_problem (EUC_2D)...
   Heuristic length: 4162.62  Time: 5.00s
 
 # Process multiple files with different starting cycle
-$ python -m lin_kernighan_tsp_solver --starting-cycle greedy --time-limit 2.0 berlin52.tsp eil51.tsp
+$ python -m lin_kernighan_tsp_solver --starting-cycle greedy --time-limit 2.0 problems/tsplib95/berlin52.tsp problems/tsplib95/eil51.tsp
 Found 2 TSP instances.
 Processing using 2 parallel workers...
 [1/2] Completed: berlin52
@@ -339,13 +339,13 @@ SUMMARY     7974.35  7973.48     0.00     1.08
 -   [Määrittelydokumentti](/documentation/requirements_specification.md)
 -   [Toteutusdokumentti](/documentation/implementation_specification.md)
 -   [Testausdokumentti](/documentation/testing_specification.md)
--   [Viikkoraportti 1](/reports/weekly_report_1.md)
--   [Viikkoraportti 2](/reports/weekly_report_2.md)
--   [Viikkoraportti 3](/reports/weekly_report_3.md)
--   [Viikkoraportti 4](/reports/weekly_report_4.md)
--   [Viikkoraportti 5](/reports/weekly_report_5.md)
--   [Viikkoraportti 6](/reports/weekly_report_6.md)
--   [Viikkoraportti 7](/reports/weekly_report_7.md)
+-   [Viikkoraportti 1](/documentation/reports/weekly_report_1.md)
+-   [Viikkoraportti 2](/documentation/reports/weekly_report_2.md)
+-   [Viikkoraportti 3](/documentation/reports/weekly_report_3.md)
+-   [Viikkoraportti 4](/documentation/reports/weekly_report_4.md)
+-   [Viikkoraportti 5](/documentation/reports/weekly_report_5.md)
+-   [Viikkoraportti 6](/documentation/reports/weekly_report_6.md)
+-   [Viikkoraportti 7](/documentation/reports/weekly_report_7.md)
 
 [^1]: Applegate, David L. & Bixby, Robert E. & Chvatál, Vašek & Cook, William J. (2006): _The Traveling Salesman Problem : A Computational Study_, Princeton University Press.
 

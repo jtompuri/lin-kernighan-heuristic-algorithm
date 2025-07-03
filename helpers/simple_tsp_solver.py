@@ -34,7 +34,7 @@ from matplotlib.lines import Line2D
 
 # --- Constants ---
 # Define path relative to this script file for robustness
-TSP_FOLDER_PATH = Path(__file__).resolve().parent.parent / "verifications" / "tsplib95"
+TSP_FOLDER_PATH = Path(__file__).resolve().parent.parent / "problems" / "tsplib95"
 MAX_SUBPLOTS = 25  # Maximum number of subplots in the tour visualization
 
 

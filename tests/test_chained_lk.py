@@ -15,7 +15,7 @@ from lin_kernighan_tsp_solver.tsp_io import (
 from lin_kernighan_tsp_solver.config import LK_CONFIG
 
 # Definition of VERIFICATION_RANDOM_PATH should be here if not in conftest.py
-VERIFICATION_RANDOM_PATH = Path(__file__).resolve().parent.parent / "verifications" / "random"
+VERIFICATION_RANDOM_PATH = Path(__file__).resolve().parent.parent / "problems" / "random"
 
 
 @pytest.mark.parametrize("instance_base_name", ["rand4", "rand5", "rand6", "rand7", "rand8", "rand9", "rand10", "rand11", "rand12"])  # Replace with your actual file base names

@@ -9,8 +9,8 @@ from pathlib import Path
 
 # Path to the folder containing TSPLIB .tsp files and optional .opt.tour files
 TSP_FOLDER_PATH = (
-    Path(__file__).resolve().parent.parent / "verifications" / "tsplib95"
-    # Path(__file__).resolve().parent.parent / "tsp"
+    Path(__file__).resolve().parent.parent / "problems" / "tsplib95"
+    # Path(__file__).resolve().parent.parent / "problems"
 )
 
 # Path to the folder for saving heuristic tour solutions

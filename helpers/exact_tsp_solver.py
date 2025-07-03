@@ -8,7 +8,7 @@ algorithm (by checking all permutations of cities, fixing the starting city), an
 saves the instance and optimal tour in TSPLIB format. The solution and its length
 are printed and plotted. Intended for small instances due to factorial time complexity.
 
-Output files are saved in a 'tsp' subdirectory relative to the script's parent directory.
+Output files are saved in a 'problems' subdirectory relative to the script's parent directory.
 """
 
 import itertools
@@ -20,7 +20,7 @@ import numpy as np
 
 N_CITIES = 10
 RANDOM_SEED = 42
-OUTPUT_SUBDIRECTORY = "tsp"
+OUTPUT_SUBDIRECTORY = "problems"
 
 
 def compute_distance_matrix(coords):

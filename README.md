@@ -339,7 +339,6 @@ SUMMARY     7974.35  7973.48     0.00     1.08
 -   [Määrittelydokumentti](/documentation/requirements_specification.md)
 -   [Toteutusdokumentti](/documentation/implementation_specification.md)
 -   [Testausdokumentti](/documentation/testing_specification.md)
--   [Starting Cycle Algorithms Documentation](/documentation/starting_cycles.md)
 -   [Viikkoraportti 1](/reports/weekly_report_1.md)
 -   [Viikkoraportti 2](/reports/weekly_report_2.md)
 -   [Viikkoraportti 3](/reports/weekly_report_3.md)

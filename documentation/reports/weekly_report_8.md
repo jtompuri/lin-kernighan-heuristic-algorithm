@@ -12,7 +12,8 @@ Harjoitustyön viimeistely on sisältänyt seuraavia työvaiheita:
 - kansiorakenteen selkeyttäminen
 - turhien tiedostojen poistaminen
 - README-tiedoston tiivistäminen
-- komentoriviargumenttien lisääminen. 
+- komentoriviargumenttien lisääminen
+- toteutus- ja testausdokumenttien päivitys. 
 
 ## 2. Miten ohjelma on edistynyt?
 

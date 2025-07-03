@@ -160,6 +160,23 @@ cython_debug/
 
 # VS Code
 .vscode/
+*.code-workspace
+
+# Vim/Neovim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
 
 # Operating System Files
 # macOS
@@ -179,26 +196,61 @@ Thumbs.db
 *.lnk
 
 # Project-specific excludes
-# Solutions folder - contains generated heuristic tours
-solutions/
+# 
+# Strategy:
+# - Track reference problems (problems/tsplib95/) for reproducible benchmarks
+# - Ignore generated solutions and random problems to keep repo clean
+# - Allow tracking of custom problems if needed (problems/custom/ can be committed manually)
+#
+# Generated solutions and heuristic tours
+solutions/simple/
+solutions/random/
+solutions/custom/
+
+# Generated random TSP instances (keep tsplib95 problems tracked)
+problems/random/
+problems/custom/
+
+# Keep important reference problems but exclude generated ones
+!problems/tsplib95/
 
 # Performance test outputs
 performance_results.txt
 performance_plots/
 
-# Large TSP instances (optional - comment out if you want to track them)
+# TSP file patterns - uncomment to exclude all TSP files
 # *.tsp
 # *.opt.tour
 # *.tour
+
+# But always exclude temporary test files
+*test*.tsp
+*test*.opt.tour
+*test*.tour
+rand*.tsp
+rand*.opt.tour
+random*.tsp
+random*.opt.tour
 
 # Temporary output files
 output/
 temp/
 tmp/
 
+# Development and testing files
+*_test_*
+*_temp_*
+scratch/
+experiments/
+
 # Profiling data
 *.prof
 *.profile
+
+# Timing and benchmark data
+benchmark_*.txt
+timing_*.csv
+results_*.json
 
 # Log files
 *.log

@@ -1,6 +1,6 @@
 NAME: rand6
 TYPE: TSP
-COMMENT: Random instance with 6 nodes
+COMMENT: Random instance with 6 nodes, seed 42
 DIMENSION: 6
 EDGE_WEIGHT_TYPE: EUC_2D
 NODE_COORD_SECTION

@@ -1,0 +1,9 @@
+NAME: dummy.heu.tour
+TYPE: TOUR
+COMMENT: Heuristic tour (Lin-Kernighan), length 1.00
+DIMENSION: 2
+TOUR_SECTION
+1
+2
+-1
+EOF

@@ -40,7 +40,7 @@ Alkuperäinen valokuva:
 
 ![Alkuperäinen valokuva](/images/example-1024px.png)
 
-Pistevarjostustekniikalla toteutettu kuva:
+Pistevarjostustekniikalla toteutettu kuva ([weighted-voronoi-stippling](https://github.com/jtompuri/weighted-voronoi-stippling)):
 
 ![Pistevarjostustekniikka](/images/stippling_example-1024px_10000.png)
 

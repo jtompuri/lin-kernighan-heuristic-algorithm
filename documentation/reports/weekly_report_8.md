@@ -6,7 +6,7 @@ Olen viimeistellyt harjoitustyötä demotilaisuudessa saamani palautteen ja kysy
 
 Lisäsin sovellukseen usean ytimen tuen, kun tehdään usean tsp-ongelman eräajoa. Tällöin yksi ydin ratkaisee aina yhtä tsp-ongelmaa. Tämä nopeuttaa merkittävästi suorituskykyä. Stokastista syistä tulokset rinnakkaisessa ja peräkkäisessä prosessoinnissa eroavat jonkin verran toisistaan. Tämä näkyy niin, että eri ongelmat osoittautuvat helpoiksi tai vaikeiksi riippuen prosessointi tavasta. 
 
-Toteutin sivuprojektina [erilliseen repoon](https://github.com/jtompuri/weighted-voronoi-stippling) kurssille alunperin suunnittelemani taideprojektin, jossa tuotetaan valokuvasta pistevarjostustekniikalla tsp-tiedosto, joka tämän jälkeen se ratkaistaan ulkoisella tsp-ratkaisijalla, jolloin lopputulokseksi saadaan kierros, josta alkuperäinen valokuva on tunnistettavissa. Toteutin LK-algoritmiin kierroksen tallentamisen `.tour`-tiedostoksi tätä varten. Tekniikan on tehnyt tunnetuksi Robert Bosch. Esimerkki tekniikasta on alla. 
+Toteutin sivuprojektina [erilliseen repoon](https://github.com/jtompuri/weighted-voronoi-stippling) kurssille alunperin suunnittelemani taideprojektin, jossa tuotetaan valokuvasta pistevarjostustekniikalla tsp-tiedosto, joka tämän jälkeen se ratkaistaan ulkoisella tsp-ratkaisijalla, jolloin lopputulokseksi saadaan kierros, josta alkuperäinen valokuva on tunnistettavissa. Toteutin LK-algoritmiin kierroksen tallentamisen `.tour`-tiedostoksi tätä varten. Tekniikan on tehnyt tunnetuksi [Robert Bosch](https://www2.oberlin.edu/math/faculty/bosch/tspart-page.html). Esimerkki tekniikasta on alla. 
 
 Harjoitustyön viimeistely on sisältänyt seuraavia työvaiheita:
 - kansiorakenteen selkeyttäminen

@@ -5,14 +5,25 @@ Random TSP Problem Generator.
 
 Generates random Traveling Salesperson Problem (TSP) instances with 2D Euclidean
 coordinates and saves them in TSPLIB format. The user specifies the number of nodes,
-output filename, and optional parameters for coordinate range and problem name.
+with smart defaults for output filename, coordinate range, and problem name.
 
 Usage:
-    python create_tsp_problem.py <n_nodes> <output_filename> [--max_coord MAX_COORD] [--name PROBLEM_NAME]
+    python create_tsp_problem.py <n_nodes> [options]
 
-Example:
-    python create_tsp_problem.py 20 my_tsp20.tsp
-    python create_tsp_problem.py 50 random50.tsp --max_coord 500 --name Random50
+Arguments:
+    n_nodes                 Number of nodes (cities) to generate
+
+Options:
+    --output, -o FILENAME   Output TSP filename (default: problems/random/random{n_nodes}.tsp)
+    --max_coord COORD       Maximum coordinate value (default: 10 * sqrt(n_nodes), min 100)
+    --name NAME             Problem name (default: Random{n_nodes})
+    --seed SEED             Random seed for reproducible results (default: random)
+
+Examples:
+    python create_tsp_problem.py 20
+    python create_tsp_problem.py 50 --output custom50.tsp
+    python create_tsp_problem.py 100 --max_coord 500 --name Custom100
+    python create_tsp_problem.py 30 --seed 42
 """
 
 import argparse
@@ -72,11 +83,24 @@ def save_tsp_manually(
 
 def main():
     """Parse arguments and generate a random TSP instance."""
-    parser = argparse.ArgumentParser(description="Generate a random TSP file.")
+    parser = argparse.ArgumentParser(
+        description="Generate a random TSP file.",
+        epilog="Examples:\n"
+               "  python create_tsp_problem.py 20\n"
+               "  python create_tsp_problem.py 50 --output custom50.tsp\n"
+               "  python create_tsp_problem.py 100 --max_coord 500 --name Custom100",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
     parser.add_argument("n_nodes", type=int, help="Number of nodes (cities) to generate.")
-    parser.add_argument("output_filename", type=str, help="Name of the output TSP file (e.g., random_tsp.tsp).")
-    parser.add_argument("--max_coord", type=int, default=1000, help="Maximum coordinate value (default: 1000).")
-    parser.add_argument("--name", type=str, default=None, help="Name of the TSP problem (default: derived from filename).")
+    parser.add_argument("--output", "-o", type=str, default=None,
+                        help="Output TSP filename (default: problems/random/random{n_nodes}.tsp).")
+    parser.add_argument("--max_coord", type=int, default=None,
+                        help="Maximum coordinate value (default: 10 * sqrt(n_nodes), min 100).")
+    parser.add_argument("--name", type=str, default=None,
+                        help="Name of the TSP problem (default: Random{n_nodes}).")
+    parser.add_argument("--seed", type=int, default=None,
+                        help="Random seed for reproducible results (default: random).")
 
     args = parser.parse_args()
 
@@ -84,29 +108,80 @@ def main():
         print("Error: Number of nodes must be positive.")
         return
 
+    # Set random seed if provided
+    if args.seed is not None:
+        random.seed(args.seed)
+        print(f"Using random seed: {args.seed}")
+
+    # Smart default for output filename
+    if args.output is None:
+        args.output = f"random{args.n_nodes}.tsp"
+
+    # Smart default for max_coord based on problem size
+    if args.max_coord is None:
+        # Use 10 * sqrt(n_nodes) with minimum of 100 for reasonable coordinate range
+        import math
+        args.max_coord = max(100, int(10 * math.sqrt(args.n_nodes)))
+
+    # Smart default for problem name
+    if args.name is None:
+        args.name = f"Random{args.n_nodes}"
+
+    # Determine output path - default to problems/random/ directory
+    if os.path.isabs(args.output):
+        # User provided absolute path
+        output_file_path = args.output
+    elif "/" in args.output:
+        # User provided relative path with directory
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(script_dir)
+        output_file_path = os.path.join(project_root, args.output)
+    else:
+        # Just filename provided - use problems/random/ as default directory
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(script_dir)
+        problems_random_dir = os.path.join(project_root, "problems", "random")
+
+        # Create the directory if it doesn't exist
+        os.makedirs(problems_random_dir, exist_ok=True)
+
+        output_file_path = os.path.join(problems_random_dir, args.output)
+
+    print("Generating TSP instance:")
+    print(f"  Nodes: {args.n_nodes}")
+    print(f"  Coordinate range: 0-{args.max_coord}")
+
+    # Show relative path from project root for cleaner output
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_file_path = os.path.join(script_dir, os.path.basename(args.output_filename))
+    project_root = os.path.dirname(script_dir)
+    try:
+        relative_path = os.path.relpath(output_file_path, project_root)
+        print(f"  Output file: {relative_path}")
+    except ValueError:
+        # If relative path can't be computed (different drives on Windows), show absolute
+        print(f"  Output file: {output_file_path}")
 
-    problem_name_arg = args.name
-    if not problem_name_arg:
-        problem_name_arg = os.path.splitext(os.path.basename(args.output_filename))[0]
+    print(f"  Problem name: {args.name}")
+    if args.seed is not None:
+        print(f"  Random seed: {args.seed}")
 
-    print(f"Generating {args.n_nodes} random coordinates (0-{args.max_coord})...")
     coordinates = generate_random_coordinates(args.n_nodes, args.max_coord)
 
     try:
-        print(f"Manually saving TSP file to '{output_file_path}'...")
         problem_comment = f"Randomly generated TSP instance with {args.n_nodes} nodes."
+        if args.seed is not None:
+            problem_comment += f" Random seed: {args.seed}."
+
         save_tsp_manually(
             filepath=output_file_path,
-            name=problem_name_arg,
+            name=args.name,
             dimension=args.n_nodes,
             node_coords=coordinates,
             comment=problem_comment
         )
-        print(f"Successfully saved {output_file_path} manually.")
+        print(f"Successfully created TSP file: {output_file_path}")
     except Exception as e:
-        print(f"Error during manual save of TSP file: {e}")
+        print(f"Error creating TSP file: {e}")
 
 
 if __name__ == "__main__":

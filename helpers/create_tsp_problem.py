@@ -65,7 +65,7 @@ def save_tsp_manually(
         node_coords (dict): Node coordinates {id: [x, y], ...}, 1-based.
         comment (str): Problem comment.
     """
-    with open(filepath, 'w') as f:
+    with open(filepath, 'w', encoding='utf-8') as f:
         f.write(f"NAME: {name}\n")
         f.write(f"COMMENT: {comment}\n")
         f.write("TYPE: TSP\n")
@@ -131,8 +131,8 @@ def main():
     if os.path.isabs(args.output):
         # User provided absolute path
         output_file_path = args.output
-    elif "/" in args.output:
-        # User provided relative path with directory
+    elif os.sep in args.output or "/" in args.output:
+        # User provided relative path with directory (handle both / and \ separators)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(script_dir)
         output_file_path = os.path.join(project_root, args.output)

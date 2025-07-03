@@ -391,7 +391,7 @@ def save_tour(tour: list[int], filepath: str, name: str) -> None:
     """
     try:
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        with open(filepath, 'w') as f:
+        with open(filepath, 'w', encoding='utf-8') as f:
             f.write(f"NAME: {name}\n")
             f.write("TYPE: TOUR\n")
             f.write(f"DIMENSION: {len(tour)}\n")

@@ -203,7 +203,7 @@ def save_heuristic_tour(tour: list[int], problem_name: str, tour_length: float,
     filepath = folder_path / filename
 
     try:
-        with open(filepath, 'w') as f:
+        with open(filepath, 'w', encoding='utf-8') as f:
             f.write(f"NAME: {problem_name}.heu.tour\n")
             f.write("TYPE: TOUR\n")
             f.write(f"COMMENT: Heuristic tour (Lin-Kernighan), length {tour_length:.2f}\n")

@@ -124,7 +124,7 @@ def save_tour(tour, filepath, name):
         filepath (str): Output file path.
         name (str): Name for the tour.
     """
-    with open(filepath, 'w') as f:
+    with open(filepath, 'w', encoding='utf-8') as f:
         f.write(f"NAME: {name}\n")
         f.write("TYPE: TOUR\n")
         f.write(f"DIMENSION: {len(tour)}\n")
@@ -235,7 +235,7 @@ def main():
         print(f"  Solutions directory: {solutions_dir}/")
 
     # Save TSP instance
-    with open(tsp_path, 'w') as f:
+    with open(tsp_path, 'w', encoding='utf-8') as f:
         f.write(f"NAME: {args.name}\n")
         f.write("TYPE: TSP\n")
         f.write(f"COMMENT: Random instance with {args.nodes} nodes, seed {args.seed}\n")

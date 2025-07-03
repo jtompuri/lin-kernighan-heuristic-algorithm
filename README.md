@@ -132,8 +132,8 @@ python helpers/simple_tsp_solver.py --input-dir problems/random --time-limit 10 
 - **TSP files**: Place `.tsp` files in `problems/tsplib95/` (default) or update `TSP_FOLDER_PATH` in `lin_kernighan_tsp_solver/config.py`
 - **Optimal tours**: Place `.opt.tour` files alongside `.tsp` files for gap calculation
 - **Output folders**: 
-  - Heuristic tours: `solutions/` folder (when `--save-tours` is enabled)
-  - Helper tools: `solutions/random/`, `solutions/simple/`, etc. based on tool and input directory
+  - Lin-Kernighan heuristic tours: `solutions/lin_kernighan/` (when `--save-tours` is enabled)
+  - Helper tools: `solutions/simple/`, `solutions/exact/`, etc. based on tool and input directory
 - **Input folders**: `problems/tsplib95/`, `problems/random/`, `problems/custom/` for organized problem storage
 - **Algorithm parameters**: Modify `LK_CONFIG` and `STARTING_CYCLE_CONFIG` in `config.py`
 

@@ -1,16 +1,14 @@
-NAME: rand11.opt
+NAME: rand9
 TYPE: TOUR
-DIMENSION: 11
+DIMENSION: 9
 TOUR_SECTION
 1
 8
 3
 6
 5
-10
 4
 2
-11
 7
 9
 -1

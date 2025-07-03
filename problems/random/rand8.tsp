@@ -1,6 +1,6 @@
 NAME: rand8
 TYPE: TSP
-COMMENT: Random instance with 8 nodes
+COMMENT: Random instance with 8 nodes, seed 42
 DIMENSION: 8
 EDGE_WEIGHT_TYPE: EUC_2D
 NODE_COORD_SECTION

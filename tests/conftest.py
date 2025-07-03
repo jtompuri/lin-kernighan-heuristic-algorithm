@@ -7,8 +7,9 @@ from lin_kernighan_tsp_solver.lk_algorithm import (
     delaunay_neighbors
 )
 
-# simple_tsp_setup fixture is automatically available from conftest.py
+# Path constants for test files
 VERIFICATION_RANDOM_PATH = Path(__file__).resolve().parent.parent / "problems" / "random"
+VERIFICATION_SOLUTIONS_PATH = Path(__file__).resolve().parent.parent / "solutions" / "exact"
 
 
 @pytest.fixture

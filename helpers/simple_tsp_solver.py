@@ -413,7 +413,7 @@ if __name__ == '__main__':
                "  python simple_tsp_solver.py --time-limit 10 --max-k 6",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    
+
     parser.add_argument("--input-dir", type=str, default=None,
                         help="Input directory for .tsp files (default: problems/tsplib95/).")
     parser.add_argument("--output-dir", type=str, default=None,
@@ -432,7 +432,7 @@ if __name__ == '__main__':
     # Set default directories
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
-    
+
     if args.input_dir is None:
         tsp_folder = os.path.join(project_root, "problems", "tsplib95")
     else:
@@ -440,7 +440,7 @@ if __name__ == '__main__':
             tsp_folder = os.path.join(project_root, args.input_dir)
         else:
             tsp_folder = args.input_dir
-    
+
     if args.output_dir is None:
         output_folder = os.path.join(project_root, "solutions", "simple")
     else:
@@ -475,18 +475,18 @@ if __name__ == '__main__':
 
         base_name = filename[:-4]
         tsp_file_path = os.path.join(tsp_folder, filename)
-        
+
         # Look for optimal tour file first in same directory as TSP file
         opt_tour_file_path = os.path.join(tsp_folder, base_name + '.opt.tour')
-        
+
         # If not found, try solutions directory structure
         if not os.path.exists(opt_tour_file_path):
             solutions_dir = os.path.join(project_root, "solutions")
             if "random" in tsp_folder:
-                opt_tour_file_path = os.path.join(solutions_dir, "random", base_name + '.opt.tour')
+                opt_tour_file_path = os.path.join(solutions_dir, "exact", base_name + '.opt.tour')
             elif "tsplib95" in tsp_folder:
                 opt_tour_file_path = os.path.join(solutions_dir, "tsplib95", base_name + '.opt.tour')
-        
+
         coords_data, problem_edge_weight_type = parse_tsp_file(tsp_file_path)
 
         if not coords_data.size:
@@ -498,7 +498,7 @@ if __name__ == '__main__':
 
         print(f"Processing {base_name} (EUC_2D)...")
         distance_matrix = compute_distance_matrix(coords_data)
-        
+
         # Read optimal tour if available
         optimal_tour_nodes = None
         optimal_length = None
@@ -561,7 +561,7 @@ if __name__ == '__main__':
     if results_data:
         print("-" * 50)
         num_items = len(results_data)
-        
+
         # Calculate totals only for items with valid optimal lengths
         valid_results = [r for r in results_data if r['opt_len'] is not None]
         if valid_results:
@@ -571,7 +571,7 @@ if __name__ == '__main__':
                 len([r for r in valid_results if r['gap'] is not None and r['gap'] != float('inf')]) \
                 if any(r['gap'] is not None and r['gap'] != float('inf') for r in valid_results) else float('nan')
             avg_time = sum(r['time'] for r in results_data) / num_items
-            
+
             total_opt_str = f"{total_opt_len:>8.2f}"
             avg_gap_str = f"{avg_gap:>8.2f}" if not math.isnan(avg_gap) else f"{'N/A':>8s}"
         else:

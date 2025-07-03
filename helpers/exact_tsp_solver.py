@@ -19,7 +19,7 @@ Options:
     --plot                  Show plot of the optimal tour (default: False)
     --max-coord COORD       Maximum coordinate value (default: 1000)
 
-Note: .tsp files are saved to problems/random/, .opt.tour files to solutions/random/
+Note: .tsp files are saved to problems/random/, .opt.tour files to solutions/exact/
 
 Examples:
     python exact_tsp_solver.py
@@ -185,7 +185,7 @@ def main():
         script_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(script_dir)
         args.output_dir = os.path.join(project_root, "problems", "random")
-        solutions_dir = os.path.join(project_root, "solutions", "random")
+        solutions_dir = os.path.join(project_root, "solutions", "exact")
     else:
         # Custom output directory provided
         if not os.path.isabs(args.output_dir):
@@ -198,10 +198,10 @@ def main():
         if "problems" in args.output_dir:
             solutions_dir = args.output_dir.replace("problems", "solutions")
         else:
-            # Fallback to solutions/random/ for non-standard paths
+            # Fallback to solutions/exact/ for non-standard paths
             script_dir = os.path.dirname(os.path.abspath(__file__))
             project_root = os.path.dirname(script_dir)
-            solutions_dir = os.path.join(project_root, "solutions", "random")
+            solutions_dir = os.path.join(project_root, "solutions", "exact")
 
     # Create both directories if they don't exist
     os.makedirs(args.output_dir, exist_ok=True)

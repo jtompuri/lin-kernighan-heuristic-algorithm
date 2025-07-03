@@ -14,7 +14,7 @@ TSP_FOLDER_PATH = (
 )
 
 # Path to the folder for saving heuristic tour solutions
-SOLUTIONS_FOLDER_PATH = Path(__file__).resolve().parent.parent / "solutions"
+SOLUTIONS_FOLDER_PATH = Path(__file__).resolve().parent.parent / "solutions" / "lin_kernighan"
 
 # Tolerance for floating point comparisons
 FLOAT_COMPARISON_TOLERANCE = 1e-12

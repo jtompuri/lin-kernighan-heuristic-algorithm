@@ -1,6 +1,6 @@
 NAME: rand7
 TYPE: TSP
-COMMENT: Random instance with 7 nodes
+COMMENT: Random instance with 7 nodes, seed 42
 DIMENSION: 7
 EDGE_WEIGHT_TYPE: EUC_2D
 NODE_COORD_SECTION

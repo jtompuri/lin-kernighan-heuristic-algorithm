@@ -204,8 +204,9 @@ Thumbs.db
 #
 # Generated solutions and heuristic tours
 solutions/simple/
-solutions/random/
+solutions/exact/
 solutions/custom/
+solutions/lin_kernighan/
 
 # Generated random TSP instances (keep tsplib95 problems tracked)
 problems/random/

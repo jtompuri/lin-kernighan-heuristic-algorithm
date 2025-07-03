@@ -1,6 +1,6 @@
 NAME: lin105.heu.tour
 TYPE: TOUR
-COMMENT: Heuristic tour (Lin-Kernighan), length 14828.14
+COMMENT: Heuristic tour (Lin-Kernighan), length 14383.00
 DIMENSION: 105
 TOUR_SECTION
 1
@@ -15,22 +15,8 @@ TOUR_SECTION
 35
 38
 39
-42
-41
-43
-46
-52
-44
-47
-51
-54
-57
-53
-58
-62
-63
-61
 60
+61
 65
 66
 87
@@ -42,18 +28,6 @@ TOUR_SECTION
 98
 90
 89
-81
-75
-74
-70
-69
-73
-76
-80
-72
-77
-79
-86
 93
 102
 101
@@ -70,6 +44,20 @@ TOUR_SECTION
 68
 67
 64
+72
+77
+79
+86
+80
+76
+73
+81
+75
+74
+69
+70
+63
+62
 105
 59
 56
@@ -80,8 +68,20 @@ TOUR_SECTION
 49
 40
 104
-36
+44
+47
+51
+54
+57
+58
+53
+52
+46
+43
+41
+42
 37
+36
 26
 25
 18

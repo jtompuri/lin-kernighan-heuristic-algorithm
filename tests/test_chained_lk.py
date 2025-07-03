@@ -14,14 +14,15 @@ from lin_kernighan_tsp_solver.tsp_io import (
 )
 from lin_kernighan_tsp_solver.config import LK_CONFIG
 
-# Definition of VERIFICATION_RANDOM_PATH should be here if not in conftest.py
+# Definition of paths for test files
 VERIFICATION_RANDOM_PATH = Path(__file__).resolve().parent.parent / "problems" / "random"
+VERIFICATION_SOLUTIONS_PATH = Path(__file__).resolve().parent.parent / "solutions" / "exact"
 
 
 @pytest.mark.parametrize("instance_base_name", ["rand4", "rand5", "rand6", "rand7", "rand8", "rand9", "rand10", "rand11", "rand12"])  # Replace with your actual file base names
 def test_chained_lk_terminates_at_known_optimum(instance_base_name):
     tsp_file = VERIFICATION_RANDOM_PATH / f"{instance_base_name}.tsp"
-    opt_tour_file = VERIFICATION_RANDOM_PATH / f"{instance_base_name}.opt.tour"
+    opt_tour_file = VERIFICATION_SOLUTIONS_PATH / f"{instance_base_name}.opt.tour"
 
     assert tsp_file.exists(), f"TSP file not found: {tsp_file}"
     assert opt_tour_file.exists(), f"Optimal tour file not found: {opt_tour_file}"

@@ -1,16 +1,14 @@
-NAME: rand10.opt
+NAME: rand8
 TYPE: TOUR
-DIMENSION: 10
+DIMENSION: 8
 TOUR_SECTION
 1
 8
 3
 6
 5
-10
 4
 2
 7
-9
 -1
 EOF

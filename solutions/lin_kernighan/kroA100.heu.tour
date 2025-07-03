@@ -1,6 +1,6 @@
 NAME: kroA100.heu.tour
 TYPE: TOUR
-COMMENT: Heuristic tour (Lin-Kernighan), length 21961.67
+COMMENT: Heuristic tour (Lin-Kernighan), length 21285.44
 DIMENSION: 100
 TOUR_SECTION
 1
@@ -54,32 +54,25 @@ TOUR_SECTION
 35
 86
 27
-20
 12
+20
+57
+9
+7
 55
 83
+34
+29
 46
 43
 3
-41
+14
 71
+41
 100
 48
-14
-29
-34
-7
-9
-57
-87
-51
-61
-25
-81
-68
-85
-39
 30
+39
 96
 78
 52
@@ -90,14 +83,21 @@ TOUR_SECTION
 13
 95
 82
-50
+85
+68
 73
+50
 44
 2
 54
 40
 64
 69
+81
+25
+87
+51
+61
 58
 67
 28

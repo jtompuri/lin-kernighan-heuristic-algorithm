@@ -26,8 +26,19 @@ if __name__ == "__main__":
                         choices=STARTING_CYCLE_CONFIG["AVAILABLE_METHODS"],
                         default=None,
                         help=f"Starting cycle algorithm (default: {STARTING_CYCLE_CONFIG['DEFAULT_METHOD']})")
+    parser.add_argument("--save-tours", action="store_true",
+                        help="Save heuristic tours to solutions/ folder")
+    parser.add_argument("--no-save-tours", action="store_true",
+                        help="Do not save heuristic tours (overrides config)")
 
     args = parser.parse_args()
+
+    # Determine tour saving preference
+    save_tours = None
+    if args.save_tours:
+        save_tours = True
+    elif args.no_save_tours:
+        save_tours = False
 
     # If specific files are provided, use sequential processing for single files
     use_parallel = not args.sequential
@@ -40,5 +51,6 @@ if __name__ == "__main__":
         max_workers=args.workers,
         time_limit=args.time_limit,
         starting_cycle_method=args.starting_cycle,
-        tsp_files=args.files if args.files else None
+        tsp_files=args.files if args.files else None,
+        save_tours=save_tours
     )

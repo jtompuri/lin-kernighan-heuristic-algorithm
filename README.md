@@ -58,6 +58,9 @@ This project is expected to work with Python 3.12 or newer due to its use of mod
 7.  If you are using a different folder for TSP instances, update the `TSP_FOLDER_PATH`
     constant at the top of the `lin_kernighan_tsp_solver/config.py`.
 
+8.  The solver will create a `solutions/` folder in the project root to save heuristic tours
+    (when tour saving is enabled, which is the default).
+
 ## Usage
 
 The solver can be used in several ways depending on your needs:
@@ -98,8 +101,14 @@ python -m lin_kernighan_tsp_solver --time-limit 20.0
 # Choose starting cycle algorithm
 python -m lin_kernighan_tsp_solver --starting-cycle nearest_neighbor
 
+# Save heuristic tours to solutions/ folder
+python -m lin_kernighan_tsp_solver --save-tours
+
+# Disable tour saving (overrides config default)
+python -m lin_kernighan_tsp_solver --no-save-tours
+
 # Combined options with specific files
-python -m lin_kernighan_tsp_solver --starting-cycle greedy --time-limit 10.0 file1.tsp file2.tsp
+python -m lin_kernighan_tsp_solver --starting-cycle greedy --time-limit 10.0 --save-tours file1.tsp file2.tsp
 
 # Get help on available options
 python -m lin_kernighan_tsp_solver --help
@@ -111,6 +120,8 @@ python -m lin_kernighan_tsp_solver --help
 - `--workers N`: Number of parallel workers (default: all CPU cores)
 - `--time-limit T`: Time limit per instance in seconds (overrides `config.py` setting)
 - `--starting-cycle METHOD`: Starting cycle algorithm (see Starting Cycle Algorithms section)
+- `--save-tours`: Save heuristic tours to `solutions/` folder in TSPLIB format
+- `--no-save-tours`: Do not save heuristic tours (overrides config default)
 - `--help`: Show help message with all available options
 
 ### Starting Cycle Algorithms
@@ -149,6 +160,41 @@ Progress and results are printed to the console. The default time limit for each
 For instances with an optimal tour, the gap percentage is calculated and displayed. For instances without an optimal tour, the gap column shows "N/A". Finally, a plot of all processed tours is displayed (showing both optimal and heuristic tours if the optimal is available, otherwise just the heuristic tour).
 
 Configuration parameters for the LK algorithm can be adjusted in the `LK_CONFIG` dictionary in `config.py`. Starting cycle algorithm preferences can be set in the `STARTING_CYCLE_CONFIG` dictionary.
+
+### Saving Heuristic Tours
+
+The solver can optionally save the computed heuristic tours to files in TSPLIB format:
+
+- **Default behavior**: Tours are saved by default (configurable in `config.py` via `LK_CONFIG["SAVE_TOURS"]`)
+- **Output location**: Tours are saved to the `solutions/` folder in the project root
+- **File format**: Standard TSPLIB `.tour` format with `.heu.tour` extension
+- **File naming**: `{problem_name}.heu.tour` (e.g., `berlin52.heu.tour`)
+- **Content**: Includes tour metadata (name, length, dimension) and the complete tour sequence
+
+**Control tour saving:**
+```bash
+# Enable tour saving (if disabled in config)
+python -m lin_kernighan_tsp_solver --save-tours
+
+# Disable tour saving (if enabled in config)
+python -m lin_kernighan_tsp_solver --no-save-tours
+```
+
+**Tour file format example:**
+```
+NAME: berlin52.heu.tour
+TYPE: TOUR
+COMMENT: Heuristic tour (Lin-Kernighan), length 7544.37
+DIMENSION: 52
+TOUR_SECTION
+1
+22
+...
+-1
+EOF
+```
+
+The saved tour files are compatible with TSPLIB tools and can be used for further analysis or comparison with other TSP solvers.
 
 ## Performance Notes
 

@@ -23,7 +23,7 @@ from .lk_algorithm import (
     chained_lin_kernighan
 )
 from .tsp_io import read_tsp_file, read_opt_tour
-from .utils import display_summary_table, plot_all_tours
+from .utils import display_summary_table, plot_all_tours, save_heuristic_tour
 from .starting_cycles import generate_starting_cycle
 
 
@@ -149,6 +149,16 @@ def process_single_instance(
         # Calculate percentage gap if optimal length is known
         results['gap'] = _calculate_gap(heuristic_len, opt_len)
 
+        # Save heuristic tour if enabled in configuration
+        if LK_CONFIG.get("SAVE_TOURS", False) and heuristic_tour:
+            try:
+                saved_path = save_heuristic_tour(heuristic_tour, problem_name, heuristic_len)
+                if verbose:
+                    print(f"  Saved heuristic tour to: {saved_path}")
+            except IOError as save_error:
+                if verbose:
+                    print(f"  Warning: Failed to save tour: {save_error}")
+
         if verbose:
             gap_str = f"Gap: {results['gap']:.2f}%  " if results['gap'] is not None else ""
             print(f"  Heuristic length: {heuristic_len:.2f}  {gap_str}Time: {elapsed_time:.2f}s")
@@ -168,7 +178,8 @@ def main(
     max_workers: int | None = None,
     time_limit: float | None = None,
     starting_cycle_method: str | None = None,
-    tsp_files: list[str] | None = None
+    tsp_files: list[str] | None = None,
+    save_tours: bool | None = None
 ):
     """Main function with configurable options.
 
@@ -178,10 +189,15 @@ def main(
         time_limit: Time limit per instance in seconds.
         starting_cycle_method: Starting cycle algorithm to use.
         tsp_files: List of specific TSP files to process. If None, processes all files in TSP_FOLDER_PATH.
+        save_tours: Whether to save heuristic tours. If None, uses config default.
     """
     # Update LK_CONFIG with starting cycle method if provided
     if starting_cycle_method is not None:
         LK_CONFIG["STARTING_CYCLE"] = starting_cycle_method
+
+    # Update LK_CONFIG with save tours setting if provided
+    if save_tours is not None:
+        LK_CONFIG["SAVE_TOURS"] = save_tours
 
     all_instance_results_list = []
 

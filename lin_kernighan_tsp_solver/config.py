@@ -13,6 +13,9 @@ TSP_FOLDER_PATH = (
     # Path(__file__).resolve().parent.parent / "tsp"
 )
 
+# Path to the folder for saving heuristic tour solutions
+SOLUTIONS_FOLDER_PATH = Path(__file__).resolve().parent.parent / "solutions"
+
 # Tolerance for floating point comparisons
 FLOAT_COMPARISON_TOLERANCE = 1e-12
 
@@ -28,6 +31,7 @@ LK_CONFIG = {
     "BREADTH_D": 1,  # Search breadth for y4 in alternate_step()
     "TIME_LIMIT": 5.0,  # Time limit for LK search (seconds)
     "STARTING_CYCLE": "qboruvka",  # Starting cycle algorithm: random, nearest_neighbor, greedy, boruvka, qboruvka
+    "SAVE_TOURS": True,  # Whether to save heuristic tours to files
 }
 
 # Starting cycle algorithm configuration

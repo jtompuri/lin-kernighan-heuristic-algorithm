@@ -113,7 +113,7 @@ python -m pytest --cov=lin_kernighan_tsp_solver --cov-report=html  # With covera
 
 ### Helper Tools
 ```bash
-# Create random TSP instances with smart defaults
+# Create random TSP instances with defaults
 python helpers/create_tsp_problem.py 20                           # Creates rand20.tsp in problems/random/
 python helpers/create_tsp_problem.py 15 --name custom --seed 123  # Custom name with seed
 

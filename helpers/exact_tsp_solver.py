@@ -176,7 +176,7 @@ def main():
     # Set random seed
     np.random.seed(args.seed)
 
-    # Smart defaults
+    # Defaults
     if args.name is None:
         args.name = f"rand{args.nodes}"
 

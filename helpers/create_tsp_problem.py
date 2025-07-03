@@ -5,7 +5,7 @@ Random TSP Problem Generator.
 
 Generates random Traveling Salesperson Problem (TSP) instances with 2D Euclidean
 coordinates and saves them in TSPLIB format. The user specifies the number of nodes,
-with smart defaults for output filename, coordinate range, and problem name.
+with defaults for output filename, coordinate range, and problem name.
 
 Usage:
     python create_tsp_problem.py <n_nodes> [options]
@@ -113,17 +113,17 @@ def main():
         random.seed(args.seed)
         print(f"Using random seed: {args.seed}")
 
-    # Smart default for output filename
+    # Default for output filename
     if args.output is None:
         args.output = f"random{args.n_nodes}.tsp"
 
-    # Smart default for max-coord based on problem size
+    # Default for max-coord based on problem size
     if args.max_coord is None:
         # Use 10 * sqrt(n_nodes) with minimum of 100 for reasonable coordinate range
         import math
         args.max_coord = max(100, int(10 * math.sqrt(args.n_nodes)))
 
-    # Smart default for problem name
+    # Default for problem name
     if args.name is None:
         args.name = f"Random{args.n_nodes}"
 

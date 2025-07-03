@@ -204,7 +204,7 @@ Thumbs.db
 #
 # Generated solutions and heuristic tours
 solutions/simple/
-solutions/exact/
+# solutions/exact/  # Keep exact solutions for critical tests
 solutions/custom/
 solutions/lin_kernighan/
 

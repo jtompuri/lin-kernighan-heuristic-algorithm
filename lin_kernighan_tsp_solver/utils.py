@@ -174,34 +174,34 @@ def plot_all_tours(results_data: list[dict[str, Any]]) -> None:
 def save_heuristic_tour(tour: list[int], problem_name: str, tour_length: float,
                         solutions_folder: str | None = None) -> str:
     """Save a heuristic tour to a file in TSPLIB format.
-    
+
     Args:
         tour (list[int]): The tour as a list of node indices.
         problem_name (str): Name of the problem (used for filename).
         tour_length (float): Length/cost of the tour.
         solutions_folder (str | None, optional): Folder to save to. If None, uses config default.
-        
+
     Returns:
         str: Path to the saved file.
-        
+
     Raises:
         IOError: If the file cannot be written.
     """
     from pathlib import Path
     from .config import SOLUTIONS_FOLDER_PATH
-    
+
     if solutions_folder is None:
         folder_path = Path(SOLUTIONS_FOLDER_PATH)
     else:
         folder_path = Path(solutions_folder)
-    
+
     # Ensure the solutions folder exists
     folder_path.mkdir(parents=True, exist_ok=True)
-    
+
     # Create filename: problem_name.heu.tour
     filename = f"{problem_name}.heu.tour"
     filepath = folder_path / filename
-    
+
     try:
         with open(filepath, 'w') as f:
             f.write(f"NAME: {problem_name}.heu.tour\n")
@@ -209,15 +209,15 @@ def save_heuristic_tour(tour: list[int], problem_name: str, tour_length: float,
             f.write(f"COMMENT: Heuristic tour (Lin-Kernighan), length {tour_length:.2f}\n")
             f.write(f"DIMENSION: {len(tour)}\n")
             f.write("TOUR_SECTION\n")
-            
+
             # Write tour nodes (TSPLIB uses 1-indexed)
             for node in tour:
                 f.write(f"{node + 1}\n")
-            
+
             f.write("-1\n")  # End marker
             f.write("EOF\n")
-            
+
         return str(filepath)
-        
+
     except IOError as e:
         raise IOError(f"Failed to save tour to {filepath}: {e}")

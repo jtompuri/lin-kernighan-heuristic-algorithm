@@ -19,7 +19,7 @@ Options:
     --plot                  Show plot of the optimal tour (default: False)
     --max-coord COORD       Maximum coordinate value (default: 1000)
 
-Note: .tsp files are saved to problems/random/, .opt.tour files to solutions/exact/
+Note: .tsp and .opt.tour files are saved to the same directory (default: problems/random/)
 
 Examples:
     python exact_tsp_solver.py
@@ -181,11 +181,11 @@ def main():
         args.name = f"rand{args.nodes}"
 
     if args.output_dir is None:
-        # Default to problems/random/ directory for TSP files
+        # Default to problems/random/ directory for both TSP and optimal tour files
         script_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(script_dir)
         args.output_dir = os.path.join(project_root, "problems", "random")
-        solutions_dir = os.path.join(project_root, "solutions", "exact")
+        solutions_dir = args.output_dir  # Keep solutions with problems for consistency
     else:
         # Custom output directory provided
         if not os.path.isabs(args.output_dir):
@@ -194,14 +194,12 @@ def main():
             project_root = os.path.dirname(script_dir)
             args.output_dir = os.path.join(project_root, args.output_dir)
 
-        # Try to map problems directory to corresponding solutions directory
+        # Try to map problems directory to keep solutions co-located
         if "problems" in args.output_dir:
-            solutions_dir = args.output_dir.replace("problems", "solutions")
+            solutions_dir = args.output_dir  # Keep solutions with problems
         else:
-            # Fallback to solutions/exact/ for non-standard paths
-            script_dir = os.path.dirname(os.path.abspath(__file__))
-            project_root = os.path.dirname(script_dir)
-            solutions_dir = os.path.join(project_root, "solutions", "exact")
+            # For custom paths, create a solutions subdirectory
+            solutions_dir = os.path.join(args.output_dir, "solutions")
 
     # Create both directories if they don't exist
     os.makedirs(args.output_dir, exist_ok=True)

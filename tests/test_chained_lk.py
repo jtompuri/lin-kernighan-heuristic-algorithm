@@ -16,7 +16,7 @@ from lin_kernighan_tsp_solver.config import LK_CONFIG
 
 # Definition of paths for test files
 VERIFICATION_RANDOM_PATH = Path(__file__).resolve().parent.parent / "problems" / "random"
-VERIFICATION_SOLUTIONS_PATH = Path(__file__).resolve().parent.parent / "solutions" / "exact"
+VERIFICATION_SOLUTIONS_PATH = Path(__file__).resolve().parent.parent / "problems" / "random"
 
 
 @pytest.mark.parametrize("instance_base_name", ["rand4", "rand5", "rand6", "rand7", "rand8", "rand9", "rand10", "rand11", "rand12"])  # Replace with your actual file base names

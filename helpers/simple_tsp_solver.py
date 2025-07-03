@@ -483,7 +483,8 @@ if __name__ == '__main__':
         if not os.path.exists(opt_tour_file_path):
             solutions_dir = os.path.join(project_root, "solutions")
             if "random" in tsp_folder:
-                opt_tour_file_path = os.path.join(solutions_dir, "exact", base_name + '.opt.tour')
+                # For random problems, optimal tours are co-located with TSP files
+                opt_tour_file_path = os.path.join(tsp_folder, base_name + '.opt.tour')
             elif "tsplib95" in tsp_folder:
                 opt_tour_file_path = os.path.join(solutions_dir, "tsplib95", base_name + '.opt.tour')
 

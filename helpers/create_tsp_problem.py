@@ -15,14 +15,14 @@ Arguments:
 
 Options:
     --output, -o FILENAME   Output TSP filename (default: problems/random/random{n_nodes}.tsp)
-    --max_coord COORD       Maximum coordinate value (default: 10 * sqrt(n_nodes), min 100)
+    --max-coord COORD       Maximum coordinate value (default: 10 * sqrt(n_nodes), min 100)
     --name NAME             Problem name (default: Random{n_nodes})
     --seed SEED             Random seed for reproducible results (default: random)
 
 Examples:
     python create_tsp_problem.py 20
     python create_tsp_problem.py 50 --output custom50.tsp
-    python create_tsp_problem.py 100 --max_coord 500 --name Custom100
+    python create_tsp_problem.py 100 --max-coord 500 --name Custom100
     python create_tsp_problem.py 30 --seed 42
 """
 
@@ -88,14 +88,14 @@ def main():
         epilog="Examples:\n"
                "  python create_tsp_problem.py 20\n"
                "  python create_tsp_problem.py 50 --output custom50.tsp\n"
-               "  python create_tsp_problem.py 100 --max_coord 500 --name Custom100",
+               "  python create_tsp_problem.py 100 --max-coord 500 --name Custom100",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
     parser.add_argument("n_nodes", type=int, help="Number of nodes (cities) to generate.")
     parser.add_argument("--output", "-o", type=str, default=None,
                         help="Output TSP filename (default: problems/random/random{n_nodes}.tsp).")
-    parser.add_argument("--max_coord", type=int, default=None,
+    parser.add_argument("--max-coord", type=int, default=None,
                         help="Maximum coordinate value (default: 10 * sqrt(n_nodes), min 100).")
     parser.add_argument("--name", type=str, default=None,
                         help="Name of the TSP problem (default: Random{n_nodes}).")
@@ -117,7 +117,7 @@ def main():
     if args.output is None:
         args.output = f"random{args.n_nodes}.tsp"
 
-    # Smart default for max_coord based on problem size
+    # Smart default for max-coord based on problem size
     if args.max_coord is None:
         # Use 10 * sqrt(n_nodes) with minimum of 100 for reasonable coordinate range
         import math

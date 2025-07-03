@@ -4,6 +4,23 @@ A simplified Traveling Salesperson Problem (TSP) solver.
 This module implements a basic k-opt based heuristic for solving the TSP.
 It focuses on the core k-opt move and a recursive improvement strategy.
 
+Usage:
+    python simple_tsp_solver.py [options]
+
+Options:
+    --input-dir DIR         Input directory for .tsp files (default: problems/tsplib95/)
+    --output-dir DIR        Output directory for .tour files (default: solutions/simple/)
+    --time-limit SECONDS    Time limit per instance in seconds (default: 5.0)
+    --max-k K               Maximum k for k-opt moves (default: 4)
+    --plot / --no-plot      Show plots of the tours (default: True)
+    --save-tours / --no-save-tours  Save tour files (default: True)
+
+Examples:
+    python simple_tsp_solver.py
+    python simple_tsp_solver.py --no-plot --no-save-tours
+    python simple_tsp_solver.py --time-limit 10 --max-k 6
+    python simple_tsp_solver.py --input-dir problems/random --output-dir solutions/simple_random
+
 Key features:
 - Computes pairwise Euclidean distances.
 - Implements 2-opt swaps.
@@ -24,17 +41,15 @@ such as:
 - Delta-based cost updates for tentative improvements.
 - Chained Lin-Kernighan algorithm structure.
 """
+import argparse
 import os
 import time
 import math
-from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 
 # --- Constants ---
-# Define path relative to this script file for robustness
-TSP_FOLDER_PATH = Path(__file__).resolve().parent.parent / "problems" / "tsplib95"
 MAX_SUBPLOTS = 25  # Maximum number of subplots in the tour visualization
 
 
@@ -365,11 +380,94 @@ def read_opt_tour(path: str) -> list[int] | None:
         return None
 
 
+def save_tour(tour: list[int], filepath: str, name: str) -> None:
+    """
+    Save a tour in TSPLIB .tour format.
+
+    Args:
+        tour: A list of 0-indexed node IDs representing the tour.
+        filepath: Output file path.
+        name: Name for the tour.
+    """
+    try:
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, 'w') as f:
+            f.write(f"NAME: {name}\n")
+            f.write("TYPE: TOUR\n")
+            f.write(f"DIMENSION: {len(tour)}\n")
+            f.write("TOUR_SECTION\n")
+            for node in tour:
+                f.write(f"{node + 1}\n")  # Convert to 1-indexed for TSPLIB format
+            f.write("-1\n")
+            f.write("EOF\n")
+    except Exception as e:
+        print(f"Error saving tour to {filepath}: {e}")
+
+
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description="Solve TSP instances using a simplified k-opt heuristic.",
+        epilog="Examples:\n"
+               "  python simple_tsp_solver.py\n"
+               "  python simple_tsp_solver.py --no-plot --no-save-tours\n"
+               "  python simple_tsp_solver.py --time-limit 10 --max-k 6",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    
+    parser.add_argument("--input-dir", type=str, default=None,
+                        help="Input directory for .tsp files (default: problems/tsplib95/).")
+    parser.add_argument("--output-dir", type=str, default=None,
+                        help="Output directory for .tour files (default: solutions/simple/).")
+    parser.add_argument("--time-limit", type=float, default=5.0,
+                        help="Time limit per instance in seconds (default: 5.0).")
+    parser.add_argument("--max-k", type=int, default=4,
+                        help="Maximum k for k-opt moves (default: 4).")
+    parser.add_argument("--plot", action=argparse.BooleanOptionalAction, default=True,
+                        help="Show plots of the tours (default: True).")
+    parser.add_argument("--save-tours", action=argparse.BooleanOptionalAction, default=True,
+                        help="Save tour files (default: True).")
+
+    args = parser.parse_args()
+
+    # Set default directories
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(script_dir)
+    
+    if args.input_dir is None:
+        tsp_folder = os.path.join(project_root, "problems", "tsplib95")
+    else:
+        if not os.path.isabs(args.input_dir):
+            tsp_folder = os.path.join(project_root, args.input_dir)
+        else:
+            tsp_folder = args.input_dir
+    
+    if args.output_dir is None:
+        output_folder = os.path.join(project_root, "solutions", "simple")
+    else:
+        if not os.path.isabs(args.output_dir):
+            output_folder = os.path.join(project_root, args.output_dir)
+        else:
+            output_folder = args.output_dir
+
+    # Create output directory if saving tours
+    if args.save_tours:
+        os.makedirs(output_folder, exist_ok=True)
+
+    print("Simple TSP Solver Configuration:")
+    print(f"  Input directory: {os.path.relpath(tsp_folder, project_root)}")
+    if args.save_tours:
+        print(f"  Output directory: {os.path.relpath(output_folder, project_root)}")
+    print(f"  Time limit: {args.time_limit}s per instance")
+    print(f"  Max k-opt: {args.max_k}")
+    print(f"  Plot tours: {args.plot}")
+    print(f"  Save tours: {args.save_tours}")
+    print()
+
+    if not os.path.exists(tsp_folder):
+        print(f"Error: Input directory does not exist: {tsp_folder}")
+        exit(1)
+
     results_data = []
-    tsp_folder = TSP_FOLDER_PATH
-    # Define the time limit for the main script's solver runs directly
-    SOLVER_TIME_LIMIT_FOR_MAIN = 5.0
 
     for filename in sorted(os.listdir(tsp_folder)):
         if not filename.lower().endswith('.tsp'):
@@ -377,12 +475,18 @@ if __name__ == '__main__':
 
         base_name = filename[:-4]
         tsp_file_path = os.path.join(tsp_folder, filename)
+        
+        # Look for optimal tour file first in same directory as TSP file
         opt_tour_file_path = os.path.join(tsp_folder, base_name + '.opt.tour')
-
+        
+        # If not found, try solutions directory structure
         if not os.path.exists(opt_tour_file_path):
-            print(f"Skipping {base_name}: .opt.tour file not found at {opt_tour_file_path}")
-            continue
-
+            solutions_dir = os.path.join(project_root, "solutions")
+            if "random" in tsp_folder:
+                opt_tour_file_path = os.path.join(solutions_dir, "random", base_name + '.opt.tour')
+            elif "tsplib95" in tsp_folder:
+                opt_tour_file_path = os.path.join(solutions_dir, "tsplib95", base_name + '.opt.tour')
+        
         coords_data, problem_edge_weight_type = parse_tsp_file(tsp_file_path)
 
         if not coords_data.size:
@@ -392,30 +496,46 @@ if __name__ == '__main__':
             print(f"Skipping {base_name}: Not EUC_2D (type: {problem_edge_weight_type}).")
             continue
 
-        print(f"\nProcessing {base_name} (EUC_2D)...")
+        print(f"Processing {base_name} (EUC_2D)...")
         distance_matrix = compute_distance_matrix(coords_data)
-        optimal_tour_nodes = read_opt_tour(opt_tour_file_path)
-
-        if optimal_tour_nodes is None:
-            print(f"Skipping {base_name}: Optimal tour could not be read.")
-            continue
-
-        optimal_length = total_distance(optimal_tour_nodes, distance_matrix)
-        print(f"  Optimal length: {optimal_length:.2f}")
+        
+        # Read optimal tour if available
+        optimal_tour_nodes = None
+        optimal_length = None
+        if os.path.exists(opt_tour_file_path):
+            optimal_tour_nodes = read_opt_tour(opt_tour_file_path)
+            if optimal_tour_nodes is not None:
+                optimal_length = total_distance(optimal_tour_nodes, distance_matrix)
+                print(f"  Optimal length: {optimal_length:.2f}")
+        else:
+            print("  No optimal tour found for comparison")
 
         start_time = time.time()
         heuristic_tour, heuristic_length = simple_tsp_solver(
-            coords_data, max_k=4, time_limit=SOLVER_TIME_LIMIT_FOR_MAIN
+            coords_data, max_k=args.max_k, time_limit=args.time_limit
         )
         elapsed_time = time.time() - start_time
-        optimality_gap = float('inf')
-        if optimal_length > 0:
-            optimality_gap = max(0.0, 100.0 * (heuristic_length - optimal_length) / optimal_length)
-        elif heuristic_length == 0:  # Both opt and heu are 0
-            optimality_gap = 0.0
 
+        # Calculate gap if optimal is available
+        optimality_gap = None
+        if optimal_length is not None:
+            if optimal_length > 0:
+                optimality_gap = max(0.0, 100.0 * (heuristic_length - optimal_length) / optimal_length)
+            elif heuristic_length == 0:  # Both opt and heu are 0
+                optimality_gap = 0.0
+            else:
+                optimality_gap = float('inf')
+
+        gap_str = f"{optimality_gap:.2f}%" if optimality_gap is not None else "N/A"
         print(f"  Heuristic length: {heuristic_length:.2f}  "
-              f"Gap: {optimality_gap:.2f}%  Time: {elapsed_time:.2f}s")
+              f"Gap: {gap_str}  Time: {elapsed_time:.2f}s")
+
+        # Save tour if requested
+        if args.save_tours and heuristic_tour:
+            tour_filename = f"{base_name}.tour"
+            tour_path = os.path.join(output_folder, tour_filename)
+            save_tour(heuristic_tour, tour_path, base_name)
+            print(f"  Saved tour: {os.path.relpath(tour_path, project_root)}")
 
         results_data.append({
             'name': base_name, 'coords': coords_data,
@@ -430,8 +550,8 @@ if __name__ == '__main__':
     print("-" * 50)
 
     for r_item in results_data:
-        opt_len_str = f"{r_item['opt_len']:>8.2f}"
-        gap_str = f"{r_item['gap']:>8.2f}"
+        opt_len_str = f"{r_item['opt_len']:>8.2f}" if r_item['opt_len'] is not None else f"{'N/A':>8s}"
+        gap_str = f"{r_item['gap']:>8.2f}" if r_item['gap'] is not None else f"{'N/A':>8s}"
         print(
             f"{r_item['name']:<10s} {opt_len_str} "
             f"{r_item['heu_len']:>8.2f} {gap_str} "
@@ -441,20 +561,33 @@ if __name__ == '__main__':
     if results_data:
         print("-" * 50)
         num_items = len(results_data)
-        total_opt_len = sum(r['opt_len'] for r in results_data)
-        total_heu_len = sum(r['heu_len'] for r in results_data)
-        avg_gap = sum(r['gap'] for r in results_data if r['gap'] != float('inf')) / \
-            len([r for r in results_data if r['gap'] != float('inf')]) \
-            if any(r['gap'] != float('inf') for r in results_data) else float('nan')
-        avg_time = sum(r['time'] for r in results_data) / num_items
+        
+        # Calculate totals only for items with valid optimal lengths
+        valid_results = [r for r in results_data if r['opt_len'] is not None]
+        if valid_results:
+            total_opt_len = sum(r['opt_len'] for r in valid_results)
+            total_heu_len = sum(r['heu_len'] for r in valid_results)
+            avg_gap = sum(r['gap'] for r in valid_results if r['gap'] is not None and r['gap'] != float('inf')) / \
+                len([r for r in valid_results if r['gap'] is not None and r['gap'] != float('inf')]) \
+                if any(r['gap'] is not None and r['gap'] != float('inf') for r in valid_results) else float('nan')
+            avg_time = sum(r['time'] for r in results_data) / num_items
+            
+            total_opt_str = f"{total_opt_len:>8.2f}"
+            avg_gap_str = f"{avg_gap:>8.2f}" if not math.isnan(avg_gap) else f"{'N/A':>8s}"
+        else:
+            total_heu_len = sum(r['heu_len'] for r in results_data)
+            avg_time = sum(r['time'] for r in results_data) / num_items
+            total_opt_str = f"{'N/A':>8s}"
+            avg_gap_str = f"{'N/A':>8s}"
 
         print(
-            f"{'SUMMARY':<10s} {total_opt_len:>8.2f} {total_heu_len:>8.2f} "
-            f"{avg_gap:>8.2f} {avg_time:>8.2f}"
+            f"{'SUMMARY':<10s} {total_opt_str} {total_heu_len:>8.2f} "
+            f"{avg_gap_str} {avg_time:>8.2f}"
         )
     print("Done.")
 
-    if results_data:
+    # Plot results if requested
+    if args.plot and results_data:
         num_total = len(results_data)
         if num_total == 0:
             print("No results to plot.")
@@ -492,7 +625,7 @@ if __name__ == '__main__':
                         has_plotted_optimal = True
 
                     title_str_parts = [res_item['name']]
-                    if 'gap' in res_item and res_item['gap'] != float('inf'):
+                    if res_item['gap'] is not None and res_item['gap'] != float('inf'):
                         title_str_parts.append(f"gap={res_item['gap']:.2f}%")
                     ax.set_title(" ".join(title_str_parts))
                     ax.set_xticks([])

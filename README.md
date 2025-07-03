@@ -113,16 +113,28 @@ python -m pytest --cov=lin_kernighan_tsp_solver --cov-report=html  # With covera
 
 ### Helper Tools
 ```bash
-python helpers/exact_tsp_solver.py             # Brute-force solver (small instances)
-python helpers/create_tsp_problem.py 20 test.tsp  # Generate random instances
-python helpers/simple_tsp_solver.py            # Nearest neighbor solver
+# Create random TSP instances with smart defaults
+python helpers/create_tsp_problem.py 20                           # Creates rand20.tsp in problems/random/
+python helpers/create_tsp_problem.py 15 --name custom --seed 123  # Custom name with seed
+
+# Exact brute-force solver for small instances  
+python helpers/exact_tsp_solver.py                                # Process problems/random/*.tsp
+python helpers/exact_tsp_solver.py --input-dir problems/custom    # Custom input directory
+
+# Simple k-opt TSP solver with time limits
+python helpers/simple_tsp_solver.py                               # Process problems/tsplib95/*.tsp
+python helpers/simple_tsp_solver.py --save-tours --plot           # Save tours and show plots
+python helpers/simple_tsp_solver.py --input-dir problems/random --time-limit 10  # Custom config
 ```
 
 ## Configuration
 
 - **TSP files**: Place `.tsp` files in `problems/tsplib95/` (default) or update `TSP_FOLDER_PATH` in `lin_kernighan_tsp_solver/config.py`
 - **Optimal tours**: Place `.opt.tour` files alongside `.tsp` files for gap calculation
-- **Output**: Heuristic tours saved to `solutions/` folder (when `--save-tours` is enabled)
+- **Output folders**: 
+  - Heuristic tours: `solutions/` folder (when `--save-tours` is enabled)
+  - Helper tools: `solutions/random/`, `solutions/simple/`, etc. based on tool and input directory
+- **Input folders**: `problems/tsplib95/`, `problems/random/`, `problems/custom/` for organized problem storage
 - **Algorithm parameters**: Modify `LK_CONFIG` and `STARTING_CYCLE_CONFIG` in `config.py`
 
 ## References & Course Documentation

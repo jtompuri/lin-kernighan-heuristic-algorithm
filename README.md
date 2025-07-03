@@ -235,21 +235,39 @@ The test suite includes unit tests, integration tests, CLI tests, and performanc
 
 ## Helper Algorithms
 
-Create and solve simple (4-12 nodes) TSP problems with Exact TSP Solver:
+The project includes several helper scripts located in the `helpers/` directory for creating and solving TSP problems:
+
+### Exact TSP Solver
+Create and solve small (4-12 nodes) TSP problems with brute-force exact solution:
 ```bash
+# Run from project root
+python helpers/exact_tsp_solver.py
+
+# Or navigate to helpers directory
 cd helpers
 python exact_tsp_solver.py
 ```
 
-Create random TSP problems:
+### Random TSP Problem Generator
+Create random TSP problems with custom parameters:
 ```bash
+# Run from project root
+python helpers/create_tsp_problem.py 20 my_tsp20.tsp
+python helpers/create_tsp_problem.py 50 random50.tsp --max_coord 500 --name Random50
+
+# Or navigate to helpers directory
 cd helpers
 python create_tsp_problem.py 20 my_tsp20.tsp
 python create_tsp_problem.py 50 random50.tsp --max_coord 500 --name Random50
 ```
 
-Solve TSP problems with Simple TSP Solver:
+### Simple TSP Solver
+Solve TSP problems using nearest neighbor heuristic on all TSPLIB95 instances:
 ```bash
+# Run from project root
+python helpers/simple_tsp_solver.py
+
+# Or navigate to helpers directory
 cd helpers
 python simple_tsp_solver.py
 ```

@@ -13,17 +13,17 @@ def test_save_heuristic_tour():
         tour = [0, 1, 2, 3, 4]
         problem_name = "test_problem"
         tour_length = 123.45
-        
+
         saved_path = save_heuristic_tour(tour, problem_name, tour_length, temp_dir)
-        
+
         # Check file was created
         assert Path(saved_path).exists()
         assert Path(saved_path).name == "test_problem.heu.tour"
-        
+
         # Check file content
         with open(saved_path, 'r') as f:
             content = f.read()
-        
+
         assert "NAME: test_problem.heu.tour" in content
         assert "TYPE: TOUR" in content
         assert "COMMENT: Heuristic tour (Lin-Kernighan), length 123.45" in content
@@ -39,16 +39,16 @@ def test_save_heuristic_tour_empty():
         tour = []
         problem_name = "empty_test"
         tour_length = 0.0
-        
+
         saved_path = save_heuristic_tour(tour, problem_name, tour_length, temp_dir)
-        
+
         # Check file was created
         assert Path(saved_path).exists()
-        
+
         # Check file content
         with open(saved_path, 'r') as f:
             content = f.read()
-        
+
         assert "DIMENSION: 0" in content
         assert "TOUR_SECTION\n-1\n" in content
 
@@ -57,7 +57,7 @@ def test_main_with_save_tours_enabled():
     """Test that main function saves tours when enabled."""
     # This test would need a full setup with TSP files,
     # so for now we'll just check that the parameter is passed correctly
-    
+
     # Test that the main function accepts the save_tours parameter
     # without raising an error (we can't test full functionality without
     # setting up complete TSP instances)

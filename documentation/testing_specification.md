@@ -1,26 +1,29 @@
 # Testausdokumentti
 
-Tämä dokumentti kuvaa Lin-Kernighan TSP-ratkaisijan Python-toteutuksen testausprosessia. Testaus on suoritettu pääasiassa automaattisilla yksikkötesteillä `pytest`-kehystä hyödyntäen.
+Tämä dokumentti kuvaa Lin-Kernighan TSP-ratkaisijan Python-toteutuksen testausprosessia. Testaus on suoritettu kattavilla automaattisilla yksikkötesteillä ja integraatiotesteillä `pytest`-kehystä hyödyntäen.
 
 ## 1. Yksikkötestauksen kattavuusraportti
 
-Yksikkötestien kattavuus on tällä hetkellä 100%. Yksityiskohtainen kattavuusraportti löytyy html-muodossa kansiosta [`htmlcov`](/htmlcov/index.html). Et voi selata raporttia Githubissa, vaan sinun pitää kloonata projekti paikalliseen kansioon ja avata index.html-sivu selaimeen. Yksikkötestauksen kattavuusraportti on tuotettu komennolla `pytest --cov=lin_kernighan_tsp_solver --cov-report=html --cov-report=term --cov-report=term-missing`.
+Yksikkötestien kattavuus on tällä hetkellä 99%. Yksityiskohtainen kattavuusraportti löytyy html-muodossa kansiosta [`htmlcov`](/htmlcov/index.html). Et voi selata raporttia Githubissa, vaan sinun pitää kloonata projekti paikalliseen kansioon ja avata index.html-sivu selaimeen. Yksikkötestauksen kattavuusraportti on tuotettu komennolla `pytest --cov=lin_kernighan_tsp_solver --cov-report=html --cov-report=term --cov-report=term-missing`.
 
 ```bash
-Name                                       Stmts   Miss  Cover   Missing
-------------------------------------------------------------------------
-lin_kernighan_tsp_solver/config.py            13      0   100%
-lin_kernighan_tsp_solver/lk_algorithm.py     352      0   100%
-lin_kernighan_tsp_solver/main.py             128      0   100%
-lin_kernighan_tsp_solver/tsp_io.py            77      0   100%
-lin_kernighan_tsp_solver/utils.py             84      0   100%
-------------------------------------------------------------------------
-TOTAL                                        654      0   100%
+Name                                           Stmts   Miss  Cover   Missing
+----------------------------------------------------------------------------
+lin_kernighan_tsp_solver/__init__.py               0      0   100%
+lin_kernighan_tsp_solver/__main__.py               2      0   100%
+lin_kernighan_tsp_solver/config.py                13      0   100%
+lin_kernighan_tsp_solver/lk_algorithm.py         352      0   100%
+lin_kernighan_tsp_solver/main.py                 133      3    98%   83, 154, 156
+lin_kernighan_tsp_solver/starting_cycles.py      125      3    98%   71, 188, 190
+lin_kernighan_tsp_solver/tsp_io.py                82      0   100%
+lin_kernighan_tsp_solver/utils.py                 89      1    99%   91
+----------------------------------------------------------------------------
+TOTAL                                             796      7    99%
 ```
 
 ## 2. Mitä on testattu, miten tämä tehtiin?
 
-Ohjelman eri komponentteja on testattu seuraavasti:
+Ohjelman eri komponentteja on testattu kattavasti seuraavasti:
 
 **A. `Tour`-luokka (`test_tour.py`)**
 
@@ -34,48 +37,70 @@ Ohjelman eri komponentteja on testattu seuraavasti:
 
 **B. Aputoiminnot (`test_utils.py`)**
 
-Moduulien `lk_algorithm.py` ja `tsp_io.py` keskeiset aputoiminnot on testattu `test_utils.py`-tiedostossa.
+Moduulien `lk_algorithm.py`, `tsp_io.py`, ja `utils.py` keskeiset aputoiminnot on testattu `test_utils.py`-tiedostossa.
 *   **`build_distance_matrix()` (moduulista `lk_algorithm.py`):** Testattu etäisyysmatriisin laskenta (esim. `test_build_distance_matrix_simple_cases`, `test_build_distance_matrix`). Myös tyhjä (`test_build_distance_matrix_edge_cases`) ja yhden solmun tapaukset (`test_build_distance_matrix_single_node`) on testattu kattavasti.
 *   **`delaunay_neighbors()` (moduulista `lk_algorithm.py`):** Testattu Delaunay-naapurien löytäminen eri pistemäärillä (0, 1, 2, 3, 4 pistettä) ja `simple_tsp_setup`-fixturen koordinaateilla (esim. `test_delaunay_neighbors_few_points`, `test_delaunay_neighbors_triangle`, `test_delaunay_neighbors_from_fixture`). Varmistettu naapurilistojen perusominaisuudet.
 *   **`double_bridge()` (moduulista `lk_algorithm.py`):** Testattu "double bridge" -potkutoimintoa (esim. `test_double_bridge_kick`, `test_kick_function_perturbs_tour`). Varmistettu, että se tuottaa validin permutaation, muuttaa kierrosta (solmuja > 4) ja palauttaa alkuperäisen (solmuja <= 4).
 *   **`read_opt_tour()` (moduulista `tsp_io.py`):** Testattu `.opt.tour`-tiedostojen lukeminen (esim. `test_read_opt_tour`). Testattu useita virheellisiä formaatteja (`test_read_opt_tour_error_cases`) ja yleinen tiedostonlukuvirhe (`test_read_opt_tour_general_exception`).
 *   **`read_tsp_file()` (moduulista `tsp_io.py`):** Testattu `.tsp`-tiedostojen lukeminen (vain `EUC_2D`) (esim. `test_read_tsp_file_valid_euc_2d`). Testattu virheellisiä formaatteja (`test_read_tsp_file_error_cases`, esim. ei-tuettu `EDGE_WEIGHT_TYPE`, virheelliset koordinaattirivit) ja `FileNotFoundError` (`test_read_tsp_file_not_found`).
+*   **`write_opt_tour()` (moduulista `tsp_io.py`):** Testattu kierroksen tallentaminen optimaalisena ratkaisuna `.opt.tour`-formaatissa (esim. `test_write_opt_tour_valid_tour`, `test_write_opt_tour_with_comments`).
+*   **`display_summary_table()` ja `plot_all_tours()` (moduulista `utils.py`):** Testattu tulosten esittäminen taulukko- ja kuvamuodossa, mukaan lukien reunatapaukset ja virhetilanteet.
 
 **C. Lin-Kernighan-algoritmin ydinkomponentit (`test_lk_algorithm.py`)**
 
 Algoritmin sisäisiä ydinosia on testattu pääasiassa `simple_tsp_setup`-fixturea hyödyntäen.
-*   **`step()`-funktio:** Testattu 2-opt-parannuksen löytäminen (`test_step_finds_simple_2_opt`) ja toiminta optimaalisella kierroksella (`test_step_no_improvement_on_optimal_tour`). Aikarajojen käsittely on testattu (`test_step_deadline_in_standard_flips_loop`). `BREADTH`-rajoitteen vaikutus (`test_step_hits_break_due_to_breadth_limit_zero`) ja tilanteet, joissa kandidaatteja ei löydy (`test_step_no_candidates_for_t1_t2_pair`, `test_step_returns_false_none_when_no_candidates`), on katettu. Myös virheellisten kandidaattien ohittaminen on testattu (`test_step_skips_invalid_y1_candidates`); analyysissä havaittiin, että osa ehdosta on käytännössä saavuttamattomissa toisen tarkistuksen vuoksi, joten se on merkitty `pragma: no cover` -kommentilla kattavuusraportointia varten.
-*   **`alternate_step()`-funktio:** Testattu parannusten löytäminen (`test_alternate_step_finds_improvement`) ja toiminta optimaalisella kierroksella (`test_alternate_step_no_improvement_on_optimal`). Testattu aikarajan ylittymisen käsittely yleisesti (`test_alternate_step_deadline_exceeded`, `test_alternate_step_deadline_passed`) sekä tarkemmin eri silmukoiden alussa (`test_alternate_step_deadline_first_for`, `test_alternate_step_deadline_second_for`, `test_alternate_step_deadline_third_for`, `test_alternate_step_deadline_in_nested_loops`). `BREADTH_A/B/D`-rajoitteiden vaikutus (`test_alternate_step_restrictive_breadth`) ja kandidaattien ohittaminen, jos ne ovat `t1`, `t2` tai `chosen_y1` (`test_alternate_step_y2_candidate_continues`), on testattu. Myös tilanteet, joissa kandidaatteja ei löydy (`test_alternate_step_no_candidates`), on katettu.
-*   **`lk_search()`-funktio:** Testattu parannuksen löytäminen (`test_lk_search_finds_optimum_for_simple_tsp`, `test_lk_search_returns_seq_alt_on_improvement`) ja toiminta optimaalisella kierroksella (`test_lk_search_no_improvement_on_optimal_tour`). Aikarajojen käsittely: välitön paluu, jos aikaraja ylittynyt alussa (`test_lk_search_returns_none_if_deadline_at_start`, `test_lk_search_deadline_passed`), ja paluu, jos aikaraja ylittyy `step()`-kutsun jälkeen mutta ennen `alternate_step()`-kutsua (`test_lk_search_deadline_after_step_before_alternate`). Ei-parantavan `alternate_step`-tuloksen käsittely (`test_lk_search_handles_non_improving_alternate_step`) ja tilanne, jossa parannusta ei löydy (`test_lk_search_no_improvement`), on testattu.
-*   **`lin_kernighan()`-pääalgoritmi:** Testattu konvergoituminen optimiin (`test_lin_kernighan_converges_on_simple_tsp`, `test_lin_kernighan_improves_to_optimum_simple_case`) ja toiminta optimaalisella aloituskierroksella (`test_lin_kernighan_no_change_on_optimal_tour`, `test_lin_kernighan_on_optimal_tour_simple_case`). Testattu pienillä instansseilla (2 ja 3 solmua: `test_lin_kernighan_on_2_node_tsp`, `test_lin_kernighan_on_3_node_tsp`). Aikarajojen noudattaminen (`test_lin_kernighan_respects_deadline`, `test_lin_kernighan_deadline_exceeded`, `test_lin_kernighan_respects_overall_deadline`). `LK_CONFIG`-parametrien vaikutus (`test_lin_kernighan_config_sensitivity`).
-*   Muita `test_lk_algorithm.py`:ssä olevia testejä: `test_delaunay_neighbors_small_cases` (Delaunay-naapurit), `test_tour_init_cost_empty` (tyhjän Tour-olion kustannus), `test_flip_and_update_cost_recomputes_cost_if_none` (Tour-kustannuksen uudelleenlaskenta).
+*   **`step()`-funktio:** Testattu 2-opt-parannuksen löytäminen (`test_step_finds_simple_2_opt`) ja toiminta optimaalisella kierroksella (`test_step_no_improvement_on_optimal_tour`). Aikarajojen käsittely on testattu (`test_step_deadline_in_standard_flips_loop`). `BREADTH`-rajoitteen vaikutus (`test_step_hits_break_due_to_breadth_limit_zero`) ja tilanteet, joissa kandidaatteja ei löydy (`test_step_no_candidates_for_t1_t2_pair`, `test_step_returns_false_none_when_no_candidates`), on katettu. Myös virheellisten kandidaattien ohittaminen on testattu (`test_step_skips_invalid_y1_candidates`).
+*   **`alternate_step()`-funktio:** Testattu parannusten löytäminen (`test_alternate_step_finds_improvement`) ja toiminta optimaalisella kierroksella (`test_alternate_step_no_improvement_on_optimal`). Testattu aikarajan ylittymisen käsittely yleisesti ja tarkemmin eri silmukoiden alussa. `BREADTH_A/B/D`-rajoitteiden vaikutus ja kandidaattien ohittaminen, jos ne ovat `t1`, `t2` tai `chosen_y1`, on testattu. Myös tilanteet, joissa kandidaatteja ei löydy, on katettu.
+*   **`lk_search()`-funktio:** Testattu parannuksen löytäminen ja toiminta optimaalisella kierroksella. Aikarajojen käsittely: välitön paluu, jos aikaraja ylittynyt alussa, ja paluu, jos aikaraja ylittyy `step()`-kutsun jälkeen mutta ennen `alternate_step()`-kutsua. Ei-parantavan `alternate_step`-tuloksen käsittely ja tilanne, jossa parannusta ei löydy, on testattu.
+*   **`lin_kernighan()`-pääalgoritmi:** Testattu konvergoituminen optimiin ja toiminta optimaalisella aloituskierroksella. Testattu pienillä instansseilla (2 ja 3 solmua). Aikarajojen noudattaminen ja `LK_CONFIG`-parametrien vaikutus on testattu.
 
-**D. Chained Lin-Kernighan -algoritmi (`test_chained_lk.py`)**
+**D. Ketjutettu Lin-Kernighan -algoritmi (`test_chained_lk.py`)**
 
 Iteratiivista `chained_lin_kernighan`-algoritmia on testattu.
-*   **Konvergoituminen ja optimaalisuus:** Testattu konvergoituminen tunnettuun optimiin (`test_chained_lin_kernighan_converges_on_simple_tsp`) ja aloitettaessa optimaalisella kierroksella (`test_chained_lin_kernighan_with_optimal_start`).
-*   **Pysähtyminen `known_optimal_length` saavutettaessa:** Testattu useilla `rand`N-instansseilla (`test_chained_lk_terminates_at_known_optimum`), että algoritmi pysähtyy löydettyään annetun optimipituuden. Myös tarkemmat testit pysähtymisestä optimiin yhden (`test_chained_lin_kernighan_breaks_on_optimum_found_single_call`) tai useamman (`test_chained_lin_kernighan_breaks_on_optimum_found_after_improvement`) `lin_kernighan`-kutsun jälkeen.
-*   **Aikarajojen noudattaminen:** Testattu, että yleinen aikaraja pysäyttää algoritmin (`test_chained_lin_kernighan_respects_overall_deadline`, kun aikaraja on menneisyydessä).
-*   **Iteraatioiden hallinta:** Testattu toiminta, kun `MAX_NO_IMPROVEMENT_ITERATIONS` saavutetaan (`test_chained_lin_kernighan_stops_on_max_no_improvement`). Yhden iteraation tapaus (`test_chained_lk_max_iterations_one`) ja useamman iteraation toiminta (`test_chained_lk_multiple_iterations`) on varmistettu.
-*   **Reunatapaukset:** Testattu toiminta tyhjällä aloituskierroksella (`test_chained_lin_kernighan_empty_tour`).
+*   **Konvergoituminen ja optimaalisuus:** Testattu konvergoituminen tunnettuun optimiin ja aloitettaessa optimaalisella kierroksella.
+*   **Pysähtyminen `known_optimal_length` saavutettaessa:** Testattu useilla `rand`N-instansseilla, että algoritmi pysähtyy löydettyään annetun optimipituuden. Myös tarkemmat testit pysähtymisestä optimiin yhden tai useamman `lin_kernighan`-kutsun jälkeen.
+*   **Aikarajojen noudattaminen:** Testattu, että yleinen aikaraja pysäyttää algoritmin.
+*   **Iteraatioiden hallinta:** Testattu toiminta, kun `MAX_NO_IMPROVEMENT_ITERATIONS` saavutetaan. Yhden iteraation tapaus ja useamman iteraation toiminta on varmistettu.
+*   **Reunatapaukset:** Testattu toiminta tyhjällä aloituskierroksella.
 
-**E. Työnkulun hallinta (`test_workflow.py`)**
+**E. Aloituskierrosten algoritmeissa (`test_starting_cycles.py`)**
+
+Erilaisten aloituskierrosten generointialgoritmeja on testattu kattavasti.
+*   **`random_cycle()`:** Testattu satunnaisten kierrosten generointi eri solmumäärillä, mukaan lukien reunatapaukset (0-2 solmua).
+*   **`greedy_cycle()`:** Testattu ahne algoritmi, joka valitsee aina lähimmän käymättömän solmun. Testattu eri konfiguraatioilla ja solmumäärillä.
+*   **`savings_cycle()`:** Testattu Clarke-Wright Savings -algoritmi, joka optimoi reittien yhdistämistä säästöjen perusteella. Varmistettu kierrosten validius ja kustannuslaskenta.
+*   **`nearest_neighbor_cycle()`:** Testattu lähimmän naapurin algoritmi eri aloitussolmuilla. Testattu deterministisyys ja tulosten oikeellisuus.
+*   **`kruskal_cycle()`:** Testattu Kruskalin algoritmin muunnos TSP-kierrosten luomiseen. Varmistettu, että tuloksena on validi Hamiltonin kierros.
+*   **`prim_cycle()`:** Testattu Primin algoritmin muunnos TSP-kierrosten luomiseen. Testattu eri aloitussolmuilla ja varmistettu kierrosten validius.
+*   **`convex_hull_cycle()`:** Testattu konveksiin kuoreen perustuva aloituskierros. Testattu eri geometrisilla konfiguraatioilla, mukaan lukien kollineaariset pisteet.
+*   **`two_opt_on_random()`:** Testattu 2-opt-optimointi satunnaiselle kierrokselle aloituskierrokseksi. Varmistettu, että tulos on parempi tai yhtä hyvä kuin alkuperäinen.
+
+**F. Komentorivikäyttöliittymä (`test_main.py`, `test_main_helpers.py`, `test_cli_files.py`)**
+
+Sovelluksen CLI-toiminnallisuutta on testattu kattavasti:
+*   **Argumenttien käsittely:** Testattu eri komentoriviparametrit, mukaan lukien tiedostopolut, aikarajat, aloitusalgoritmit ja tallennusasetukset.
+*   **Tiedostojen käsittely:** Testattu TSP- ja OPT-tiedostojen lukeminen ja kirjoittaminen eri formaateissa.
+*   **Virheenkäsittely:** Testattu virhetilanteiden käsittely, kuten puuttuvat tiedostot, virheelliset parametrit ja I/O-virheet.
+*   **Tulosten tallennus:** Testattu kierrosten tallentaminen eri formaateissa (`test_tour_saving.py`).
+
+**G. Aloitusalgoritmien CLI-testaus (`test_starting_cycles_cli.py`)**
+
+Aloitusalgoritmien komentorivikäyttöä on testattu:
+*   **Kaikkien algoritmien testaus:** Varmistettu, että jokainen aloitusalgoritmi toimii CLI:n kautta oikein.
+*   **Parametrien välitys:** Testattu, että CLI-parametrit välitetään oikein algoritmeille.
+*   **Tulosten validointi:** Varmistettu, että eri aloitusalgoritmit tuottavat valideja kierroksia.
+
+**H. Työnkulun hallinta (`test_workflow.py`)**
 
 Pääohjelman (`main.py`) toimintoja on testattu.
-*   **`process_single_instance`:**
-    *   Testattu virhetilanteet: koordinaattien lataus epäonnistuu (`test_process_single_instance_no_coords_loaded`, `test_process_single_instance_handles_empty_coords`), TSP-tiedoston lukuvirhe (`test_process_single_instance_handles_tsp_read_error`), optimaalista kierrosta ei löydy (`test_process_single_instance_no_opt_tour_loaded`, `test_process_single_instance_handles_missing_opt_tour`), ja `chained_lin_kernighan`-funktion sisäinen virhe (`test_process_single_instance_handles_chained_lk_exception`).
-    *   Testattu `gap`-arvon laskenta erityisesti, kun optimaalinen pituus on nolla (`test_process_single_instance_handles_zero_opt_len`, `test_process_single_instance_gap_when_optimal_zero`).
-*   **`main` (pääfunktio):**
-    *   Testattu virhetilanteet: TSP-kansion puuttuminen (`test_main_tsp_folder_not_found`), ei TSP-tiedostoja käsiteltäväksi (`test_main_no_tsp_files`).
-    *   Testattu yksittäisen instanssin käsittelyn virhe (`test_main_process_single_instance_exception`) ja onnistuminen (`test_main_process_single_instance_success`).
-    *   Testattu useamman TSP-tiedoston käsittely (`test_main_multiple_tsp_files`).
-    *   Varmistettu, että yhteenvetotaulukko ja kuvaajat kutsutaan (`test_main_calls_summary_and_plot`).
+*   **`process_single_instance`:** Testattu virhetilanteet (koordinaattien lataus, TSP-tiedoston lukuvirhe, optimaalista kierrosta ei löydy, algoritmin sisäinen virhe) ja `gap`-arvon laskenta.
+*   **`main` (pääfunktio):** Testattu virhetilanteet (TSP-kansion puuttuminen, ei TSP-tiedostoja) ja onnistuneet käsittelyt. Varmistettu yhteenvetotaulukon ja kuvaajien kutsuminen.
 
-**F. Tulosten esitys (`test_output.py`)**
+**I. Tulosten esitys (`test_output.py`)**
 
 Moduulin `utils.py` tulosten visualisointi- ja yhteenvetofunktioita on testattu.
-*   **`display_summary_table()`:** Testattu useilla reunatapauksilla (`test_display_summary_table_edge_cases`), kuten tyhjällä tulosdatalla, vain virheellisiä tuloksia sisältävällä datalla, tai kun `opt_len` tai `gap` puuttuvat tai ovat `inf`.
-*   **`plot_all_tours()`:** Testattu toiminta, kun tulosdata on tyhjä (`test_plot_all_tours_no_results`) tai ei sisällä piirrettävää dataa (`test_plot_all_tours_no_valid_results_for_plotting`). Testattu varoituksen tulostuminen, jos piirrettävien kuvien määrä ylittää `MAX_SUBPLOTS_IN_PLOT` (`test_plot_all_tours_exceeds_max_subplots_prints_warning`) tai kun `MAX_SUBPLOTS_IN_PLOT` on asetettu nollaan (`test_plot_all_tours_num_to_plot_actual_is_zero`). Käyttämättömien subplotien akseleiden poistaminen (`test_plot_all_tours_turns_off_unused_subplots`). Onnistunut piirtopolku on testattu mockaamalla `matplotlib`-kutsut (`test_plot_all_tours_successful_path_mocked`).
+*   **`display_summary_table()`:** Testattu useilla reunatapauksilla, kuten tyhjällä tulosdatalla tai kun `opt_len` tai `gap` puuttuvat.
+*   **`plot_all_tours()`:** Testattu toiminta tyhjällä tulosdatalla, varoitusten tulostuminen ja onnistunut piirtopolku mockaamalla `matplotlib`-kutsut.
 
 ## 3. Minkälaisilla syötteillä testaus tehtiin?
 
@@ -84,17 +109,55 @@ Testauksessa käytettiin monipuolisia syötteitä:
 *   **`simple_tsp_setup`-fixture:** Tämä `conftest.py`-tiedostossa määritelty fixture tarjoaa konsistentin 5 solmun TSP-instanssin (koordinaatit `[[0.0, 0.01], [1.0, -0.01], [3.0, 0.02], [2.0, -0.02], [4.0, 0.0]]`), johon kuuluu etäisyysmatriisi, alkukierros (`[0, 1, 2, 3, 4]`), Delaunay-naapurit ja tunnettu optimaalinen kierros (`[0, 2, 4, 3, 1]`, kustannus n. `8.000567`). Tätä käytetään laajasti LK-ydinkomponenttien ja -algoritmien testauksessa.
 *   **Reunatapaukset:** Tyhjät kierrokset, yhden tai kahden solmun kierrokset, virheelliset syötteet funktioille, tyhjät tiedostot.
 *   **Tiedostopohjaiset syötteet:** `read_opt_tour` ja `read_tsp_file` -funktioiden testauksessa luotiin dynaamisesti testitiedostoja (`tmp_path`-fixture) simuloimaan validia ja virheellistä TSPLIB-formaatin dataa.
-*   **Ulkoiset TSPLIB-tiedostot:** `test_chained_lk_terminates_at_known_optimum` käyttää parametrisoidusti `rand4.tsp` ... `rand12.tsp` ja vastaavia `.opt.tour`-tiedostoja `verifications/random`-kansiosta.
+*   **Ulkoiset TSPLIB-tiedostot:** Useita testejä käyttää parametrisoidusti `rand4.tsp` ... `rand12.tsp` ja vastaavia `.opt.tour`-tiedostoja `problems/random`-kansiosta sekä muita TSPLIB-instansseja `problems/tsplib95`-kansiosta.
+*   **Aloitusalgoritmien testaus:** Jokaista aloitusalgoritmia testattiin eri kokoisilla ja geometrisesti erilaisilla instansseilla, mukaan lukien reunatapaukset kuten kollineaariset pisteet konveksille kuorelle.
+*   **CLI-parametrit:** Komentorivikäyttöliittymän testaus kattoi kaikki mahdolliset parametrikombinaatiot, virheelliset syötteet ja tiedostopolut.
 *   **Algoritmin parametrit:** `LK_CONFIG`-sanakirjan eri asetuksia (esim. `MAX_LEVEL`, `BREADTH`, `TIME_LIMIT`, `MAX_NO_IMPROVEMENT_ITERATIONS`) muunneltiin testaamaan algoritmien käyttäytymistä eri rajoitteilla.
 
 ## 4. Miten testit voidaan toistaa?
 
 Testit on kirjoitettu `pytest`-testauskehyksellä ja ne voidaan toistaa seuraavasti:
-1.  **Asenna riippuvuudet:** Varmista, että Python-ympäristöön on asennettu `pytest`, `numpy` ja `scipy` (sekä `matplotlib` jos halutaan ajaa koodia, joka tuottaa visualisointeja, vaikka testit itsessään mockaavat sen).
-2.  **Siirry projektin juurihakemistoon.**
-3.  **Suorita `pytest`:** Aja komento `pytest` terminaalissa.
-    *   Testit käyttävät pääosin dynaamisesti luotuja syötteitä tai `simple_tsp_setup`-fixturea, jotka eivät vaadi ulkoisia tiedostoja (lukuun ottamatta `randN`-testejä, jotka vaativat tiedostot `verifications/random`-kansiosta).
-    *   Satunnaisuutta käytetään `double_bridge`-funktiossa, mutta testit on suunniteltu varmistamaan sen yleiset ominaisuudet. Yhdessä `double_bridge`-testissä käytetään `np.random.seed(42)` toistettavuuden varmistamiseksi.
+
+1.  **Asenna riippuvuudet:** Varmista, että Python-ympäristöön on asennettu kaikki tarvittavat paketit:
+    ```bash
+    pip install -r requirements.txt
+    pip install -r requirements-dev.txt
+    ```
+    Tämä asentaa `pytest`, `pytest-cov`, `numpy`, `scipy`, `matplotlib` ja muut tarvittavat kirjastot.
+
+2.  **Siirry projektin juurihakemistoon:** Varmista, että olet hakemistossa, jossa `pytest.ini`-tiedosto sijaitsee.
+
+3.  **Suorita kaikki testit:**
+    ```bash
+    pytest
+    ```
+
+4.  **Suorita testit kattavuusraportilla:**
+    ```bash
+    pytest --cov=lin_kernighan_tsp_solver --cov-report=html --cov-report=term
+    ```
+    Tämä luo HTML-kattavuusraportin `htmlcov/`-kansioon.
+
+5.  **Suorita tietty testitiedosto:**
+    ```bash
+    pytest tests/test_tour.py
+    pytest tests/test_starting_cycles.py
+    ```
+
+6.  **Suorita tietty testi:**
+    ```bash
+    pytest tests/test_tour.py::test_tour_init_and_get_tour
+    ```
+
+**Huomioita toistettavuudesta:**
+*   Testit käyttävät pääosin deterministisiä syötteitä tai `simple_tsp_setup`-fixturea.
+*   Satunnaisuutta käyttävät testit (esim. `double_bridge`, `random_cycle`) on suunniteltu testaamaan yleisiä ominaisuuksia.
+*   Ulkoiset TSPLIB-tiedostot ovat mukana repositoriossa `problems/`-kansiossa.
+*   Testit eivät vaadi internetyhteyttä tai ulkoisia palveluita.
+*   Mockauksia käytetään `matplotlib`-visualisoinneissa välttämään riippuvuudet graafisista järjestelmistä.
+
+**Testien suoritus CI/CD-ympäristössä:**
+Testit on suunniteltu toimimaan automatisoiduissa ympäristöissä ilman käyttäjän vuorovaikutusta.
 
 ## 5. Ohjelman toiminnan empiirisen testauksen tulokset graafisessa muodossa
 
@@ -289,14 +352,28 @@ Havaitaan, että yksinkertainen tsp-ratkaisija pääsee yleensä noin 5-10 %:n p
 
 ## 6. Sovelluksen puutteet ja kehitysmahdollisuudet
 
-Vaikka sovellus on testattu kattavasti ja saavuttaa 100% lausekattavuuden yksikkötesteissä, on olemassa joitakin tunnistettuja puutteita ja mahdollisia kehityskohteita:
+Vaikka sovellus on testattu kattavasti ja saavuttaa 99% lausekattavuuden yksikkötesteissä, on olemassa joitakin tunnistettuja puutteita ja mahdollisia kehityskohteita:
 
-*   **TSPLIB-formaatin tuki:** Tällä hetkellä `read_tsp_file` tukee vain `EUC_2D`-tyyppisiä etäisyysmatriiseja. Laajempi tuki muille TSPLIB-formaateille (esim. `GEO`, `ATT`, eksplisiittiset matriisit) parantaisi sovelluksen käytettävyyttä. Jokainen uusi tuettu formaatti vaatisi omat yksikkötestinsä.
-*   **Naapurilistojen generointi:** Vain Delaunay-triangulaatioon perustuva naapurilista on implementoitu. Muiden naapuristrategioiden (esim. k-lähimmät naapurit, quadrant-naapurit) lisääminen voisi parantaa ratkaisun laatua tietyissä instansseissa. Nämä vaatisivat omat testinsä.
-*   **Parametrien viritys:** `LK_CONFIG`-sanakirjan parametrit ovat globaaleja ja niiden optimaaliset arvot voivat vaihdella instanssityypin ja -koon mukaan. Kehittyneempi parametrien hallinta tai automaattinen viritys voisi olla hyödyllistä. Tämän testaaminen olisi monimutkaista ja vaatisi todennäköisesti laajempaa empiiristä testausta.
-*   **Suorituskyky suurilla instansseilla:** Vaikka algoritmi on tehokas, Pythonin luontainen hitaus verrattuna käännettyihin kieliin voi rajoittaa suorituskykyä erittäin suurilla TSP-instansseilla (useita tuhansia solmuja). Kriittisten osien (esim. `Tour`-luokan operaatiot, etäisyyslaskenta) optimointi tai siirtäminen Cythoniin voisi olla kehityssuunta. Suorituskykytestaus ja profilointi auttaisivat tunnistamaan pullonkauloja.
-*   **LK-algoritmi ei noudata aikarajaa (mahdollinen ongelma lepotilassa):** On havaittu, että kun tietokone jätetään yksin laskemaan tsp-ratkaisua, algoritmin suoritus ei aina pysähdy asetettuun aikarajaan. Ongelma voi liittyä tietokoneen energiansäästö- tai lepotilaan, sillä algoritmi näyttää noudattavan aikarajaa tiukasti, kun kone on aktiivisessa käytössä. Mahdollisia ratkaisuja ovat energiansäästö- tai lepotilan estäminen sovelluksen ajon ajaksi tai `time.time()`-funktion korvaaminen `time.monotonic()`-funktiolla, joka ei ole altis järjestelmän kellonajan muutoksille.
-*   **Käyttöliittymä ja käytettävyys:** Nykyinen sovellus on komentorivipohjainen. Graafinen käyttöliittymä tai parempi integrointi muihin työkaluihin voisi parantaa käytettävyyttä.
-*   **Virheiden raportointi:** Vaikka virheitä käsitellään, käyttäjälle annettava palaute virhetilanteissa (esim. tiedostojen lukuvirheet) voisi olla yksityiskohtaisempaa ja ohjaavampaa.
+**Testaamatta jääneet rivit (1% kattavuudesta):**
+*   **`main.py` (3 riviä):** Kaksi `sys.exit()`-kutsua virhetilanteissa ja yksi tiedostojen listauksen virheenkäsittely. Nämä ovat vaikeasti testattavia ilman monimutkaisia mock-järjestelyjä.
+*   **`starting_cycles.py` (3 riviä):** Kaksi `sys.exit()`-kutsua CLI-virhetilanteissa ja yksi virheenkäsittely. Vastaava tilanne kuin `main.py`-tiedostossa.
+*   **`utils.py` (1 rivi):** Matplotlib-kuvaajan tallennuksen virheenkäsittely, joka on vaikea simuloida testissä.
 
-Nämä kohdat tarjoavat suuntaviivoja sovelluksen jatkokehitykselle ja laadun parantamiselle.
+**Teknisiä kehityskohteita:**
+*   **TSPLIB-formaatin tuki:** Tällä hetkellä `read_tsp_file` tukee vain `EUC_2D`-tyyppisiä etäisyysmatriiseja. Laajempi tuki muille TSPLIB-formaateille (esim. `GEO`, `ATT`, eksplisiittiset matriisit) parantaisi sovelluksen käytettävyyttä.
+*   **Naapurilistojen generointi:** Vain Delaunay-triangulaatioon perustuva naapurilista on implementoitu. Muiden naapuristrategioiden (esim. k-lähimmät naapurit, quadrant-naapurit) lisääminen voisi parantaa ratkaisun laatua tietyissä instansseissa.
+*   **Parametrien viritys:** `LK_CONFIG`-sanakirjan parametrit ovat globaaleja ja niiden optimaaliset arvot voivat vaihdella instanssityypin ja -koon mukaan. Kehittyneempi parametrien hallinta tai automaattinen viritys voisi olla hyödyllistä.
+*   **Suorituskyky suurilla instansseilla:** Vaikka algoritmi on tehokas, Pythonin luontainen hitaus verrattuna käännettyihin kieliin voi rajoittaa suorituskykyä erittäin suurilla TSP-instansseilla (useita tuhansia solmuja). Kriittisten osien optimointi tai siirtäminen Cythoniin voisi olla kehityssuunta.
+
+**Käytettävyys ja toiminnallisuus:**
+*   **Graafinen käyttöliittymä:** Nykyinen sovellus on komentorivipohjainen. Graafinen käyttöliittymä tai web-käyttöliittymä voisi parantaa käytettävyyttä.
+*   **Virheiden raportointi:** Vaikka virheitä käsitellään kattavasti, käyttäjälle annettava palaute virhetilanteissa voisi olla yksityiskohtaisempaa ja ohjaavampaa.
+*   **Rinnakkaiskäsittely:** Nykyinen toteutus ei hyödynnä useita prosessoriytimjä. Parallelisoiminen voisi parantaa suorituskykyä suurissa instansseissa.
+*   **Aikarajapositiivinen ongelma:** On havaittu, että kun tietokone jätetään yksin laskemaan TSP-ratkaisua, algoritmin suoritus ei aina pysähdy asetettuun aikarajaan. Ongelma voi liittyä tietokoneen energiansäästö- tai lepotilaan.
+
+**Testauksen kehityskohteet:**
+*   **Pitkäaikaiset suorituskykytestit:** Nykyiset testit keskittyvät oikeellisuuteen. Automaattisia suorituskykytestejä voisi lisätä regressioiden havaitsemiseksi.
+*   **Stress-testaus:** Testaus erittäin suurilla instansseilla muistin ja ajan kulutuksen suhteen.
+*   **Integraatiotestit:** Vaikka CLI-testejä on paljon, end-to-end-testejä koko työkululle voisi lisätä.
+
+Nämä kohdat tarjoavat suuntaviivoja sovelluksen jatkokehitykselle ja laadun parantamiselle. Tämänhetkinen 99%:n testikattavuus ja kattava testisarja tarjoavat kuitenkin vahvan perustan jatkokehitykselle.

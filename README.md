@@ -11,7 +11,7 @@ A Python implementation of the Lin-Kernighan (LK) heuristic for solving the Trav
 - Comprehensive test coverage and helper tools
 
 **Requirements:** Python 3.12+ (uses modern features like f-strings, pathlib, and extensive type hinting)  
-**Optional:** Numba (for JIT optimizations - automatically detected and used when available)
+**Dependencies:** Includes Numba for JIT optimizations (graceful fallback if unavailable)
 
 ## Table of Contents
 - [Quick Start](#quick-start)
@@ -136,8 +136,7 @@ SUMMARY    910625.92 1104939.02     3.52    15.20
 
 ### Installation
 ```bash
-pip install -r requirements.txt                # Core dependencies
-pip install numba                             # Optional: for JIT optimizations
+pip install -r requirements.txt                # Includes Numba for JIT optimizations
 pip install -r requirements-dev.txt          # Development: includes testing, linting tools
 ```
 

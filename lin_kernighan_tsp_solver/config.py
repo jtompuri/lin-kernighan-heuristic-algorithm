@@ -6,8 +6,6 @@ throughout the project, such as algorithm settings, tolerances, and paths.
 """
 
 from pathlib import Path
-import math
-import os
 
 # Path to the folder containing TSPLIB .tsp files and optional .opt.tour files
 TSP_FOLDER_PATH = (

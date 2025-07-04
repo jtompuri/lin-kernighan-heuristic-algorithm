@@ -3,7 +3,12 @@ Numba-optimized components for Lin-Kernighan TSP solver.
 
 This module provides JIT-compiled versions of performance-critical functions
 from the original LK algorithm implementation.
+
+Note: This module intentionally defines functions twice (with and without Numba decorators)
+to provide fallback implementations when Numba is not available.
 """
+# pyright: reportOptionalMemberAccess=false
+# pyright: reportGeneralTypeIssues=false
 
 import math
 import time
@@ -12,8 +17,8 @@ from typing import Tuple, List
 import numpy as np
 
 try:
-    import numba
-    from numba import jit, prange
+    import numba  # type: ignore[import-untyped]
+    from numba import jit, prange  # type: ignore[import-untyped]
     NUMBA_AVAILABLE = True
     print("Numba JIT compilation available")
 except ImportError:
@@ -33,21 +38,21 @@ except ImportError:
 
 if NUMBA_AVAILABLE:
     @jit(nopython=True, cache=True)
-    def tour_next_numba(order: np.ndarray, pos: np.ndarray, v: int) -> int:
+    def tour_next_numba(order: np.ndarray, pos: np.ndarray, v: int) -> int:  # type: ignore[misc] # Numba-decorated version
         """Numba-optimized tour.next() operation."""
         n = len(order)
         idx = pos[v] + 1
         return order[idx if idx < n else 0]
 
     @jit(nopython=True, cache=True)
-    def tour_prev_numba(order: np.ndarray, pos: np.ndarray, v: int) -> int:
+    def tour_prev_numba(order: np.ndarray, pos: np.ndarray, v: int) -> int:  # type: ignore[misc] # Numba-decorated version
         """Numba-optimized tour.prev() operation."""
         n = len(order)
         idx = pos[v] - 1
         return order[idx if idx >= 0 else n - 1]
 
     @jit(nopython=True, cache=True)
-    def tour_sequence_numba(pos: np.ndarray, node_a: int, node_b: int, node_c: int) -> bool:
+    def tour_sequence_numba(pos: np.ndarray, node_a: int, node_b: int, node_c: int) -> bool:  # type: ignore[misc] # Numba-decorated version
         """Numba-optimized tour.sequence() operation."""
         idx_a, idx_b, idx_c = pos[node_a], pos[node_b], pos[node_c]
         if idx_a <= idx_c:
@@ -55,7 +60,7 @@ if NUMBA_AVAILABLE:
         return idx_a <= idx_b or idx_b <= idx_c
 
     @jit(nopython=True, cache=True)
-    def tour_flip_numba(order: np.ndarray, pos: np.ndarray, start_node: int, end_node: int):
+    def tour_flip_numba(order: np.ndarray, pos: np.ndarray, start_node: int, end_node: int):  # type: ignore[misc] # Numba-decorated version
         """Numba-optimized tour.flip() operation."""
         n = len(order)
         if n == 0:
@@ -94,7 +99,7 @@ if NUMBA_AVAILABLE:
             pos[node_right] = left_idx
 
     @jit(nopython=True, cache=True)
-    def tour_init_cost_numba(order: np.ndarray, D: np.ndarray) -> float:
+    def tour_init_cost_numba(order: np.ndarray, D: np.ndarray) -> float:  # type: ignore[misc] # Numba-decorated version
         """Numba-optimized tour cost calculation."""
         n = len(order)
         if n == 0:
@@ -106,7 +111,7 @@ if NUMBA_AVAILABLE:
             next_node = order[(i + 1) % n]
             total_cost += D[current_node, next_node]
 
-        return total_cost
+        return float(total_cost)  # type: ignore[return-value] # Ensure float return type
 
     @jit(nopython=True, parallel=True, cache=True)
     def tour_init_cost_numba_parallel(order: np.ndarray, D: np.ndarray) -> float:
@@ -125,10 +130,10 @@ if NUMBA_AVAILABLE:
             costs[i] = D[current_node, next_node]
 
         # Sum the costs
-        return np.sum(costs)
+        return float(np.sum(costs))  # type: ignore[return-value] # Ensure float return type
 
     @jit(nopython=True, cache=True)
-    def distance_matrix_numba(coords: np.ndarray) -> np.ndarray:
+    def distance_matrix_numba(coords: np.ndarray) -> np.ndarray:  # type: ignore[misc] # Numba-decorated version
         """Numba-optimized distance matrix computation."""
         n = coords.shape[0]
         if n == 0:
@@ -171,7 +176,7 @@ if NUMBA_AVAILABLE:
         return D
 
     @jit(nopython=True, cache=True)
-    def generate_standard_candidates_numba(
+    def generate_standard_candidates_numba(  # type: ignore[misc] # Numba-decorated version
         base: int, s1: int, order: np.ndarray, pos: np.ndarray,
         D: np.ndarray, neigh_s1: np.ndarray, tolerance: float
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -203,7 +208,7 @@ if NUMBA_AVAILABLE:
         return y1_candidates[:count], t3_candidates[:count], gains[:count]
 
     @jit(nopython=True, cache=True)
-    def generate_mak_morton_candidates_numba(
+    def generate_mak_morton_candidates_numba(  # type: ignore[misc] # Numba-decorated version
         base: int, s1: int, order: np.ndarray, pos: np.ndarray,
         D: np.ndarray, neigh_base: np.ndarray, tolerance: float
     ) -> Tuple[np.ndarray, np.ndarray]:
@@ -322,23 +327,23 @@ if NUMBA_AVAILABLE:
 
 else:
     # Fallback implementations when Numba is not available
-    def tour_next_numba(order, pos, v):
+    def tour_next_numba(order, pos, v):  # type: ignore[misc] # Intentional redefinition for fallback
         n = len(order)
         idx = pos[v] + 1
         return order[idx if idx < n else 0]
 
-    def tour_prev_numba(order, pos, v):
+    def tour_prev_numba(order, pos, v):  # type: ignore[misc] # Intentional redefinition for fallback
         n = len(order)
         idx = pos[v] - 1
         return order[idx if idx >= 0 else n - 1]
 
-    def tour_sequence_numba(pos, node_a, node_b, node_c):
+    def tour_sequence_numba(pos, node_a, node_b, node_c):  # type: ignore[misc] # Intentional redefinition for fallback
         idx_a, idx_b, idx_c = pos[node_a], pos[node_b], pos[node_c]
         if idx_a <= idx_c:
             return idx_a <= idx_b <= idx_c
         return idx_a <= idx_b or idx_b <= idx_c
 
-    def tour_flip_numba(order, pos, start_node, end_node):
+    def tour_flip_numba(order, pos, start_node, end_node):  # type: ignore[misc] # Intentional redefinition for fallback
         # Pure Python fallback - use original implementation
         from .lk_algorithm import Tour
         tour = Tour(order.tolist())
@@ -347,16 +352,16 @@ else:
         order[:] = tour.order
         pos[:] = tour.pos
 
-    def tour_init_cost_numba(order, D):
+    def tour_init_cost_numba(order, D):  # type: ignore[misc] # Intentional redefinition for fallback
         n = len(order)
         if n == 0:
             return 0.0
         return sum(float(D[order[i], order[(i + 1) % n]]) for i in range(n))
 
-    def distance_matrix_numba(coords):
+    def distance_matrix_numba(coords):  # type: ignore[misc] # Intentional redefinition for fallback
         return np.linalg.norm(coords[:, None] - coords[None, :], axis=2)
 
-    def generate_standard_candidates_numba(base, s1, order, pos, D, neigh_s1, tolerance):
+    def generate_standard_candidates_numba(base, s1, order, pos, D, neigh_s1, tolerance):  # type: ignore[misc] # Intentional redefinition for fallback
         # Fallback to lists
         y1_candidates = []
         t3_candidates = []
@@ -378,7 +383,7 @@ else:
 
         return np.array(y1_candidates), np.array(t3_candidates), np.array(gains)
 
-    def generate_mak_morton_candidates_numba(base, s1, order, pos, D, neigh_base, tolerance):
+    def generate_mak_morton_candidates_numba(base, s1, order, pos, D, neigh_base, tolerance):  # type: ignore[misc] # Intentional redefinition for fallback
         candidates = []
         gains = []
         prev_base = tour_prev_numba(order, pos, base)

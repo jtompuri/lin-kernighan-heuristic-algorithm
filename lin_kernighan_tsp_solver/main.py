@@ -31,7 +31,7 @@ _distance_matrix_func = None
 def _set_algorithm_functions(use_enhanced: bool = False):
     """Set the algorithm functions based on configuration."""
     global _algorithm_func, _distance_matrix_func
-    
+
     # Use the integrated version that automatically handles Numba optimizations
     from .lk_algorithm_integrated import chained_lin_kernighan, build_distance_matrix
     _algorithm_func = chained_lin_kernighan
@@ -217,29 +217,29 @@ def main(
         random_seed: Random seed for reproducible results.
     """
     from .config import NUMBA_CONFIG, set_random_seed
-    
+
     # Configure algorithm selection - always use integrated version (not enhanced)
     _set_algorithm_functions(use_enhanced=False)
-    
+
     # Set random seed for reproducible results
     actual_seed = set_random_seed(random_seed)
     if random_seed is not None:
         print(f"Random seed set to: {actual_seed}")
-    
+
     # Update Numba configuration if provided
     if numba_enabled is not None:
         NUMBA_CONFIG["ENABLED"] = numba_enabled
         print(f"Numba optimizations {'enabled' if numba_enabled else 'disabled'}")
-    
+
     if numba_threshold is not None:
         NUMBA_CONFIG["AUTO_DETECT_SIZE_THRESHOLD"] = numba_threshold
         print(f"Numba auto-detection threshold set to {numba_threshold} nodes")
-    
+
     # Update parallel threshold if provided
     if parallel_threshold is not None:
         NUMBA_CONFIG["PARALLEL_THRESHOLD"] = parallel_threshold
         print(f"Parallel optimization threshold set to {parallel_threshold} nodes")
-    
+
     # Update LK_CONFIG with starting cycle method if provided
     if starting_cycle_method is not None:
         LK_CONFIG["STARTING_CYCLE"] = starting_cycle_method
@@ -326,7 +326,7 @@ def main(
     override_config = {'TIME_LIMIT': time_limit}
     if random_seed is not None:
         override_config['RANDOM_SEED'] = actual_seed
-    
+
     display_summary_table(all_instance_results_list, override_config=override_config)
     plot_all_tours(all_instance_results_list)
 

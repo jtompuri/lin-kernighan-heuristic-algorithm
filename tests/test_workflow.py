@@ -55,7 +55,7 @@ def test_process_single_instance_no_opt_tour_loaded(tmp_path, simple_tsp_setup):
 
     with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=mock_coords) as mock_read_tsp, \
         patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=None) as mock_read_opt, \
-        patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan',
+        patch('lin_kernighan_tsp_solver.lk_algorithm_integrated.chained_lin_kernighan_auto',
               return_value=(mock_clk_result_tour, mock_clk_result_cost)) as mock_clk:
 
         result = process_single_instance(str(tsp_file), str(opt_tour_file))
@@ -101,7 +101,7 @@ def test_process_single_instance_handles_chained_lk_exception(tmp_path, simple_t
     # Simulate a ValueError, which the function is designed to catch.
     with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=mock_coords) as mock_read_tsp, \
             patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=None) as mock_read_opt, \
-            patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', side_effect=ValueError(error_message)) as mock_clk:
+            patch('lin_kernighan_tsp_solver.lk_algorithm_integrated.chained_lin_kernighan_auto', side_effect=ValueError(error_message)) as mock_clk:
 
         result = process_single_instance(str(tsp_file), str(opt_tour_file))
 
@@ -271,7 +271,7 @@ def test_process_single_instance_handles_missing_opt_tour(capsys):
     coords = np.array([[0, 0], [1, 1]])
     with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=coords), \
             patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=None), \
-            patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', return_value=([0, 1], 1.0)):
+            patch('lin_kernighan_tsp_solver.lk_algorithm_integrated.chained_lin_kernighan_auto', return_value=([0, 1], 1.0)):
         result = process_single_instance("dummy.tsp", "dummy.opt.tour")
         captured = capsys.readouterr()
         assert "Optimal tour not available" in captured.out
@@ -286,13 +286,13 @@ def test_process_single_instance_handles_zero_opt_len():
     # Case 1: heuristic_len == 0.0
     with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=coords), \
             patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=opt_tour), \
-            patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', return_value=(opt_tour, 0.0)):
+            patch('lin_kernighan_tsp_solver.lk_algorithm_integrated.chained_lin_kernighan_auto', return_value=(opt_tour, 0.0)):
         result = process_single_instance("dummy.tsp", "dummy.opt.tour")
         assert result['gap'] == 0.0
     # Case 2: heuristic_len != 0.0
     with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=coords), \
             patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=opt_tour), \
-            patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', return_value=(opt_tour, 1.0)):
+            patch('lin_kernighan_tsp_solver.lk_algorithm_integrated.chained_lin_kernighan_auto', return_value=(opt_tour, 1.0)):
         result = process_single_instance("dummy.tsp", "dummy.opt.tour")
         assert result['gap'] == 0.0
 
@@ -339,16 +339,16 @@ def test_process_single_instance_gap_when_optimal_zero(monkeypatch):
     # Case 1: heuristic_len == 0.0, expect gap == 0.0
     with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=coords), \
             patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=opt_tour), \
-            patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', return_value=(opt_tour, 0.0)), \
-            patch('lin_kernighan_tsp_solver.main.build_distance_matrix', return_value=np.zeros((2, 2))):
+            patch('lin_kernighan_tsp_solver.lk_algorithm_integrated.chained_lin_kernighan_auto', return_value=(opt_tour, 0.0)), \
+            patch('lin_kernighan_tsp_solver.lk_algorithm_integrated.build_distance_matrix_auto', return_value=np.zeros((2, 2))):
         result = process_single_instance("dummy.tsp", "dummy.opt.tour")
         assert result['gap'] == 0.0
 
     # Case 2: heuristic_len != 0.0, expect gap == float('inf')
     with patch('lin_kernighan_tsp_solver.main.read_tsp_file', return_value=coords), \
             patch('lin_kernighan_tsp_solver.main.read_opt_tour', return_value=opt_tour), \
-            patch('lin_kernighan_tsp_solver.main.chained_lin_kernighan', return_value=(opt_tour, 1.0)), \
-            patch('lin_kernighan_tsp_solver.main.build_distance_matrix', return_value=np.zeros((2, 2))):
+            patch('lin_kernighan_tsp_solver.lk_algorithm_integrated.chained_lin_kernighan_auto', return_value=(opt_tour, 1.0)), \
+            patch('lin_kernighan_tsp_solver.lk_algorithm_integrated.build_distance_matrix_auto', return_value=np.zeros((2, 2))):
         result = process_single_instance("dummy.tsp", "dummy.opt.tour")
         assert result['gap'] == float('inf')
 

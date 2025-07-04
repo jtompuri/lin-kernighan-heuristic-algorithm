@@ -26,10 +26,8 @@ try:
     import numba  # type: ignore[import-untyped]
     from numba import jit, prange  # type: ignore[import-untyped]
     NUMBA_AVAILABLE = True
-    print("Numba JIT compilation available")
 except ImportError:
     NUMBA_AVAILABLE = False
-    print("Numba not available - falling back to pure Python")
 
     # Create dummy decorator for when Numba is not available
     def jit(*args, **kwargs):
@@ -46,6 +44,29 @@ except ImportError:
         boolean = bool
 
     numba = _DummyNumba()  # type: ignore[misc]
+
+
+def get_numba_status(verbose: bool = False) -> dict:
+    """Get Numba availability status.
+    
+    Args:
+        verbose: If True, print status message.
+        
+    Returns:
+        Dictionary with Numba status information.
+    """
+    status = {
+        'available': NUMBA_AVAILABLE,
+        'version': getattr(numba, '__version__', 'N/A') if NUMBA_AVAILABLE else None
+    }
+    
+    if verbose:
+        if NUMBA_AVAILABLE:
+            print(f"Numba JIT compilation available (version {status['version']})")
+        else:
+            print("Numba not available - falling back to pure Python")
+    
+    return status
 
 
 # =============================================================================

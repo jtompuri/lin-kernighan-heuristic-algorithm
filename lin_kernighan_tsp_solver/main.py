@@ -226,6 +226,10 @@ def main(
     if random_seed is not None:
         print(f"Random seed set to: {actual_seed}")
 
+    # Show Numba status (only once in main process)
+    from .lk_algorithm_numba import get_numba_status
+    _ = get_numba_status(verbose=True)  # Show status and discard return value
+
     # Update Numba configuration if provided
     if numba_enabled is not None:
         NUMBA_CONFIG["ENABLED"] = numba_enabled

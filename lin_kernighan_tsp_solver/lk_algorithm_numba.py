@@ -7,14 +7,13 @@ from the original LK algorithm implementation.
 
 import math
 import time
-from typing import Tuple, List, Optional
+from typing import Tuple, List
 
 import numpy as np
 
 try:
     import numba
-    from numba import jit, types, prange
-    from numba.typed import Dict
+    from numba import jit, prange
     NUMBA_AVAILABLE = True
     print("Numba JIT compilation available")
 except ImportError:

@@ -64,6 +64,9 @@ python -m lin_kernighan_tsp_solver --time-limit 20.0 --save-tours
 | `--workers` | Number of parallel workers | All CPU cores |
 | `--sequential` | Force sequential processing | Parallel |
 | `--save-tours` / `--no-save-tours` | Save/don't save heuristic tours | Save |
+| `--enable-numba` / `--disable-numba` | Enable/disable Numba JIT optimizations | Auto (30+ nodes) |
+| `--enable-parallel-numba` | Enable parallel Numba for very large problems | Auto (500+ nodes) |
+| `--seed` | Random seed for reproducible results | Random |
 
 ### Starting Cycle Algorithms
 

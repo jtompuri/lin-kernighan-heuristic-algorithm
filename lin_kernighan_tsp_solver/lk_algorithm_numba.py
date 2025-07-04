@@ -20,7 +20,7 @@ try:
 except ImportError:
     NUMBA_AVAILABLE = False
     print("Numba not available - falling back to pure Python")
-    
+
     # Create dummy decorator for when Numba is not available
     def jit(*args, **kwargs):
         def decorator(func):
@@ -61,35 +61,35 @@ if NUMBA_AVAILABLE:
         n = len(order)
         if n == 0:
             return
-            
+
         idx_a, idx_b = pos[start_node], pos[end_node]
-        
+
         if idx_a == idx_b:
             return
-            
+
         # Calculate segment length
         if idx_a <= idx_b:
             segment_len = idx_b - idx_a + 1
         else:
             segment_len = (n - idx_a) + (idx_b + 1)
-        
+
         # Perform in-place reversal
         for i in range(segment_len // 2):
             left_idx = idx_a + i
             if left_idx >= n:
                 left_idx -= n
-                
+
             right_idx = idx_b - i
             if right_idx < 0:
                 right_idx += n
-            
+
             # Swap nodes in order array
             node_left = order[left_idx]
             node_right = order[right_idx]
-            
+
             order[left_idx] = node_right
             order[right_idx] = node_left
-            
+
             # Update position mapping
             pos[node_left] = right_idx
             pos[node_right] = left_idx
@@ -100,13 +100,13 @@ if NUMBA_AVAILABLE:
         n = len(order)
         if n == 0:
             return 0.0
-            
+
         total_cost = 0.0
         for i in range(n):
             current_node = order[i]
             next_node = order[(i + 1) % n]
             total_cost += D[current_node, next_node]
-        
+
         return total_cost
 
     @jit(nopython=True, cache=True)
@@ -117,9 +117,9 @@ if NUMBA_AVAILABLE:
             return np.empty((0, 0), dtype=np.float64)
         if n == 1:
             return np.array([[0.0]], dtype=np.float64)
-            
+
         D = np.zeros((n, n), dtype=np.float64)
-        
+
         for i in range(n):
             for j in range(i + 1, n):
                 dx = coords[i, 0] - coords[j, 0]
@@ -127,12 +127,12 @@ if NUMBA_AVAILABLE:
                 dist = math.sqrt(dx * dx + dy * dy)
                 D[i, j] = dist
                 D[j, i] = dist
-                
+
         return D
 
     @jit(nopython=True, cache=True)
     def generate_standard_candidates_numba(
-        base: int, s1: int, order: np.ndarray, pos: np.ndarray, 
+        base: int, s1: int, order: np.ndarray, pos: np.ndarray,
         D: np.ndarray, neigh_s1: np.ndarray, tolerance: float
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Numba-optimized standard flip candidate generation."""
@@ -140,26 +140,26 @@ if NUMBA_AVAILABLE:
         y1_candidates = np.empty(max_candidates, dtype=np.int32)
         t3_candidates = np.empty(max_candidates, dtype=np.int32)
         gains = np.empty(max_candidates, dtype=np.float64)
-        
+
         count = 0
         for i in range(len(neigh_s1)):
             y1_cand = neigh_s1[i]
             if y1_cand == base or y1_cand == s1:
                 continue
-                
+
             gain_G1 = D[base, s1] - D[s1, y1_cand]
             if gain_G1 <= tolerance:
                 continue
-                
+
             t3_node = tour_prev_numba(order, pos, y1_cand)
             gain_G2 = D[t3_node, y1_cand] - D[t3_node, base]
             total_gain = gain_G1 + gain_G2
-            
+
             y1_candidates[count] = y1_cand
             t3_candidates[count] = t3_node
             gains[count] = total_gain
             count += 1
-        
+
         return y1_candidates[:count], t3_candidates[:count], gains[:count]
 
     @jit(nopython=True, cache=True)
@@ -171,22 +171,22 @@ if NUMBA_AVAILABLE:
         max_candidates = len(neigh_base)
         candidates = np.empty(max_candidates, dtype=np.int32)
         gains = np.empty(max_candidates, dtype=np.float64)
-        
+
         prev_base = tour_prev_numba(order, pos, base)
         count = 0
-        
+
         for i in range(len(neigh_base)):
             candidate = neigh_base[i]
             if candidate == s1 or candidate == prev_base or candidate == base:
                 continue
-                
+
             next_candidate = tour_next_numba(order, pos, candidate)
             gain = (D[base, s1] - D[base, candidate]) + (D[candidate, next_candidate] - D[next_candidate, s1])
-            
+
             candidates[count] = candidate
             gains[count] = gain
             count += 1
-            
+
         return candidates[:count], gains[:count]
 
 else:
@@ -230,7 +230,7 @@ else:
         y1_candidates = []
         t3_candidates = []
         gains = []
-        
+
         for y1_cand in neigh_s1:
             if y1_cand == base or y1_cand == s1:
                 continue
@@ -240,18 +240,18 @@ else:
             t3_node = tour_prev_numba(order, pos, y1_cand)
             gain_G2 = D[t3_node, y1_cand] - D[t3_node, base]
             total_gain = gain_G1 + gain_G2
-            
+
             y1_candidates.append(y1_cand)
             t3_candidates.append(t3_node)
             gains.append(total_gain)
-        
+
         return np.array(y1_candidates), np.array(t3_candidates), np.array(gains)
 
     def generate_mak_morton_candidates_numba(base, s1, order, pos, D, neigh_base, tolerance):
         candidates = []
         gains = []
         prev_base = tour_prev_numba(order, pos, base)
-        
+
         for candidate in neigh_base:
             if candidate in (s1, prev_base, base):
                 continue
@@ -259,7 +259,7 @@ else:
             gain = (D[base, s1] - D[base, candidate]) + (D[candidate, next_candidate] - D[next_candidate, s1])
             candidates.append(candidate)
             gains.append(gain)
-            
+
         return np.array(candidates), np.array(gains)
 
 
@@ -269,12 +269,12 @@ else:
 
 class TourNumba:
     """Tour class with Numba-optimized operations for better performance."""
-    
+
     def __init__(self, order, D=None):
         """Initialize tour with optional distance matrix for cost calculation."""
         order_list = list(order) if not isinstance(order, list) else order
         self.n = len(order_list)
-        
+
         if self.n == 0:
             self.order = np.array([], dtype=np.int32)
             self.pos = np.array([], dtype=np.int32)
@@ -283,84 +283,84 @@ class TourNumba:
             self.order = np.array(order_list, dtype=np.int32)
             max_node = int(np.max(self.order))
             self.pos = np.empty(max_node + 1, dtype=np.int32)
-            
+
             # Initialize position mapping
             for i in range(self.n):
                 self.pos[self.order[i]] = i
-            
+
             self.cost = None
             if D is not None:
                 self.init_cost(D)
-    
+
     def next(self, v: int) -> int:
         """Get next vertex in tour."""
         if self.n == 0:
             raise IndexError("Cannot get next node from an empty tour.")
         return int(tour_next_numba(self.order, self.pos, v))
-    
+
     def prev(self, v: int) -> int:
         """Get previous vertex in tour."""
         if self.n == 0:
             raise IndexError("Cannot get previous node from an empty tour.")
         return int(tour_prev_numba(self.order, self.pos, v))
-    
+
     def sequence(self, node_a: int, node_b: int, node_c: int) -> bool:
         """Check if node_b is in sequence from node_a to node_c."""
         if self.n == 0:
             return False
         return tour_sequence_numba(self.pos, node_a, node_b, node_c)
-    
+
     def flip(self, start_node: int, end_node: int):
         """Flip tour segment between start_node and end_node."""
         tour_flip_numba(self.order, self.pos, start_node, end_node)
-    
+
     def init_cost(self, D: np.ndarray):
         """Initialize tour cost using distance matrix."""
         self.cost = tour_init_cost_numba(self.order, D)
-    
+
     def flip_and_update_cost(self, node_a: int, node_b: int, D: np.ndarray) -> float:
         """Flip segment and update cost, returning cost change."""
         if self.n == 0:
             return 0.0
-        
+
         if node_a == node_b:
             return 0.0
-        
+
         # Calculate cost change before flipping
         pos_a = self.pos[node_a]
         pos_b = self.pos[node_b]
-        
+
         prev_node_of_a = self.order[(pos_a - 1 + self.n) % self.n]
         next_node_of_b = self.order[(pos_b + 1) % self.n]
-        
+
         if prev_node_of_a == node_b and next_node_of_b == node_a:
             delta_cost = 0.0
         else:
             term_removed = D[prev_node_of_a, node_a] + D[node_b, next_node_of_b]
             term_added = D[prev_node_of_a, node_b] + D[node_a, next_node_of_b]
             delta_cost = term_added - term_removed
-        
+
         # Perform flip
         self.flip(node_a, node_b)
-        
+
         # Update cost
         if self.cost is None:
             self.init_cost(D)
             return 0.0
-        
+
         self.cost += delta_cost
         return delta_cost
-    
+
     def get_tour(self) -> List[int]:
         """Get tour as list, normalized to start with node 0 if present."""
         if self.n == 0:
             return []
-        
+
         # Check if node 0 is in tour and normalize
         if 0 < len(self.pos) and 0 <= self.pos[0] < self.n and self.order[self.pos[0]] == 0:
             position_of_vertex_0 = self.pos[0]
             return list(np.roll(self.order, -position_of_vertex_0))
-        
+
         return self.order.tolist()
 
 
@@ -377,37 +377,37 @@ def benchmark_numba_speedup(n_nodes: int = 50, n_iterations: int = 1000) -> dict
     """Benchmark Numba vs original implementation speedup."""
     np.random.seed(42)
     coords = np.random.uniform(0, 1000, (n_nodes, 2))
-    
+
     # Build distance matrix
     D = build_distance_matrix_numba(coords)
-    
+
     # Create test tour
     order = np.arange(n_nodes, dtype=np.int32)
     np.random.shuffle(order)
-    
+
     # Benchmark Numba implementation
     tour_numba = TourNumba(order.tolist(), D)
-    
+
     start_time = time.time()
     for _ in range(n_iterations):
         if n_nodes > 4:
             tour_numba.flip(0, 2)
             tour_numba.flip(2, 0)  # Undo
     numba_time = time.time() - start_time
-    
+
     # Benchmark original implementation
     from .lk_algorithm import Tour
     tour_original = Tour(order.tolist(), D)
-    
+
     start_time = time.time()
     for _ in range(n_iterations):
         if n_nodes > 4:
             tour_original.flip(0, 2)
             tour_original.flip(2, 0)  # Undo
     original_time = time.time() - start_time
-    
+
     speedup = original_time / numba_time if numba_time > 0 else float('inf')
-    
+
     return {
         'n_nodes': n_nodes,
         'n_iterations': n_iterations,
@@ -421,7 +421,7 @@ def benchmark_numba_speedup(n_nodes: int = 50, n_iterations: int = 1000) -> dict
 if __name__ == "__main__":
     # Quick benchmark when run as main module
     print("Running Numba optimization benchmark...")
-    
+
     for n in [20, 50, 100]:
         result = benchmark_numba_speedup(n, 1000)
         print(f"n={n:3d}: {result['speedup']:.2f}x speedup "

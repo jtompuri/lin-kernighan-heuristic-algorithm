@@ -31,6 +31,16 @@ except ImportError:
             return func
         return decorator
 
+    # Create dummy prange for fallback
+    def prange(*args):  # type: ignore[misc]
+        return range(*args)
+
+    # Create dummy numba module for type annotations
+    class _DummyNumba:  # type: ignore[misc]
+        boolean = bool
+
+    numba = _DummyNumba()  # type: ignore[misc]
+
 
 # =============================================================================
 # Core Tour Operations (Numba-optimized)
@@ -124,7 +134,7 @@ if NUMBA_AVAILABLE:
         costs = np.zeros(n, dtype=np.float64)
 
         # Parallel computation of edge costs
-        for i in prange(n):
+        for i in prange(n):  # type: ignore[possibly-unbound]
             current_node = order[i]
             next_node = order[(i + 1) % n]
             costs[i] = D[current_node, next_node]
@@ -165,7 +175,7 @@ if NUMBA_AVAILABLE:
         D = np.zeros((n, n), dtype=np.float64)
 
         # Parallel computation of distance matrix
-        for i in prange(n):
+        for i in prange(n):  # type: ignore[possibly-unbound]
             for j in range(i + 1, n):
                 dx = coords[i, 0] - coords[j, 0]
                 dy = coords[i, 1] - coords[j, 1]
@@ -244,10 +254,10 @@ if NUMBA_AVAILABLE:
         y1_candidates = np.empty(max_candidates, dtype=np.int32)
         t3_candidates = np.empty(max_candidates, dtype=np.int32)
         gains = np.empty(max_candidates, dtype=np.float64)
-        valid = np.empty(max_candidates, dtype=numba.boolean)
+        valid = np.empty(max_candidates, dtype=numba.boolean)  # type: ignore[possibly-unbound]
 
         # Parallel candidate evaluation
-        for i in prange(len(neigh_s1)):
+        for i in prange(len(neigh_s1)):  # type: ignore[possibly-unbound]
             y1_cand = neigh_s1[i]
             valid[i] = False
 
@@ -287,12 +297,12 @@ if NUMBA_AVAILABLE:
         max_candidates = len(neigh_base)
         candidates = np.empty(max_candidates, dtype=np.int32)
         gains = np.empty(max_candidates, dtype=np.float64)
-        valid = np.empty(max_candidates, dtype=numba.boolean)
+        valid = np.empty(max_candidates, dtype=numba.boolean)  # type: ignore[possibly-unbound]
 
         prev_base = tour_prev_numba(order, pos, base)
 
         # Parallel candidate evaluation
-        for i in prange(len(neigh_base)):
+        for i in prange(len(neigh_base)):  # type: ignore[possibly-unbound]
             t3_candidate = neigh_base[i]
             valid[i] = False
 

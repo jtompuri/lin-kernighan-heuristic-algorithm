@@ -27,6 +27,11 @@ try:
     )
     NUMBA_INTEGRATION_AVAILABLE = True
 except ImportError:
+    # Define fallback types and functions when Numba is not available
+    TourNumba = None  # type: ignore[misc,assignment]
+    build_distance_matrix_numba = None  # type: ignore[misc,assignment]
+    distance_matrix_numba_parallel = None  # type: ignore[misc,assignment]
+    tour_init_cost_numba_parallel = None  # type: ignore[misc,assignment]
     NUMBA_INTEGRATION_AVAILABLE = False
     NUMBA_AVAILABLE = False
 
@@ -80,10 +85,13 @@ def build_distance_matrix(coords: np.ndarray, use_numba: Optional[bool] = None) 
             _warmup_numba_functions()
 
             # Use parallel Numba for very large problems
-            if use_parallel:
+            if use_parallel and distance_matrix_numba_parallel is not None:
                 return distance_matrix_numba_parallel(coords)
-            else:
+            elif build_distance_matrix_numba is not None:
                 return build_distance_matrix_numba(coords)
+            else:
+                # Fallback if functions are None
+                return original_build_distance_matrix(coords)
         except Exception:
             if NUMBA_CONFIG.get("FALLBACK_ON_ERROR", True):
                 import logging
@@ -103,7 +111,7 @@ class Tour:
         self.use_numba = should_use_numba(self.n, use_numba)
         self.use_parallel = should_use_parallel_numba(self.n)
 
-        if self.use_numba and NUMBA_INTEGRATION_AVAILABLE:
+        if self.use_numba and NUMBA_INTEGRATION_AVAILABLE and TourNumba is not None:
             try:
                 # Warm up JIT compilation first
                 _warmup_numba_functions()
@@ -143,7 +151,7 @@ class Tour:
 
     def init_cost(self, D: np.ndarray):
         """Initialize tour cost using distance matrix with optional parallel computation."""
-        if self.use_parallel and NUMBA_INTEGRATION_AVAILABLE:
+        if self.use_parallel and NUMBA_INTEGRATION_AVAILABLE and tour_init_cost_numba_parallel is not None:
             try:
                 # Use parallel Numba for large tour cost calculation
                 cost = tour_init_cost_numba_parallel(self._tour.order, D)
@@ -440,15 +448,18 @@ def _warmup_numba_functions():
     try:
         import numpy as np
 
-        # Warm up distance matrix functions
+        # Warm up distance matrix functions (only if available)
         test_coords = np.array([[0.0, 0.0], [1.0, 1.0]], dtype=np.float64)
-        _ = build_distance_matrix_numba(test_coords)
-        _ = distance_matrix_numba_parallel(test_coords)
+        if build_distance_matrix_numba is not None:
+            _ = build_distance_matrix_numba(test_coords)
+        if distance_matrix_numba_parallel is not None:
+            _ = distance_matrix_numba_parallel(test_coords)
 
-        # Warm up Tour operations
-        test_tour = TourNumba([0, 1], None)
-        _ = test_tour.next(0)
-        _ = test_tour.prev(1)
+        # Warm up Tour operations (only if available)
+        if TourNumba is not None:
+            test_tour = TourNumba([0, 1], None)
+            _ = test_tour.next(0)
+            _ = test_tour.prev(1)
 
         _NUMBA_WARMED_UP = True
     except Exception:

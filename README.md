@@ -15,6 +15,7 @@ A Python implementation of the Lin-Kernighan (LK) heuristic for solving the Trav
 
 ## Table of Contents
 - [Quick Start](#quick-start)
+- [Requirements & Compatibility](#requirements--compatibility)
 - [Usage](#usage)
 - [Example Output](#example-output)
 - [Development](#development)
@@ -29,14 +30,53 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-# 2. Run with default settings (processes all TSPLIB95 instances)
+# 2. Verify installation (optional)
+python test_requirements.py
+
+# 2. Verify installation (optional)
+python test_requirements.py
+
+# 3. Run with default settings (processes all TSPLIB95 instances)
 python -m lin_kernighan_tsp_solver
 
-# 3. Process specific files
+# 4. Process specific files
 python -m lin_kernighan_tsp_solver problems/tsplib95/berlin52.tsp
 
-# 4. Customize settings
+# 5. Customize settings
 python -m lin_kernighan_tsp_solver --time-limit 10.0 --starting-cycle greedy
+```
+
+## Requirements & Compatibility
+
+### Core Dependencies
+- **Python**: 3.8+ (tested with 3.12)
+- **NumPy**: 2.2.x (pinned for Numba compatibility)
+- **SciPy**: 1.16.0+
+- **Matplotlib**: 3.10.3+
+
+### Performance Optimization
+- **Numba**: 0.58.0+ (optional but recommended for 10-100x speedup)
+- **Important**: Numba 0.61.x requires NumPy ≤ 2.2.x, not the latest 2.3.x
+
+### Installation Notes
+```bash
+# Standard installation
+pip install -r requirements.txt
+
+# Development installation (includes testing/linting tools)
+pip install -r requirements-dev.txt
+
+# Verify compatibility
+python test_requirements.py
+```
+
+### Compatibility Matrix
+| Component | Status | Notes |
+|-----------|--------|-------|
+| NumPy 2.2.x | ✅ Full support | Required for Numba compatibility |
+| NumPy 2.3.x | ⚠️ Limited | Works without Numba optimizations |
+| Numba JIT | ✅ Auto-detect | Graceful fallback if unavailable |
+| Python 3.8-3.12 | ✅ Tested | Recommended: 3.10+ |
 ```
 
 ## Usage

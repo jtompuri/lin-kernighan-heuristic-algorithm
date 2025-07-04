@@ -1,4 +1,4 @@
-NAME : ./TSPLIB/a280.tsp.optbc.tour
+NAME : ./TSPLIB/a280.tsp.opt.tour
 TYPE : TOUR
 DIMENSION : 280
 TOUR_SECTION

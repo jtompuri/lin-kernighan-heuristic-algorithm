@@ -198,7 +198,8 @@ def main(
     tsp_files: list[str] | None = None,
     save_tours: bool | None = None,
     numba_enabled: bool | None = None,
-    numba_threshold: int | None = None
+    numba_threshold: int | None = None,
+    random_seed: int | None = None
 ):
     """Main function with configurable options.
 
@@ -211,11 +212,17 @@ def main(
         save_tours: Whether to save heuristic tours. If None, uses config default.
         numba_enabled: Whether to enable Numba optimizations. If None, uses config default.
         numba_threshold: Minimum problem size to use Numba optimizations.
+        random_seed: Random seed for reproducible results. If None, uses config default.
     """
-    from .config import NUMBA_CONFIG
+    from .config import NUMBA_CONFIG, set_random_seed
     
     # Configure algorithm selection - always use integrated version (not enhanced)
     _set_algorithm_functions(use_enhanced=False)
+    
+    # Set random seed for reproducible results
+    actual_seed = set_random_seed(random_seed)
+    if random_seed is not None:
+        print(f"Random seed set to: {actual_seed}")
     
     # Update Numba configuration if provided
     if numba_enabled is not None:
@@ -308,8 +315,12 @@ def main(
     # Sort results by name for consistent output
     all_instance_results_list.sort(key=lambda x: x['name'])
 
-    # Display results
-    display_summary_table(all_instance_results_list, override_config={'TIME_LIMIT': time_limit})
+    # Display results with runtime configuration
+    override_config = {'TIME_LIMIT': time_limit}
+    if random_seed is not None:
+        override_config['RANDOM_SEED'] = actual_seed
+    
+    display_summary_table(all_instance_results_list, override_config=override_config)
     plot_all_tours(all_instance_results_list)
 
 

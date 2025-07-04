@@ -38,6 +38,10 @@ if __name__ == "__main__":
                         help="Disable Numba JIT optimizations (use original Python implementation)")
     parser.add_argument("--numba-threshold", type=int, default=None,
                         help="Minimum problem size to use Numba optimizations (default: 30)")
+    
+    # Random seed control
+    parser.add_argument("--seed", type=int, default=None,
+                        help="Random seed for reproducible results (default: random)")
 
     args = parser.parse_args()
 
@@ -69,5 +73,6 @@ if __name__ == "__main__":
         tsp_files=args.files if args.files else None,
         save_tours=save_tours,
         numba_enabled=numba_enabled,
-        numba_threshold=args.numba_threshold
+        numba_threshold=args.numba_threshold,
+        random_seed=args.seed
     )

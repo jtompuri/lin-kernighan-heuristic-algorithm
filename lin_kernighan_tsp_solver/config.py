@@ -6,6 +6,8 @@ throughout the project, such as algorithm settings, tolerances, and paths.
 """
 
 from pathlib import Path
+import math
+import os
 
 # Path to the folder containing TSPLIB .tsp files and optional .opt.tour files
 TSP_FOLDER_PATH = (
@@ -32,6 +34,7 @@ LK_CONFIG = {
     "TIME_LIMIT": 5.0,  # Time limit for LK search (seconds)
     "STARTING_CYCLE": "qboruvka",  # Starting cycle algorithm: random, nearest_neighbor, greedy, boruvka, qboruvka
     "SAVE_TOURS": True,  # Whether to save heuristic tours to files
+    "RANDOM_SEED": None,  # Random seed for reproducible results (None = random seed)
 }
 
 # Starting cycle algorithm configuration
@@ -79,7 +82,7 @@ DOUBLE_BRIDGE_CONFIG = {
 # Numba JIT optimization configuration
 NUMBA_CONFIG = {
     "ENABLED": True,                    # Master enable/disable for Numba optimizations
-    "AUTO_DETECT_SIZE_THRESHOLD": 30,   # Use Numba for n >= threshold (nodes)
+    "AUTO_DETECT_SIZE_THRESHOLD": 20,   # Use Numba for n >= threshold (nodes) - lowered for more aggressive optimization
     "FALLBACK_ON_ERROR": True,         # Graceful fallback if Numba operations fail
     "JIT_CACHE": True,                 # Enable Numba compilation caching
     "PARALLEL_THRESHOLD": 500,         # Use parallel features for n >= threshold
@@ -119,3 +122,30 @@ FLIP_CONFIG = {
     "SEGMENT_HALF_DIVISOR": 2,    # Divisor for calculating half segment length
     "MAX_SEGMENT_SIZE": 1000,     # Maximum segment size for flip operation
 }
+
+
+def set_random_seed(seed: int | None = None) -> int:
+    """Set random seed for reproducible results.
+    
+    Args:
+        seed: Random seed to set. If None, uses LK_CONFIG["RANDOM_SEED"].
+              If that's also None, generates a random seed.
+    
+    Returns:
+        int: The seed that was actually set.
+    """
+    import random
+    import numpy as np
+    
+    if seed is None:
+        seed = LK_CONFIG.get("RANDOM_SEED")
+    
+    if seed is None:
+        # Generate a random seed
+        seed = random.randint(0, 2**31 - 1)
+    
+    # Set seeds for all random number generators
+    random.seed(seed)
+    np.random.seed(seed)
+    
+    return seed

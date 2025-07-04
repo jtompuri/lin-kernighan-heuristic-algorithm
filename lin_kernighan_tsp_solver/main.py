@@ -32,15 +32,14 @@ def _set_algorithm_functions(use_enhanced: bool = False):
     """Set the algorithm functions based on configuration."""
     global _algorithm_func, _distance_matrix_func
     
-    if use_enhanced:
-        from .lk_algorithm_enhanced import chained_lin_kernighan_enhanced_auto
-        from .lk_algorithm_integrated import build_distance_matrix_auto
-        _algorithm_func = chained_lin_kernighan_enhanced_auto
-        _distance_matrix_func = build_distance_matrix_auto
-    else:
-        from .lk_algorithm_integrated import chained_lin_kernighan_auto, build_distance_matrix_auto
-        _algorithm_func = chained_lin_kernighan_auto
-        _distance_matrix_func = build_distance_matrix_auto
+    # Always use the integrated version that preserves algorithm quality
+    from .lk_algorithm_integrated import chained_lin_kernighan_auto, build_distance_matrix_auto
+    _algorithm_func = chained_lin_kernighan_auto
+    _distance_matrix_func = build_distance_matrix_auto
+
+
+# Initialize with default functions
+_set_algorithm_functions()
 
 
 def _calculate_tour_length(tour_nodes: list[int], D: np.ndarray) -> float:
@@ -137,7 +136,8 @@ def process_single_instance(
         if coords.size == 0:
             raise ValueError("No coordinates loaded from TSP file.")
         results['nodes'] = coords.shape[0]
-        D = _distance_matrix_func(coords)
+        from .lk_algorithm_integrated import build_distance_matrix_auto
+        D = build_distance_matrix_auto(coords)
 
         opt_tour_nodes = read_opt_tour(opt_tour_file_path_str)
         results['opt_tour'] = opt_tour_nodes
@@ -153,7 +153,8 @@ def process_single_instance(
         initial_tour = generate_starting_cycle(coords, method=LK_CONFIG["STARTING_CYCLE"])
         start_time = time.time()
 
-        heuristic_tour, heuristic_len = _algorithm_func(
+        from .lk_algorithm_integrated import chained_lin_kernighan_auto
+        heuristic_tour, heuristic_len = chained_lin_kernighan_auto(
             coords, initial_tour,
             known_optimal_length=opt_len,
             time_limit_seconds=time_limit
@@ -197,8 +198,7 @@ def main(
     tsp_files: list[str] | None = None,
     save_tours: bool | None = None,
     numba_enabled: bool | None = None,
-    numba_threshold: int | None = None,
-    use_enhanced: bool = False
+    numba_threshold: int | None = None
 ):
     """Main function with configurable options.
 
@@ -211,15 +211,11 @@ def main(
         save_tours: Whether to save heuristic tours. If None, uses config default.
         numba_enabled: Whether to enable Numba optimizations. If None, uses config default.
         numba_threshold: Minimum problem size to use Numba optimizations.
-        use_enhanced: Whether to use the enhanced Lin-Kernighan algorithm.
     """
     from .config import NUMBA_CONFIG
     
-    # Configure algorithm selection
-    _set_algorithm_functions(use_enhanced)
-    
-    if use_enhanced:
-        print("Using enhanced Lin-Kernighan algorithm with comprehensive Numba optimizations")
+    # Configure algorithm selection - always use integrated version (not enhanced)
+    _set_algorithm_functions(use_enhanced=False)
     
     # Update Numba configuration if provided
     if numba_enabled is not None:

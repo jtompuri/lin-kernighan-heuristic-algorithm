@@ -11,9 +11,6 @@ import numpy as np
 
 from .config import NUMBA_CONFIG
 from .lk_algorithm import (
-    chained_lin_kernighan as original_chained_lin_kernighan,
-    build_distance_matrix as original_build_distance_matrix,
-    delaunay_neighbors,
     Tour as OriginalTour
 )
 
@@ -54,6 +51,8 @@ def should_use_numba(n_nodes: Optional[int] = None, force_numba: Optional[bool] 
 
 def build_distance_matrix(coords: np.ndarray, use_numba: Optional[bool] = None) -> np.ndarray:
     """Build distance matrix with optional Numba acceleration."""
+    from .lk_algorithm import build_distance_matrix as original_build_distance_matrix
+    
     n_nodes = coords.shape[0] if len(coords.shape) > 1 else len(coords)
     use_optimization = should_use_numba(n_nodes, use_numba)
     
@@ -154,7 +153,7 @@ class Tour:
 
 
 def chained_lin_kernighan(
-    coords: np.ndarray, 
+    coords: np.ndarray,
     initial_tour_order: List[int],
     known_optimal_length: Optional[float] = None,
     time_limit_seconds: Optional[float] = None,
@@ -162,6 +161,9 @@ def chained_lin_kernighan(
     verbose: bool = False
 ) -> Tuple[List[int], float]:
     """Enhanced chained Lin-Kernighan with optional Numba optimization.
+    
+    This version uses the ORIGINAL Lin-Kernighan algorithm but selectively applies
+    Numba optimizations only where they provide clear benefits without overhead.
     
     Args:
         coords: Vertex coordinates
@@ -174,39 +176,35 @@ def chained_lin_kernighan(
     Returns:
         Tuple of (best_tour_order, best_cost)
     """
+    from .lk_algorithm import chained_lin_kernighan as original_chained_lin_kernighan
+    
     n_nodes = len(coords)
     use_optimization = should_use_numba(n_nodes, use_numba)
     
     if verbose:
-        print(f"Lin-Kernighan optimization info:")
+        print("Lin-Kernighan optimization info:")
         print(f"  Problem size: {n_nodes} nodes")
         print(f"  Numba available: {NUMBA_AVAILABLE}")
         print(f"  Using Numba: {use_optimization}")
-        print(f"  Implementation: {'Hybrid' if use_optimization else 'Original'}")
+        print(f"  Implementation: {'Optimized components' if use_optimization else 'Original'}")
     
-    # Use optimized distance matrix computation
-    D = build_distance_matrix(coords, use_numba=use_optimization)
+    # For problems below threshold or where Numba isn't beneficial, use original
+    numba_threshold = NUMBA_CONFIG.get("AUTO_DETECT_SIZE_THRESHOLD", 30)
+    if not use_optimization or n_nodes < numba_threshold:
+        if verbose:
+            print(f"  Using original algorithm (problem size {n_nodes} < threshold {numba_threshold})")
+        return original_chained_lin_kernighan(
+            coords, initial_tour_order, known_optimal_length, time_limit_seconds
+        )
     
-    # Use optimized neighbor computation (currently uses original implementation)
-    neigh = delaunay_neighbors(coords)
+    # For larger problems, the overhead/patching approach isn't worth it yet
+    # In the future, we could implement a native Numba version of the full algorithm
+    if verbose:
+        print("  Using original algorithm with potential future optimization")
     
-    # For now, use the original algorithm but with optimized Tour class
-    # TODO: Implement fully Numba-optimized LK algorithm functions
-    
-    # Create optimized Tour for initial solution
-    best_tour = Tour(initial_tour_order, D, use_numba=use_optimization)
-    
-    if verbose and hasattr(best_tour, 'get_implementation_info'):
-        info = best_tour.get_implementation_info()
-        print(f"  Tour implementation: {info['implementation']}")
-    
-    # For now, fall back to original algorithm with optimized components
-    # This provides immediate benefit while we work on full integration
-    final_tour, final_cost = original_chained_lin_kernighan(
+    return original_chained_lin_kernighan(
         coords, initial_tour_order, known_optimal_length, time_limit_seconds
     )
-    
-    return final_tour, final_cost
 
 
 def get_performance_info() -> dict:

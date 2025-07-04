@@ -268,3 +268,26 @@ docs/latex/
 
 # Matplotlib figure cache
 .matplotlib/
+
+# Archived/deleted development files (prevent VS Code recreation)
+NATIVE_NUMBA_*.md
+NUMBA_*.md
+PARALLEL_*.md
+PERFORMANCE_*.md
+QUALITY_*.md
+benchmark_integration.py
+benchmark_numba.py
+benchmark_numba_quick.py
+profile_lk_performance.py
+test_basic_numba.py
+test_debug_numba.py
+test_native_numba.py
+test_numba_compilation.py
+test_numba_performance.py
+test_quality_investigation.py
+test_simple_debug.py
+
+# Archived/deleted algorithm modules (prevent recreation)
+lin_kernighan_tsp_solver/lk_algorithm_enhanced.py
+lin_kernighan_tsp_solver/lk_algorithm_native_interface.py
+lin_kernighan_tsp_solver/lk_algorithm_native_numba.py

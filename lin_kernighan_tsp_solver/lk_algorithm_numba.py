@@ -48,10 +48,10 @@ except ImportError:
 
 def get_numba_status(verbose: bool = False) -> dict:
     """Get Numba availability status.
-    
+
     Args:
         verbose: If True, print status message.
-        
+
     Returns:
         Dictionary with Numba status information.
     """
@@ -59,13 +59,13 @@ def get_numba_status(verbose: bool = False) -> dict:
         'available': NUMBA_AVAILABLE,
         'version': getattr(numba, '__version__', 'N/A') if NUMBA_AVAILABLE else None
     }
-    
+
     if verbose:
         if NUMBA_AVAILABLE:
             print(f"Numba JIT compilation available (version {status['version']})")
         else:
             print("Numba not available - falling back to pure Python")
-    
+
     return status
 
 

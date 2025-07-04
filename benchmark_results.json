@@ -1,0 +1,140 @@
+{
+  "config": {
+    "numba": {
+      "available": true,
+      "enabled": true,
+      "integration_available": true,
+      "auto_threshold": 30
+    },
+    "environment": {
+      "LK_NUMBA_ENABLED": "true"
+    },
+    "config": {
+      "ENABLED": true,
+      "AUTO_DETECT_SIZE_THRESHOLD": 30,
+      "FALLBACK_ON_ERROR": true,
+      "JIT_CACHE": true,
+      "PARALLEL_THRESHOLD": 500,
+      "VERBOSE_COMPILATION": false
+    }
+  },
+  "benchmarks": {
+    "distance_matrix": [
+      {
+        "numba_time": 0.02101759910583496,
+        "original_time": 5.2976608276367185e-05,
+        "speedup": 0.002520583250712955,
+        "equivalent": true,
+        "n_nodes": 50
+      },
+      {
+        "numba_time": 8.535385131835937e-06,
+        "original_time": 0.00015840530395507812,
+        "speedup": 18.558659217877096,
+        "equivalent": true,
+        "n_nodes": 100
+      },
+      {
+        "numba_time": 2.4843215942382813e-05,
+        "original_time": 0.0006802082061767578,
+        "speedup": 27.38003838771593,
+        "equivalent": true,
+        "n_nodes": 200
+      },
+      {
+        "numba_time": 0.00029296875,
+        "original_time": 0.0047910213470458984,
+        "speedup": 16.353352864583336,
+        "equivalent": true,
+        "n_nodes": 500
+      }
+    ],
+    "tour_operations": [
+      {
+        "numba_time": 0.07060599327087402,
+        "original_time": 0.0017211437225341797,
+        "speedup": 0.024376736914261017,
+        "n_nodes": 50,
+        "n_operations": 1000
+      },
+      {
+        "numba_time": 0.00026106834411621094,
+        "original_time": 0.003025054931640625,
+        "speedup": 11.587214611872145,
+        "n_nodes": 100,
+        "n_operations": 1000
+      },
+      {
+        "numba_time": 0.00027108192443847656,
+        "original_time": 0.005707979202270508,
+        "speedup": 21.056288478452068,
+        "n_nodes": 200,
+        "n_operations": 1000
+      },
+      {
+        "numba_time": 0.00030517578125,
+        "original_time": 0.01575303077697754,
+        "speedup": 51.61953125,
+        "n_nodes": 500,
+        "n_operations": 1000
+      }
+    ],
+    "integration_test": [
+      {
+        "n_nodes": 100,
+        "n_iterations": 1000,
+        "integrated_time": 0.0006999969482421875,
+        "original_time": 0.045758962631225586,
+        "speedup": 65.37023160762942,
+        "integrated_implementation": {
+          "implementation": "numba",
+          "numba_available": true,
+          "numba_enabled": true,
+          "using_numba": true,
+          "problem_size": 100,
+          "auto_threshold": 30
+        },
+        "original_implementation": {
+          "implementation": "original",
+          "numba_available": true,
+          "numba_enabled": true,
+          "using_numba": false,
+          "problem_size": 100,
+          "auto_threshold": 30
+        }
+      }
+    ],
+    "full_algorithm": [
+      {
+        "problem": "rd100",
+        "n_nodes": 100,
+        "numba_time": 5.00099515914917,
+        "original_time": 5.0006890296936035,
+        "speedup": 0.999938786292363,
+        "numba_cost": 7910.396210215005,
+        "original_cost": 7910.396210215008,
+        "cost_difference_percent": 3.44923823385153e-14
+      },
+      {
+        "problem": "pcb442",
+        "n_nodes": 442,
+        "numba_time": 5.004278898239136,
+        "original_time": 5.007438898086548,
+        "speedup": 1.000631459579226,
+        "numba_cost": 54123.19900989933,
+        "original_cost": 54123.19900989933,
+        "cost_difference_percent": 0.0
+      },
+      {
+        "problem": "lin105",
+        "n_nodes": 105,
+        "numba_time": 5.000751733779907,
+        "original_time": 5.000974178314209,
+        "speedup": 1.000044482219103,
+        "numba_cost": 14512.882832393085,
+        "original_cost": 14512.882832393085,
+        "cost_difference_percent": 0.0
+      }
+    ]
+  }
+}

@@ -30,6 +30,17 @@ if __name__ == "__main__":
                         help="Save heuristic tours to solutions/ folder")
     parser.add_argument("--no-save-tours", action="store_true",
                         help="Do not save heuristic tours (overrides config)")
+    
+    # Numba optimization flags
+    parser.add_argument("--enable-numba", action="store_true",
+                        help="Enable Numba JIT optimizations for better performance on large problems")
+    parser.add_argument("--disable-numba", action="store_true",
+                        help="Disable Numba JIT optimizations (use original Python implementation)")
+    parser.add_argument("--numba-threshold", type=int, default=None,
+                        help="Minimum problem size to use Numba optimizations (default: 30)")
+    # Add enhanced algorithm option
+    parser.add_argument("--enhanced", action="store_true",
+                        help="Use enhanced Lin-Kernighan algorithm with comprehensive Numba optimizations")
 
     args = parser.parse_args()
 
@@ -39,6 +50,13 @@ if __name__ == "__main__":
         save_tours = True
     elif args.no_save_tours:
         save_tours = False
+    
+    # Determine Numba preference
+    numba_enabled = None
+    if args.enable_numba:
+        numba_enabled = True
+    elif args.disable_numba:
+        numba_enabled = False
 
     # If specific files are provided, use sequential processing for single files
     use_parallel = not args.sequential
@@ -52,5 +70,8 @@ if __name__ == "__main__":
         time_limit=args.time_limit,
         starting_cycle_method=args.starting_cycle,
         tsp_files=args.files if args.files else None,
-        save_tours=save_tours
+        save_tours=save_tours,
+        numba_enabled=numba_enabled,
+        numba_threshold=args.numba_threshold,
+        use_enhanced=args.enhanced
     )

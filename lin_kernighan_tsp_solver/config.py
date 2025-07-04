@@ -76,6 +76,16 @@ DOUBLE_BRIDGE_CONFIG = {
     "CUT_RANGE_START": 1,         # Start of range for cut point selection
 }
 
+# Numba JIT optimization configuration
+NUMBA_CONFIG = {
+    "ENABLED": True,                    # Master enable/disable for Numba optimizations
+    "AUTO_DETECT_SIZE_THRESHOLD": 30,   # Use Numba for n >= threshold (nodes)
+    "FALLBACK_ON_ERROR": True,         # Graceful fallback if Numba operations fail
+    "JIT_CACHE": True,                 # Enable Numba compilation caching
+    "PARALLEL_THRESHOLD": 500,         # Use parallel features for n >= threshold
+    "VERBOSE_COMPILATION": False,      # Show compilation messages
+}
+
 # Error handling and validation constants
 VALIDATION_CONFIG = {
     "DEADLINE_SAFETY_MARGIN": 0.1,              # Safety margin for deadline checks (seconds)

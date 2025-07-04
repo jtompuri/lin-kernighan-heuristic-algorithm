@@ -41,11 +41,11 @@ NUMBA_ENABLED = os.getenv('LK_NUMBA_ENABLED', 'true').lower() == 'true'
 
 def should_use_numba(n_nodes: Optional[int] = None, force_numba: Optional[bool] = None) -> bool:
     """Determine whether to use Numba optimizations based on configuration and problem size.
-    
+
     Args:
         n_nodes: Number of nodes in the problem. Used for auto-detection.
         force_numba: If True/False, force enable/disable Numba. If None, auto-detect.
-        
+
     Returns:
         True if Numba optimizations should be used, False otherwise.
     """
@@ -68,10 +68,10 @@ def should_use_numba(n_nodes: Optional[int] = None, force_numba: Optional[bool] 
 
 def should_use_parallel_numba(n_nodes: Optional[int] = None) -> bool:
     """Determine whether to use parallel Numba optimizations for very large problems.
-    
+
     Args:
         n_nodes: Number of nodes in the problem.
-        
+
     Returns:
         True if parallel Numba optimizations should be used, False otherwise.
     """
@@ -88,14 +88,14 @@ def should_use_parallel_numba(n_nodes: Optional[int] = None) -> bool:
 
 def build_distance_matrix(coords: np.ndarray, use_numba: Optional[bool] = None) -> np.ndarray:
     """Build distance matrix with optional Numba acceleration and parallel optimization.
-    
+
     Args:
         coords: Array of (x, y) coordinates with shape (n, 2).
         use_numba: Force enable/disable Numba. If None, auto-detect based on problem size.
-        
+
     Returns:
         Symmetric distance matrix of shape (n, n).
-        
+
     Raises:
         Exception: If Numba optimization fails and fallback is disabled.
     """

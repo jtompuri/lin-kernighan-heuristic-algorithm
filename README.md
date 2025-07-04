@@ -1,13 +1,6 @@
 # Lin-Kernighan Heuristic for the Traveling Salesperson Problem (TSP)
 
-A Python implementatio# Use different starting algorithm
-python -m lin_kernighan_tsp_solver --starting-cycle greedy
-
-# Set time limit and save tours
-python -m lin_kernighan_tsp_solver --time-limit 10.0 --save-tours
-
-# Enable performance optimizations (optional)
-python -m lin_kernighan_tsp_solver --enable-numba Lin-Kernighan (LK) heuristic for solving the Traveling Salesperson Problem. This solver processes TSPLIB format instances with Euclidean 2D geometry and provides high-quality approximate solutions using a chained version of the LK algorithm.
+A Python implementation of the Lin-Kernighan (LK) heuristic for solving the Traveling Salesperson Problem. This solver processes TSPLIB format instances with Euclidean 2D geometry and provides high-quality approximate solutions using a chained version of the LK algorithm.
 
 **Key Features:**
 - Complete implementation of the Lin-Kernighan local search heuristic
@@ -23,7 +16,6 @@ python -m lin_kernighan_tsp_solver --enable-numba Lin-Kernighan (LK) heuristic f
 
 ## Table of Contents
 - [Quick Start](#quick-start)
-- [Requirements & Compatibility](#requirements--compatibility)
 - [Usage](#usage)
 - [Example Output](#example-output)
 - [Development](#development)
@@ -38,51 +30,14 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-# 2. Verify installation (optional)
-python test_requirements.py
-
-# 2. Verify installation (optional)
-python test_requirements.py
-
-# 3. Run with default settings (processes all TSPLIB95 instances)
+# 2. Run with default settings (processes all TSPLIB95 instances)
 python -m lin_kernighan_tsp_solver
 
-# 4. Process specific files
+# 3. Process specific files
 python -m lin_kernighan_tsp_solver problems/tsplib95/berlin52.tsp
 
-# 5. Customize settings
+# 4. Customize settings
 python -m lin_kernighan_tsp_solver --time-limit 10.0 --starting-cycle greedy
-```
-
-## Requirements & Compatibility
-
-### Core Dependencies
-- **Python**: 3.8+ (tested with 3.12)
-- **NumPy**: 2.2.x+ (stable and well-tested)
-- **SciPy**: 1.16.0+
-- **Matplotlib**: 3.10.3+
-
-### Performance Optimization
-- **Numba**: 0.58.0+ (optional automatic acceleration)
-
-### Installation Notes
-```bash
-# Standard installation
-pip install -r requirements.txt
-
-# Development installation (includes testing/linting tools)
-pip install -r requirements-dev.txt
-
-# Verify installation
-python test_requirements.py
-```
-
-### Compatibility Matrix
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Python 3.8-3.12 | ✅ Tested | Recommended: 3.10+ |
-| NumPy 2.2.x+ | ✅ Supported | Stable and reliable |
-| All platforms | ✅ Cross-platform | Windows, macOS, Linux |
 ```
 
 ## Usage
@@ -102,10 +57,7 @@ python -m lin_kernighan_tsp_solver --starting-cycle greedy --enable-numba
 # Set time limit and save tours with Numba auto-detection
 python -m lin_kernighan_tsp_solver --time-limit 20.0 --save-tours
 
-# Enable performance optimizations (optional)
-python -m lin_kernighan_tsp_solver --enable-numba
-
-# Use pure Python implementation
+# Disable Numba for testing or compatibility
 python -m lin_kernighan_tsp_solver --disable-numba
 ```
 
@@ -113,19 +65,15 @@ python -m lin_kernighan_tsp_solver --disable-numba
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--starting-cycle` | Initial tour algorithm: `natural`, `random`, `nearest_neighbor`, `greedy`, `boruvka`, `qboruvka` | `qboruvka` |
+| `--starting-cycle` | Algorithm: `natural`, `random`, `nearest_neighbor`, `greedy`, `boruvka`, `qboruvka` | `qboruvka` |
 | `--time-limit` | Time limit per instance (seconds) | `5.0` |
 | `--workers` | Number of parallel workers | All CPU cores |
 | `--sequential` | Force sequential processing | Parallel |
 | `--save-tours` / `--no-save-tours` | Save/don't save heuristic tours | Save |
+| `--enable-numba` / `--disable-numba` | Enable/disable Numba JIT optimizations | Auto-detect (≥30 nodes) |
+| `--numba-threshold` | Minimum nodes for Numba auto-detection | `30` |
+| `--parallel-threshold` | Minimum nodes for parallel Numba | `500` |
 | `--seed` | Random seed for reproducible results | Random |
-
-#### Performance Options (Optional)
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--enable-numba` / `--disable-numba` | Control performance optimizations | Auto-detect |
-| `--numba-threshold` | Minimum nodes for auto-optimization | `30` |
-| `--parallel-threshold` | Minimum nodes for parallel processing | `500` |
 
 ### Starting Cycle Algorithms
 
@@ -138,20 +86,29 @@ python -m lin_kernighan_tsp_solver --disable-numba
 **Performance:** `natural` > `random` > `nearest_neighbor` > `qboruvka` > `boruvka` > `greedy`  
 **Quality:** Often `greedy` ≥ `qboruvka` ≥ `boruvka` ≥ `nearest_neighbor` > `random` > `natural`
 
-### Performance Notes
+### Numba JIT Optimizations
 
-The solver includes automatic performance optimizations when beneficial:
+The solver includes optional **Numba Just-In-Time (JIT) compilation** for significant performance improvements:
 
-- **Pure Python**: Reliable implementation works on all systems
-- **Optional Acceleration**: Automatic performance enhancement for larger problems when available
-- **Scalable Processing**: Efficient handling from small test cases to large instances
+- **Automatic Detection**: Numba optimizations are automatically enabled for problems with ≥30 nodes
+- **Parallel Processing**: For very large problems (≥500 nodes), parallel Numba optimizations are used
+- **Graceful Fallback**: If Numba is not available, the solver automatically falls back to pure Python
+- **Manual Control**: Use `--enable-numba` or `--disable-numba` to override automatic detection
+
+**Performance Impact:**
+- **2-5x speedup** for medium problems (30-200 nodes)
+- **3-10x speedup** for large problems (200+ nodes) with parallel Numba
+- **No overhead** for small problems (auto-disabled)
 
 ```bash
-# Standard usage (automatic optimization)
-python -m lin_kernighan_tsp_solver
+# Force enable Numba (useful for benchmarking)
+python -m lin_kernighan_tsp_solver --enable-numba
 
-# Force pure Python mode if needed
+# Force disable Numba (pure Python mode)
 python -m lin_kernighan_tsp_solver --disable-numba
+
+# Custom thresholds
+python -m lin_kernighan_tsp_solver --numba-threshold 50 --parallel-threshold 1000
 ```
 
 ## Example Output

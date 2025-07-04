@@ -1,11 +1,10 @@
 # Core scientific computing
-# Note: NumPy version constrained for optional Numba compatibility
-numpy>=2.2.0,<2.3.0  # Stable version, compatible with all features
+numpy>=2.2.0,<2.3.0  # Stable version with broad compatibility
 scipy>=1.16.0
 
 # Plotting and visualization  
 matplotlib>=3.10.3
 
 # Optional performance optimization
-# Provides acceleration for large problems when available
-numba>=0.58.0,<0.62.0  # Optional: automatic speedup for large instances
+# Provides automatic acceleration for large instances when available
+numba>=0.58.0,<0.62.0  # Optional: can improve performance for large problems

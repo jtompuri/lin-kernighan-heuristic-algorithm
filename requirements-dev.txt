@@ -1,9 +1,13 @@
 -r requirements.txt  # Includes all production dependencies
 
 # === Testing ===
-pytest==8.4.1
-pytest-cov==6.2.1
+pytest>=8.4.1
+pytest-cov>=6.2.1
 
 # === Linting & Static Analysis ===
-pylint==3.3.7
-flake8==7.3.0
+pylint>=3.3.7
+flake8>=7.3.0
+
+# === Additional Development Tools ===
+coverage>=7.9.2  # Test coverage reporting
+click>=8.2.1     # CLI framework (transitive dependency, pinned for stability)

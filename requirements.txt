@@ -4,3 +4,7 @@ scipy==1.16.0
 
 # Plotting and visualization  
 matplotlib==3.10.3
+
+# Performance optimization (optional but recommended)
+# Provides 10-100x speedup for large problems
+numba>=0.58.0

@@ -32,10 +32,10 @@ def _set_algorithm_functions(use_enhanced: bool = False):
     """Set the algorithm functions based on configuration."""
     global _algorithm_func, _distance_matrix_func
     
-    # Always use the integrated version that preserves algorithm quality
-    from .lk_algorithm_integrated import chained_lin_kernighan_auto, build_distance_matrix_auto
-    _algorithm_func = chained_lin_kernighan_auto
-    _distance_matrix_func = build_distance_matrix_auto
+    # Use the integrated version that automatically handles Numba optimizations
+    from .lk_algorithm_integrated import chained_lin_kernighan, build_distance_matrix
+    _algorithm_func = chained_lin_kernighan
+    _distance_matrix_func = build_distance_matrix
 
 
 # Initialize with default functions
@@ -199,8 +199,7 @@ def main(
     save_tours: bool | None = None,
     numba_enabled: bool | None = None,
     numba_threshold: int | None = None,
-    parallel_numba_enabled: bool | None = None,
-    parallel_numba_threshold: int | None = None,
+    parallel_threshold: int | None = None,
     random_seed: int | None = None
 ):
     """Main function with configurable options.
@@ -214,9 +213,8 @@ def main(
         save_tours: Whether to save heuristic tours. If None, uses config default.
         numba_enabled: Whether to enable Numba optimizations. If None, uses config default.
         numba_threshold: Minimum problem size to use Numba optimizations.
-        parallel_numba_enabled: Whether to enable parallel Numba optimizations. If None, uses config default.
-        parallel_numba_threshold: Minimum problem size to use parallel Numba optimizations.
-        random_seed: Random seed for reproducible results. If None, uses config default.
+        parallel_threshold: Minimum problem size to use parallel optimizations.
+        random_seed: Random seed for reproducible results.
     """
     from .config import NUMBA_CONFIG, set_random_seed
     
@@ -237,17 +235,10 @@ def main(
         NUMBA_CONFIG["AUTO_DETECT_SIZE_THRESHOLD"] = numba_threshold
         print(f"Numba auto-detection threshold set to {numba_threshold} nodes")
     
-    # Update parallel Numba configuration if provided
-    if parallel_numba_enabled is not None:
-        # For now, we don't have a separate config flag, but we can adjust the threshold
-        if parallel_numba_enabled:
-            print("Parallel Numba optimizations enabled")
-        else:
-            print("Parallel Numba optimizations disabled")
-    
-    if parallel_numba_threshold is not None:
-        NUMBA_CONFIG["PARALLEL_THRESHOLD"] = parallel_numba_threshold
-        print(f"Parallel Numba threshold set to {parallel_numba_threshold} nodes")
+    # Update parallel threshold if provided
+    if parallel_threshold is not None:
+        NUMBA_CONFIG["PARALLEL_THRESHOLD"] = parallel_threshold
+        print(f"Parallel optimization threshold set to {parallel_threshold} nodes")
     
     # Update LK_CONFIG with starting cycle method if provided
     if starting_cycle_method is not None:

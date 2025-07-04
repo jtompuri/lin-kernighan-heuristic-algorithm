@@ -118,7 +118,7 @@ if NUMBA_AVAILABLE:
 
         # Create array for parallel cost computation
         costs = np.zeros(n, dtype=np.float64)
-        
+
         # Parallel computation of edge costs
         for i in prange(n):
             current_node = order[i]
@@ -246,7 +246,7 @@ if NUMBA_AVAILABLE:
         for i in prange(len(neigh_s1)):
             y1_cand = neigh_s1[i]
             valid[i] = False
-            
+
             if y1_cand == base or y1_cand == s1:
                 continue
 
@@ -291,7 +291,7 @@ if NUMBA_AVAILABLE:
         for i in prange(len(neigh_base)):
             t3_candidate = neigh_base[i]
             valid[i] = False
-            
+
             if t3_candidate == base or t3_candidate == s1:
                 continue
 

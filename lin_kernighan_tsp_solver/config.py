@@ -126,26 +126,26 @@ FLIP_CONFIG = {
 
 def set_random_seed(seed: int | None = None) -> int:
     """Set random seed for reproducible results.
-    
+
     Args:
         seed: Random seed to set. If None, uses LK_CONFIG["RANDOM_SEED"].
               If that's also None, generates a random seed.
-    
+
     Returns:
         int: The seed that was actually set.
     """
     import random
     import numpy as np
-    
+
     if seed is None:
         seed = LK_CONFIG.get("RANDOM_SEED")
-    
+
     if seed is None:
         # Generate a random seed
         seed = random.randint(0, 2**31 - 1)
-    
+
     # Set seeds for all random number generators
     random.seed(seed)
     np.random.seed(seed)
-    
+
     return seed

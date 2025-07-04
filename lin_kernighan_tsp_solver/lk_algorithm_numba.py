@@ -13,7 +13,7 @@ import numpy as np
 
 try:
     import numba
-    from numba import jit, types
+    from numba import jit, types, prange
     from numba.typed import Dict
     NUMBA_AVAILABLE = True
     print("Numba JIT compilation available")
@@ -109,6 +109,25 @@ if NUMBA_AVAILABLE:
 
         return total_cost
 
+    @jit(nopython=True, parallel=True, cache=True)
+    def tour_init_cost_numba_parallel(order: np.ndarray, D: np.ndarray) -> float:
+        """Parallel Numba-optimized tour cost calculation for large tours."""
+        n = len(order)
+        if n == 0:
+            return 0.0
+
+        # Create array for parallel cost computation
+        costs = np.zeros(n, dtype=np.float64)
+        
+        # Parallel computation of edge costs
+        for i in prange(n):
+            current_node = order[i]
+            next_node = order[(i + 1) % n]
+            costs[i] = D[current_node, next_node]
+
+        # Sum the costs
+        return np.sum(costs)
+
     @jit(nopython=True, cache=True)
     def distance_matrix_numba(coords: np.ndarray) -> np.ndarray:
         """Numba-optimized distance matrix computation."""
@@ -121,6 +140,28 @@ if NUMBA_AVAILABLE:
         D = np.zeros((n, n), dtype=np.float64)
 
         for i in range(n):
+            for j in range(i + 1, n):
+                dx = coords[i, 0] - coords[j, 0]
+                dy = coords[i, 1] - coords[j, 1]
+                dist = math.sqrt(dx * dx + dy * dy)
+                D[i, j] = dist
+                D[j, i] = dist
+
+        return D
+
+    @jit(nopython=True, parallel=True, cache=True)
+    def distance_matrix_numba_parallel(coords: np.ndarray) -> np.ndarray:
+        """Parallel Numba-optimized distance matrix computation for large problems."""
+        n = coords.shape[0]
+        if n == 0:
+            return np.empty((0, 0), dtype=np.float64)
+        if n == 1:
+            return np.array([[0.0]], dtype=np.float64)
+
+        D = np.zeros((n, n), dtype=np.float64)
+
+        # Parallel computation of distance matrix
+        for i in prange(n):
             for j in range(i + 1, n):
                 dx = coords[i, 0] - coords[j, 0]
                 dy = coords[i, 1] - coords[j, 1]
@@ -186,6 +227,97 @@ if NUMBA_AVAILABLE:
             candidates[count] = candidate
             gains[count] = gain
             count += 1
+
+        return candidates[:count], gains[:count]
+
+    @jit(nopython=True, parallel=True, cache=True)
+    def generate_standard_candidates_numba_parallel(
+        base: int, s1: int, order: np.ndarray, pos: np.ndarray,
+        D: np.ndarray, neigh_s1: np.ndarray, tolerance: float
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Parallel Numba-optimized standard flip candidate generation."""
+        max_candidates = len(neigh_s1)
+        y1_candidates = np.empty(max_candidates, dtype=np.int32)
+        t3_candidates = np.empty(max_candidates, dtype=np.int32)
+        gains = np.empty(max_candidates, dtype=np.float64)
+        valid = np.empty(max_candidates, dtype=numba.boolean)
+
+        # Parallel candidate evaluation
+        for i in prange(len(neigh_s1)):
+            y1_cand = neigh_s1[i]
+            valid[i] = False
+            
+            if y1_cand == base or y1_cand == s1:
+                continue
+
+            gain_G1 = D[base, s1] - D[s1, y1_cand]
+            if gain_G1 <= tolerance:
+                continue
+
+            t3_node = tour_prev_numba(order, pos, y1_cand)
+            gain_G2 = D[t3_node, y1_cand] - D[t3_node, base]
+            total_gain = gain_G1 + gain_G2
+
+            y1_candidates[i] = y1_cand
+            t3_candidates[i] = t3_node
+            gains[i] = total_gain
+            valid[i] = True
+
+        # Serial compaction of valid candidates
+        count = 0
+        for i in range(len(neigh_s1)):
+            if valid[i]:
+                y1_candidates[count] = y1_candidates[i]
+                t3_candidates[count] = t3_candidates[i]
+                gains[count] = gains[i]
+                count += 1
+
+        return y1_candidates[:count], t3_candidates[:count], gains[:count]
+
+    @jit(nopython=True, parallel=True, cache=True)
+    def generate_mak_morton_candidates_numba_parallel(
+        base: int, s1: int, order: np.ndarray, pos: np.ndarray,
+        D: np.ndarray, neigh_base: np.ndarray, tolerance: float
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Parallel Numba-optimized Mak-Morton flip candidate generation."""
+        max_candidates = len(neigh_base)
+        candidates = np.empty(max_candidates, dtype=np.int32)
+        gains = np.empty(max_candidates, dtype=np.float64)
+        valid = np.empty(max_candidates, dtype=numba.boolean)
+
+        prev_base = tour_prev_numba(order, pos, base)
+
+        # Parallel candidate evaluation
+        for i in prange(len(neigh_base)):
+            t3_candidate = neigh_base[i]
+            valid[i] = False
+            
+            if t3_candidate == base or t3_candidate == s1:
+                continue
+
+            t4_node = tour_next_numba(order, pos, t3_candidate)
+            if t4_node == base:
+                continue
+
+            # Check feasibility and calculate gain
+            if not tour_sequence_numba(pos, base, t3_candidate, t4_node):
+                continue
+
+            gain_G2 = D[t3_candidate, t4_node] - D[prev_base, base]
+            if gain_G2 <= tolerance:
+                continue
+
+            candidates[i] = t3_candidate
+            gains[i] = gain_G2
+            valid[i] = True
+
+        # Serial compaction of valid candidates
+        count = 0
+        for i in range(len(neigh_base)):
+            if valid[i]:
+                candidates[count] = candidates[i]
+                gains[count] = gains[i]
+                count += 1
 
         return candidates[:count], gains[:count]
 

@@ -38,6 +38,12 @@ if __name__ == "__main__":
                         help="Disable Numba JIT optimizations (use original Python implementation)")
     parser.add_argument("--numba-threshold", type=int, default=None,
                         help="Minimum problem size to use Numba optimizations (default: 30)")
+    parser.add_argument("--enable-parallel-numba", action="store_true",
+                        help="Enable parallel Numba optimizations for very large problems")
+    parser.add_argument("--disable-parallel-numba", action="store_true",
+                        help="Disable parallel Numba optimizations")
+    parser.add_argument("--parallel-numba-threshold", type=int, default=None,
+                        help="Minimum problem size to use parallel Numba optimizations (default: 500)")
     
     # Random seed control
     parser.add_argument("--seed", type=int, default=None,
@@ -58,6 +64,13 @@ if __name__ == "__main__":
         numba_enabled = True
     elif args.disable_numba:
         numba_enabled = False
+    
+    # Determine parallel Numba preference
+    parallel_numba_enabled = None
+    if args.enable_parallel_numba:
+        parallel_numba_enabled = True
+    elif args.disable_parallel_numba:
+        parallel_numba_enabled = False
 
     # If specific files are provided, use sequential processing for single files
     use_parallel = not args.sequential
@@ -74,5 +87,7 @@ if __name__ == "__main__":
         save_tours=save_tours,
         numba_enabled=numba_enabled,
         numba_threshold=args.numba_threshold,
+        parallel_numba_enabled=parallel_numba_enabled,
+        parallel_numba_threshold=args.parallel_numba_threshold,
         random_seed=args.seed
     )

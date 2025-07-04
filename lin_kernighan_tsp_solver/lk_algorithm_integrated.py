@@ -19,6 +19,10 @@ try:
     from .lk_algorithm_numba import (
         TourNumba,
         build_distance_matrix_numba,
+        distance_matrix_numba_parallel,
+        tour_init_cost_numba_parallel,
+        generate_standard_candidates_numba_parallel,
+        generate_mak_morton_candidates_numba_parallel,
         NUMBA_AVAILABLE
     )
     NUMBA_INTEGRATION_AVAILABLE = True
@@ -49,16 +53,34 @@ def should_use_numba(n_nodes: Optional[int] = None, force_numba: Optional[bool] 
     return True
 
 
+def should_use_parallel_numba(n_nodes: Optional[int] = None) -> bool:
+    """Determine whether to use parallel Numba optimizations for very large problems."""
+    if not should_use_numba(n_nodes):
+        return False
+    
+    if n_nodes is not None:
+        # Use parallel Numba for very large problems where the overhead is justified
+        parallel_threshold = NUMBA_CONFIG.get("PARALLEL_THRESHOLD", 500)
+        return n_nodes >= parallel_threshold
+    
+    return False
+
+
 def build_distance_matrix(coords: np.ndarray, use_numba: Optional[bool] = None) -> np.ndarray:
-    """Build distance matrix with optional Numba acceleration."""
+    """Build distance matrix with optional Numba acceleration and parallel optimization."""
     from .lk_algorithm import build_distance_matrix as original_build_distance_matrix
     
     n_nodes = coords.shape[0] if len(coords.shape) > 1 else len(coords)
     use_optimization = should_use_numba(n_nodes, use_numba)
+    use_parallel = should_use_parallel_numba(n_nodes)
     
     if use_optimization and NUMBA_INTEGRATION_AVAILABLE:
         try:
-            return build_distance_matrix_numba(coords)
+            # Use parallel Numba for very large problems
+            if use_parallel:
+                return distance_matrix_numba_parallel(coords)
+            else:
+                return build_distance_matrix_numba(coords)
         except Exception:
             if NUMBA_CONFIG.get("FALLBACK_ON_ERROR", True):
                 import logging
@@ -76,21 +98,26 @@ class Tour:
         """Initialize Tour with automatic Numba optimization detection."""
         self.n = len(order)
         self.use_numba = should_use_numba(self.n, use_numba)
+        self.use_parallel = should_use_parallel_numba(self.n)
         
         if self.use_numba and NUMBA_INTEGRATION_AVAILABLE:
             try:
                 self._tour = TourNumba(order, D)
                 self._implementation = "numba"
+                if self.use_parallel:
+                    self._implementation += "_parallel"
             except Exception:
                 if NUMBA_CONFIG.get("FALLBACK_ON_ERROR", True):
                     self._tour = OriginalTour(order, D)
                     self._implementation = "original"
                     self.use_numba = False
+                    self.use_parallel = False
                 else:
                     raise
         else:
             self._tour = OriginalTour(order, D)
             self._implementation = "original"
+            self.use_parallel = False
     
     def next(self, v: int) -> int:
         """Get next vertex in tour."""
@@ -109,8 +136,19 @@ class Tour:
         return self._tour.flip(start_node, end_node)
     
     def init_cost(self, D: np.ndarray):
-        """Initialize tour cost using distance matrix."""
-        return self._tour.init_cost(D)
+        """Initialize tour cost using distance matrix with optional parallel computation."""
+        if self.use_parallel and NUMBA_INTEGRATION_AVAILABLE:
+            try:
+                # Use parallel Numba for large tour cost calculation
+                cost = tour_init_cost_numba_parallel(self._tour.order, D)
+                self._tour.cost = cost
+                return cost
+            except Exception:
+                if NUMBA_CONFIG.get("FALLBACK_ON_ERROR", True):
+                    return self._tour.init_cost(D)
+                raise
+        else:
+            return self._tour.init_cost(D)
     
     def flip_and_update_cost(self, node_a: int, node_b: int, D: np.ndarray) -> float:
         """Flip segment and update cost, returning cost change."""

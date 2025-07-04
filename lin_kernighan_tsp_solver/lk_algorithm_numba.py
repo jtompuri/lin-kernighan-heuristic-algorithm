@@ -12,14 +12,6 @@ The module exports optimized implementations of:
 
 Note: This module intentionally defines functions twice (with and without Numba decorators)
 to provide fallback implementations when Numba is not available.
-
-Example:
-    >>> import numpy as np
-    >>> from lin_kernighan_tsp_solver.lk_algorithm_numba import TourNumba, build_distance_matrix_numba
-    >>> coords = np.array([[0, 0], [1, 1], [2, 0]], dtype=float)
-    >>> D = build_distance_matrix_numba(coords)
-    >>> tour = TourNumba([0, 1, 2], D)
-    >>> next_node = tour.next(0)
 """
 # pyright: reportOptionalMemberAccess=false
 # pyright: reportGeneralTypeIssues=false
@@ -353,12 +345,12 @@ else:
     # Fallback implementations when Numba is not available
     def tour_next_numba(order, pos, v):  # type: ignore[misc] # Intentional redefinition for fallback
         """Get next vertex in tour (fallback implementation).
-        
+
         Args:
             order: Array of tour vertex order.
             pos: Position mapping for vertices.
             v: Current vertex.
-            
+
         Returns:
             Next vertex in the tour.
         """
@@ -368,12 +360,12 @@ else:
 
     def tour_prev_numba(order, pos, v):  # type: ignore[misc] # Intentional redefinition for fallback
         """Get previous vertex in tour (fallback implementation).
-        
+
         Args:
             order: Array of tour vertex order.
             pos: Position mapping for vertices.
             v: Current vertex.
-            
+
         Returns:
             Previous vertex in the tour.
         """
@@ -383,13 +375,13 @@ else:
 
     def tour_sequence_numba(pos, node_a, node_b, node_c):  # type: ignore[misc] # Intentional redefinition for fallback
         """Check if node_b is in sequence from node_a to node_c (fallback implementation).
-        
+
         Args:
             pos: Position mapping for vertices.
             node_a: First node in sequence.
             node_b: Node to check.
             node_c: Last node in sequence.
-            
+
         Returns:
             True if node_b is between node_a and node_c in tour order.
         """
@@ -400,7 +392,7 @@ else:
 
     def tour_flip_numba(order, pos, start_node, end_node):  # type: ignore[misc] # Intentional redefinition for fallback
         """Flip tour segment between start_node and end_node (fallback implementation).
-        
+
         Args:
             order: Array of tour vertex order (modified in-place).
             pos: Position mapping for vertices (modified in-place).
@@ -417,11 +409,11 @@ else:
 
     def tour_init_cost_numba(order, D):  # type: ignore[misc] # Intentional redefinition for fallback
         """Calculate total tour cost (fallback implementation).
-        
+
         Args:
             order: Array of tour vertex order.
             D: Distance matrix.
-            
+
         Returns:
             Total cost of the tour.
         """
@@ -432,10 +424,10 @@ else:
 
     def distance_matrix_numba(coords):  # type: ignore[misc] # Intentional redefinition for fallback
         """Build distance matrix from coordinates (fallback implementation).
-        
+
         Args:
             coords: Array of (x, y) coordinates.
-            
+
         Returns:
             Symmetric distance matrix.
         """
@@ -443,7 +435,7 @@ else:
 
     def generate_standard_candidates_numba(base, s1, order, pos, D, neigh_s1, tolerance):  # type: ignore[misc] # Intentional redefinition for fallback
         """Generate standard flip candidates (fallback implementation).
-        
+
         Args:
             base: Base node for the move.
             s1: First node in current move.
@@ -452,7 +444,7 @@ else:
             D: Distance matrix.
             neigh_s1: Neighbors of s1.
             tolerance: Minimum gain tolerance.
-            
+
         Returns:
             Tuple of (y1_candidates, t3_candidates, gains).
         """
@@ -479,7 +471,7 @@ else:
 
     def generate_mak_morton_candidates_numba(base, s1, order, pos, D, neigh_base, tolerance):  # type: ignore[misc] # Intentional redefinition for fallback
         """Generate Mak-Morton flip candidates (fallback implementation).
-        
+
         Args:
             base: Base node for the move.
             s1: First node in current move.
@@ -488,7 +480,7 @@ else:
             D: Distance matrix.
             neigh_base: Neighbors of base node.
             tolerance: Minimum gain tolerance.
-            
+
         Returns:
             Tuple of (candidates, gains).
         """
@@ -513,16 +505,16 @@ else:
 
 class TourNumba:
     """Tour class with Numba-optimized operations for better performance.
-    
+
     This class provides a high-performance tour representation using Numba-compiled
     operations for critical tour manipulations in the Lin-Kernighan algorithm.
-    
+
     Attributes:
         n: Number of nodes in the tour.
         order: NumPy array representing the tour order.
         pos: Position mapping array for O(1) position lookups.
         cost: Current tour cost (None if not calculated).
-    
+
     Example:
         >>> import numpy as np
         >>> coords = np.array([[0, 0], [1, 1], [2, 0]], dtype=float)
@@ -534,11 +526,11 @@ class TourNumba:
 
     def __init__(self, order, D=None):
         """Initialize tour with optional distance matrix for cost calculation.
-        
+
         Args:
             order: Initial tour order as list or array.
             D: Optional distance matrix for cost calculation.
-            
+
         Raises:
             ValueError: If order contains invalid node indices.
         """
@@ -564,13 +556,13 @@ class TourNumba:
 
     def next(self, v: int) -> int:
         """Get next vertex in tour.
-        
+
         Args:
             v: Current vertex.
-            
+
         Returns:
             Next vertex in the tour order.
-            
+
         Raises:
             IndexError: If tour is empty.
         """
@@ -580,13 +572,13 @@ class TourNumba:
 
     def prev(self, v: int) -> int:
         """Get previous vertex in tour.
-        
+
         Args:
             v: Current vertex.
-            
+
         Returns:
             Previous vertex in the tour order.
-            
+
         Raises:
             IndexError: If tour is empty.
         """
@@ -596,15 +588,15 @@ class TourNumba:
 
     def sequence(self, node_a: int, node_b: int, node_c: int) -> bool:
         """Check if node_b is in sequence from node_a to node_c.
-        
+
         This determines if node_b appears between node_a and node_c in the
         tour order, handling wraparound at tour boundaries.
-        
+
         Args:
             node_a: Starting node of the sequence.
             node_b: Node to check for presence in sequence.
             node_c: Ending node of the sequence.
-            
+
         Returns:
             True if node_b is between node_a and node_c in tour order.
         """
@@ -614,10 +606,10 @@ class TourNumba:
 
     def flip(self, start_node: int, end_node: int):
         """Flip tour segment between start_node and end_node.
-        
+
         Reverses the order of nodes in the tour segment from start_node
         to end_node, inclusive. Updates both order and position arrays.
-        
+
         Args:
             start_node: Starting node of segment to flip.
             end_node: Ending node of segment to flip.
@@ -626,7 +618,7 @@ class TourNumba:
 
     def init_cost(self, D: np.ndarray):
         """Initialize tour cost using distance matrix.
-        
+
         Args:
             D: Distance matrix where D[i,j] is distance from node i to j.
         """
@@ -634,15 +626,15 @@ class TourNumba:
 
     def flip_and_update_cost(self, node_a: int, node_b: int, D: np.ndarray) -> float:
         """Flip segment and update cost, returning cost change.
-        
+
         Efficiently calculates the cost change from flipping a segment
         and updates the tour cost accordingly.
-        
+
         Args:
             node_a: Starting node of segment to flip.
             node_b: Ending node of segment to flip.
             D: Distance matrix.
-            
+
         Returns:
             Change in tour cost (positive for increase, negative for decrease).
         """
@@ -679,10 +671,10 @@ class TourNumba:
 
     def get_tour(self) -> List[int]:
         """Get tour as list, normalized to start with node 0 if present.
-        
+
         Returns the tour as a list of node indices, rotated so that node 0
         appears first if it exists in the tour.
-        
+
         Returns:
             List of node indices representing the tour order.
         """
@@ -703,17 +695,17 @@ class TourNumba:
 
 def build_distance_matrix_numba(coords: np.ndarray) -> np.ndarray:
     """Build distance matrix using Numba optimization if available.
-    
+
     Computes the Euclidean distance matrix from a set of 2D coordinates.
     Uses Numba JIT compilation for improved performance when available.
-    
+
     Args:
         coords: Array of shape (n, 2) containing (x, y) coordinates.
-        
+
     Returns:
         Symmetric distance matrix of shape (n, n) where D[i,j] is the
         Euclidean distance between points i and j.
-        
+
     Example:
         >>> coords = np.array([[0, 0], [1, 1], [2, 0]], dtype=float)
         >>> D = build_distance_matrix_numba(coords)
@@ -725,14 +717,14 @@ def build_distance_matrix_numba(coords: np.ndarray) -> np.ndarray:
 
 def benchmark_numba_speedup(n_nodes: int = 50, n_iterations: int = 1000) -> dict:
     """Benchmark Numba vs original implementation speedup.
-    
+
     Compares the performance of Numba-optimized tour operations against
     the original pure Python implementation.
-    
+
     Args:
         n_nodes: Number of nodes in test tour.
         n_iterations: Number of flip operations to benchmark.
-        
+
     Returns:
         Dictionary containing benchmark results:
             - n_nodes: Number of nodes tested
@@ -741,7 +733,7 @@ def benchmark_numba_speedup(n_nodes: int = 50, n_iterations: int = 1000) -> dict
             - numba_time: Time for Numba implementation (seconds)
             - speedup: Performance ratio (original_time / numba_time)
             - numba_available: Whether Numba is available
-            
+
     Example:
         >>> result = benchmark_numba_speedup(50, 1000)
         >>> print(f"Speedup: {result['speedup']:.1f}x")

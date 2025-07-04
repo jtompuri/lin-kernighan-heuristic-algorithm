@@ -40,7 +40,15 @@ NUMBA_ENABLED = os.getenv('LK_NUMBA_ENABLED', 'true').lower() == 'true'
 
 
 def should_use_numba(n_nodes: Optional[int] = None, force_numba: Optional[bool] = None) -> bool:
-    """Determine whether to use Numba optimizations based on configuration and problem size."""
+    """Determine whether to use Numba optimizations based on configuration and problem size.
+    
+    Args:
+        n_nodes: Number of nodes in the problem. Used for auto-detection.
+        force_numba: If True/False, force enable/disable Numba. If None, auto-detect.
+        
+    Returns:
+        True if Numba optimizations should be used, False otherwise.
+    """
     if force_numba is not None:
         return force_numba and NUMBA_AVAILABLE
 
@@ -59,7 +67,14 @@ def should_use_numba(n_nodes: Optional[int] = None, force_numba: Optional[bool] 
 
 
 def should_use_parallel_numba(n_nodes: Optional[int] = None) -> bool:
-    """Determine whether to use parallel Numba optimizations for very large problems."""
+    """Determine whether to use parallel Numba optimizations for very large problems.
+    
+    Args:
+        n_nodes: Number of nodes in the problem.
+        
+    Returns:
+        True if parallel Numba optimizations should be used, False otherwise.
+    """
     if not should_use_numba(n_nodes):
         return False
 
@@ -72,7 +87,18 @@ def should_use_parallel_numba(n_nodes: Optional[int] = None) -> bool:
 
 
 def build_distance_matrix(coords: np.ndarray, use_numba: Optional[bool] = None) -> np.ndarray:
-    """Build distance matrix with optional Numba acceleration and parallel optimization."""
+    """Build distance matrix with optional Numba acceleration and parallel optimization.
+    
+    Args:
+        coords: Array of (x, y) coordinates with shape (n, 2).
+        use_numba: Force enable/disable Numba. If None, auto-detect based on problem size.
+        
+    Returns:
+        Symmetric distance matrix of shape (n, n).
+        
+    Raises:
+        Exception: If Numba optimization fails and fallback is disabled.
+    """
     from .lk_algorithm import build_distance_matrix as original_build_distance_matrix
 
     n_nodes = coords.shape[0] if len(coords.shape) > 1 else len(coords)

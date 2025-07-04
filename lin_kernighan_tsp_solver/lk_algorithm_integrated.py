@@ -377,15 +377,12 @@ def _lin_kernighan_integrated(
     verbose: bool = False
 ) -> Tuple['Tour', float]:
     """Integrated Lin-Kernighan using Numba-optimized Tour class."""
-    import time
     from .lk_algorithm import lin_kernighan
 
     # Simply call the original lin_kernighan but with our integrated Tour class
     # The key difference is that when lin_kernighan creates Tours, it will use our integrated class
-    n_nodes = len(coords)
-
     if verbose:
-        print(f"Using integrated Tour class with Numba optimizations")
+        print("Using integrated Tour class with Numba optimizations")
 
     # Call original lin_kernighan which will automatically use the integrated Tour class
     # since we're in the integrated module context
@@ -393,7 +390,11 @@ def _lin_kernighan_integrated(
         coords, initial_tour_order, distance_matrix, neighbor_list, deadline
     )
 
-    return best_tour, best_cost
+    # Convert the returned original Tour to our integrated Tour for consistency
+    integrated_tour = Tour(best_tour.get_tour(), distance_matrix, use_numba=use_numba)
+    integrated_tour.cost = best_cost
+
+    return integrated_tour, best_cost
 
 
 def _perform_kick_and_lk_run_integrated(
@@ -493,7 +494,8 @@ def patch_algorithm_with_numba():
 
 def restore_original_algorithm():
     """Restore the original non-Numba functions."""
-    # Currently no patching is done, so no restoration needed    pass
+    # Currently no patching is done, so no restoration needed
+    pass
 
 
 if __name__ == "__main__":

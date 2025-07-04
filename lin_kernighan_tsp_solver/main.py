@@ -388,7 +388,7 @@ def _process_parallel(
         total_count = len(future_to_files)
 
         for future in concurrent.futures.as_completed(future_to_files):
-            tsp_file, opt_file = future_to_files[future]
+            tsp_file, _ = future_to_files[future]  # opt_file not needed here
             base_name = Path(tsp_file).stem
             completed_count += 1
 

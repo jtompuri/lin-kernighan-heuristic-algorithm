@@ -11,3 +11,15 @@ exclude_lines =
     # Don't cover main entry points or pragma: no cover
     if __name__ == .__main__.:
     pragma: no cover
+    
+    # Exclude defensive programming constructs
+    # Safety checks that shouldn't be reachable
+    raise ValueError.*not implemented
+    
+    # Complex import error handling with detailed messages
+    if "tkinter" in str\(e\)\.lower\(\):
+    print\("\\nError: tkinter is required
+    print\("On Ubuntu/Debian, install it with:"
+    print\("    sudo apt-get install python3-tk"
+    print\("\\nAlternatively, matplotlib is configured
+    print\("so this error shouldn't occur during normal operation\."

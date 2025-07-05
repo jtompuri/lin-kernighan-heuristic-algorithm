@@ -141,8 +141,9 @@ Testit on kirjoitettu `pytest`-testauskehyksellä ja ne voidaan toistaa seuraava
 4.  **Suorita testit kattavuusraportilla:**
     ```bash
     pytest --cov=lin_kernighan_tsp_solver --cov-report=html --cov-report=term
+    pytest --cov=lin_kernighan_tsp_solver --cov-report=term-missing
     ```
-    Tämä luo HTML-kattavuusraportin `htmlcov/`-kansioon.
+    Tämä luo HTML-kattavuusraportin `htmlcov/`-kansioon. Projektin `.coveragerc`-tiedosto otetaan automaattisesti käyttöön ja sulkee pois puolustavan ohjelmoinnin konstruktit kattavuusvaatimuksista.
 
 5.  **Suorita tietty testitiedosto:**
     ```bash

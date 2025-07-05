@@ -159,7 +159,12 @@ cython_debug/
 .idea/
 
 # VS Code
+# VS Code settings (exclude personal settings but allow project-specific ones)
 .vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 *.code-workspace
 
 # Vim/Neovim

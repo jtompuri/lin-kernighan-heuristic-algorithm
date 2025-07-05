@@ -1,0 +1,19 @@
+{
+    "python.analysis.extraPaths": [
+        "./lin_kernighan_tsp_solver",
+        "./venv/lib/python3.12/site-packages"
+    ],
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.stubPath": "./venv/lib/python3.12/site-packages",
+    "python.analysis.include": [
+        "./lin_kernighan_tsp_solver",
+        "./tests",
+        "./helpers"
+    ],
+    "python.analysis.exclude": [
+        "**/node_modules",
+        "**/__pycache__"
+    ]
+}

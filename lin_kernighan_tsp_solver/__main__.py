@@ -26,10 +26,8 @@ if __name__ == "__main__":
                         choices=STARTING_CYCLE_CONFIG["AVAILABLE_METHODS"],
                         default=None,
                         help=f"Starting cycle algorithm (default: {STARTING_CYCLE_CONFIG['DEFAULT_METHOD']})")
-    parser.add_argument("--save-tours", action="store_true",
-                        help="Save heuristic tours to solutions/ folder (default: enabled)")
     parser.add_argument("--no-save-tours", action="store_true",
-                        help="Do not save heuristic tours (overrides config)")
+                        help="Do not save heuristic tours (default: tours saved)")
     parser.add_argument("--save-plot", action="store_true",
                         help="Force saving plots to files instead of showing interactively (default: auto-detect)")
     parser.add_argument("--no-plot", action="store_true",
@@ -38,11 +36,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Determine tour saving preference
-    save_tours = None
-    if args.save_tours:
-        save_tours = True
-    elif args.no_save_tours:
-        save_tours = False
+    # Default to enabled unless explicitly disabled
+    save_tours = None if not args.no_save_tours else False
 
     # Determine plotting preference
     # Default to enabled unless explicitly disabled

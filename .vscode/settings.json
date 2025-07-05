@@ -1,0 +1,13 @@
+{
+    "python.defaultInterpreterPath": "./venv/bin/python3",
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.analysis.extraPaths": [
+        "./lin_kernighan_tsp_solver",
+        "./venv/lib/python3.12/site-packages"
+    ],
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.stubPath": "./venv/lib/python3.12/site-packages"
+}

@@ -4,19 +4,19 @@ Tämä dokumentti kuvaa Lin-Kernighan TSP-ratkaisijan Python-toteutuksen testaus
 
 ## 1. Yksikkötestauksen kattavuusraportti
 
-Yksikkötestien kattavuus on tällä hetkellä 98%. Yksityiskohtainen kattavuusraportti löytyy html-muodossa kansiosta [`htmlcov`](/htmlcov/index.html). Et voi selata raporttia Githubissa, vaan sinun pitää kloonata projekti paikalliseen kansioon ja avata index.html-sivu selaimeen. Yksikkötestauksen kattavuusraportti on tuotettu komennolla `pytest --cov=lin_kernighan_tsp_solver --cov-report=html --cov-report=term --cov-report=term-missing`.
+Yksikkötestien kattavuus on tällä hetkellä 99%. Yksityiskohtainen kattavuusraportti löytyy html-muodossa kansiosta [`htmlcov`](/htmlcov/index.html). Et voi selata raporttia Githubissa, vaan sinun pitää kloonata projekti paikalliseen kansioon ja avata index.html-sivu selaimeen. Yksikkötestauksen kattavuusraportti on tuotettu komennolla `pytest --cov=lin_kernighan_tsp_solver --cov-report=html --cov-report=term --cov-report=term-missing`.
 
 ```bash
 Name                                          Stmts   Miss  Cover   Missing
 ---------------------------------------------------------------------------
 lin_kernighan_tsp_solver/config.py               15      0   100%
 lin_kernighan_tsp_solver/lk_algorithm.py        351      0   100%
-lin_kernighan_tsp_solver/main.py                162      3    98%   158-160
-lin_kernighan_tsp_solver/starting_cycles.py     223      6    97%   79, 199, 202, 400, 425, 454
+lin_kernighan_tsp_solver/main.py                162      0   100%
+lin_kernighan_tsp_solver/starting_cycles.py     223      3    99%   79, 202, 454
 lin_kernighan_tsp_solver/tsp_io.py               77      0   100%
 lin_kernighan_tsp_solver/utils.py               168      8    95%   42-49
 ---------------------------------------------------------------------------
-TOTAL                                           996     17    98%
+TOTAL                                           996     11    99%
 ```
 
 ## 2. Mitä on testattu, miten tämä tehtiin?

@@ -27,7 +27,7 @@ EOF
 """
         tsp_file = tmp_path / "test_save_error.tsp"
         tsp_file.write_text(tsp_content)
-        
+
         # Mock save_heuristic_tour to raise IOError
         with patch('lin_kernighan_tsp_solver.main.save_heuristic_tour',
                    side_effect=IOError("Permission denied")):
@@ -38,11 +38,11 @@ EOF
                 time_limit=1.0,
                 verbose=True
             )
-        
+
         # Should complete successfully despite save error
         assert result is not None
         assert 'error' not in result or not result['error']
-        
+
         # Check that warning was printed
         captured = capsys.readouterr()
         assert "Warning: Failed to save tour: Permission denied" in captured.out
@@ -55,13 +55,13 @@ class TestStartingCyclesLargeInstances:
         """Test that greedy tour falls back to nearest neighbor for large instances."""
         # Create a large instance (>1000 nodes)
         n_nodes = 1001
-        coords = np.random.RandomState(42).rand(n_nodes, 2) * 100
-        
+        coords = np.random.RandomState(42).randint(0, 100, size=(n_nodes, 2))
+
         with patch('lin_kernighan_tsp_solver.starting_cycles._nearest_neighbor_tour') as mock_nn:
             mock_nn.return_value = list(range(n_nodes))
-            
+
             result = generate_starting_cycle(coords, method="greedy")
-            
+
             # Should have called nearest neighbor fallback
             mock_nn.assert_called_once_with(coords)
             assert result == list(range(n_nodes))
@@ -69,25 +69,25 @@ class TestStartingCyclesLargeInstances:
     def test_mst_tour_empty_edges(self):
         """Test MST tour building with empty edge list."""
         from lin_kernighan_tsp_solver.starting_cycles import _mst_to_tour
-        
+
         n_nodes = 5
         mst_edges = []  # Empty edge list
-        
+
         result = _mst_to_tour(mst_edges, n_nodes)
-        
+
         # Should return natural order when no edges
         assert result == list(range(n_nodes))
 
     def test_mst_tour_unvisited_nodes(self):
         """Test MST tour building handles unvisited nodes."""
         from lin_kernighan_tsp_solver.starting_cycles import _mst_to_tour
-        
+
         n_nodes = 5
         # Create MST that doesn't connect all nodes (edge case)
         mst_edges = [(0, 1), (1, 2)]  # Nodes 3, 4 not connected
-        
+
         result = _mst_to_tour(mst_edges, n_nodes)
-        
+
         # Should include all nodes
         assert len(result) == n_nodes
         assert set(result) == set(range(n_nodes))
@@ -95,17 +95,17 @@ class TestStartingCyclesLargeInstances:
     def test_2opt_improvement_time_limit(self):
         """Test 2-opt improvement respects time limit."""
         from lin_kernighan_tsp_solver.starting_cycles import _improve_tour_2opt
-        
+
         tour = [0, 1, 2, 3, 4]
         n = len(tour)
         distances = np.random.RandomState(42).rand(n, n)
         # Make symmetric
         distances = (distances + distances.T) / 2
         np.fill_diagonal(distances, 0)
-        
+
         # Very short time limit should cause early exit
         result = _improve_tour_2opt(tour.copy(), distances, max_time=0.0001)
-        
+
         # Should return some result (may or may not be improved)
         assert len(result) == len(tour)
         assert set(result) == set(tour)
@@ -119,16 +119,16 @@ class TestUtilsImportErrorHandling:
         # This is tricky to test because imports happen at module level
         # We can test the _check_tkinter_available function behavior
         from lin_kernighan_tsp_solver.utils import _check_tkinter_available
-        
+
         # Mock import to raise ImportError for tkinter
         import builtins
         original_import = builtins.__import__
-        
+
         def mock_import(name, *args, **kwargs):
             if name == 'tkinter':
                 raise ImportError("No module named 'tkinter'")
             return original_import(name, *args, **kwargs)
-        
+
         with patch('builtins.__import__', side_effect=mock_import):
             result = _check_tkinter_available()
             assert result is False
@@ -142,12 +142,12 @@ class TestEdgeCaseScenarios:
         tour = [0, 1, 2]
         problem_name = "test_permission"
         tour_length = 123.45
-        
+
         # Create a directory with restrictive permissions
         restricted_dir = tmp_path / "restricted"
         restricted_dir.mkdir()
         restricted_dir.chmod(0o444)  # Read-only
-        
+
         try:
             with pytest.raises(IOError, match="Failed to save tour"):
                 save_heuristic_tour(tour, problem_name, tour_length, str(restricted_dir))
@@ -158,15 +158,15 @@ class TestEdgeCaseScenarios:
     def test_natural_tour_edge_cases(self):
         """Test natural tour generation edge cases."""
         from lin_kernighan_tsp_solver.starting_cycles import _natural_tour
-        
+
         # Test with 0 nodes
         result = _natural_tour(0)
         assert result == []
-        
+
         # Test with 1 node
         result = _natural_tour(1)
         assert result == [0]
-        
+
         # Test with large number
         result = _natural_tour(1000)
         assert result == list(range(1000))

@@ -79,7 +79,7 @@ def test_parallel_processing_handles_errors(monkeypatch, tmp_path, capsys):
 
     # Mock the TSP folder path and the processing function
     monkeypatch.setattr(lk_main, "TSP_FOLDER_PATH", tmp_path)
-    monkeypatch.setattr(lk_main, "plot_all_tours", lambda x: None)  # Prevent plotting
+    monkeypatch.setattr(lk_main, "plot_all_tours", lambda x, force_save_plot=False: None)  # Prevent plotting
     monkeypatch.setattr(lk_main, "process_single_instance", mock_process_instance_with_failure)
 
     # Run main, which calls _process_parallel
@@ -113,7 +113,7 @@ def test_sequential_processing_handles_errors(monkeypatch, tmp_path, capsys):
     (tmp_path / "fail.tsp").write_text("dummy")
 
     monkeypatch.setattr(lk_main, "TSP_FOLDER_PATH", tmp_path)
-    monkeypatch.setattr(lk_main, "plot_all_tours", lambda x: None)
+    monkeypatch.setattr(lk_main, "plot_all_tours", lambda x, force_save_plot=False: None)
     monkeypatch.setattr(lk_main, "process_single_instance", mock_process_instance_with_failure)
 
     # Run main sequentially

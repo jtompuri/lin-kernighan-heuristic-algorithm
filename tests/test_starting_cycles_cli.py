@@ -193,15 +193,18 @@ class TestStartingCycleIntegration:
 
         try:
             # Test that CLI argument changes the config
-            main(starting_cycle_method="nearest_neighbor")
+            # Use small file to speed up test - only test config override, not full solving
+            small_files = ["problems/random/rand4.tsp"]
+            
+            main(starting_cycle_method="nearest_neighbor", tsp_files=small_files, plot=False)
             assert LK_CONFIG["STARTING_CYCLE"] == "nearest_neighbor"
 
-            main(starting_cycle_method="random")
+            main(starting_cycle_method="random", tsp_files=small_files, plot=False)
             assert LK_CONFIG["STARTING_CYCLE"] == "random"
 
             # Test that None doesn't change config
             LK_CONFIG["STARTING_CYCLE"] = "greedy"
-            main(starting_cycle_method=None)
+            main(starting_cycle_method=None, tsp_files=small_files, plot=False)
             assert LK_CONFIG["STARTING_CYCLE"] == "greedy"
 
         finally:

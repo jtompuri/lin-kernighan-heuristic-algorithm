@@ -55,14 +55,13 @@ def test_save_heuristic_tour_empty():
 
 def test_main_with_save_tours_enabled():
     """Test that main function saves tours when enabled."""
-    # This test would need a full setup with TSP files,
-    # so for now we'll just check that the parameter is passed correctly
-
+    # Test with a small specific file to avoid processing all TSP files
+    small_files = ["problems/random/rand4.tsp"]
+    
     # Test that the main function accepts the save_tours parameter
-    # without raising an error (we can't test full functionality without
-    # setting up complete TSP instances)
+    # and processes the specified small file
     try:
-        main(use_parallel=False, save_tours=True, tsp_files=[])
+        main(use_parallel=False, save_tours=True, tsp_files=small_files, plot=False)
     except SystemExit:
         # Expected when no files are found
         pass

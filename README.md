@@ -47,9 +47,9 @@ sudo apt-get update
 sudo apt-get install python3-tk  # Enables interactive plot windows
 ```
 
-**Note**: The solver automatically detects tkinter availability and enables plotting by default:
-- **With tkinter**: Shows interactive plot windows  
-- **Without tkinter**: Automatically saves plots to `solutions/plots/`
+**Note**: The solver automatically detects `tkinter` availability and enables plotting by default:
+- **With `tkinter`**: Shows interactive plot windows  
+- **Without `tkinter`**: Automatically saves plots to `solutions/plots/`
 
 ## Usage
 
@@ -81,7 +81,7 @@ python -m lin_kernighan_tsp_solver
 | `--workers` | Number of parallel workers | All CPU cores |
 | `--sequential` | Force sequential processing | Parallel |
 | `--no-save-tours` | Don't save heuristic tours | **Tours saved by default** |
-| `--save-plot` | Force saving plots to files (even with GUI) | Interactive if tkinter available |
+| `--save-plot` | Force saving plots to files (even with GUI) | Interactive if `tkinter` available |
 | `--no-plot` | Disable all plot generation | **Plots enabled by default** |
 
 ### Starting Cycle Algorithms
@@ -100,7 +100,7 @@ python -m lin_kernighan_tsp_solver
 The solver automatically generates visualization plots showing optimal and heuristic tours:
 
 ```bash
-# Default behavior: generate plots (interactive if tkinter available, otherwise saved to file)
+# Default behavior: generate plots (interactive if `tkinter` available, otherwise saved to file)
 python -m lin_kernighan_tsp_solver problems/tsplib95/berlin52.tsp
 
 # Force saving plots to files (useful for servers/CI)

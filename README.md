@@ -110,12 +110,6 @@ python -m lin_kernighan_tsp_solver problems/tsplib95/berlin52.tsp --save-plot
 python -m lin_kernighan_tsp_solver problems/tsplib95/berlin52.tsp --no-plot
 ```
 
-**Smart Plotting Behavior:**
-- **With tkinter installed**: Interactive plots open in GUI window (default behavior)
-- **Without tkinter**: Plots automatically saved to `solutions/plots/` directory
-- **Override**: Use `--save-plot` to force file saving even with GUI available
-- **File naming**: `{problem_name}_tour.png` (single) or `{first}_to_{last}_{count}_tours.png` (multiple)
-
 ## Example Output
 
 ![Example output plots](/images/lin-kernighan-example-output-20s-parallel.png)

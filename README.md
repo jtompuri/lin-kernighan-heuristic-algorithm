@@ -110,12 +110,6 @@ python -m lin_kernighan_tsp_solver problems/tsplib95/berlin52.tsp --save-plot
 python -m lin_kernighan_tsp_solver problems/tsplib95/berlin52.tsp --no-plot
 ```
 
-**Smart Plotting Behavior:**
-- **With tkinter installed**: Interactive plots open in GUI window (default behavior)
-- **Without tkinter**: Plots automatically saved to `solutions/plots/` directory
-- **Override**: Use `--save-plot` to force file saving even with GUI available
-- **File naming**: `{problem_name}_tour.png` (single) or `{first}_to_{last}_{count}_tours.png` (multiple)
-
 ## Example Output
 
 ![Example output plots](/images/lin-kernighan-example-output-20s-parallel.png)
@@ -148,7 +142,7 @@ pip install -r requirements-dev.txt  # Includes testing, linting tools
 ### Testing
 ```bash
 python -m pytest                              # Run all tests
-python -m pytest --cov=lin_kernighan_tsp_solver --cov-report=html  # With coverage
+python -m pytest --cov=lin_kernighan_tsp_solver --cov-report=html --cov-report=term-missing  # With coverage
 ```
 
 ### Helper Tools

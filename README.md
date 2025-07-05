@@ -142,7 +142,7 @@ pip install -r requirements-dev.txt  # Includes testing, linting tools
 ### Testing
 ```bash
 python -m pytest                              # Run all tests
-python -m pytest --cov=lin_kernighan_tsp_solver --cov-report=html  # With coverage
+python -m pytest --cov=lin_kernighan_tsp_solver --cov-report=html --cov-report=term-missing  # With coverage
 ```
 
 ### Helper Tools

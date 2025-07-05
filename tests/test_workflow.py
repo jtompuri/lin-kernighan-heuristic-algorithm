@@ -200,9 +200,9 @@ def test_main_process_single_instance_success(monkeypatch):
     with patch('lin_kernighan_tsp_solver.main.process_single_instance', return_value=dummy_result), \
             patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
             patch('lin_kernighan_tsp_solver.main.plot_all_tours') as mock_plot:
-        main()
+        main()  # Plotting is enabled by default
         mock_display.assert_called_once_with([dummy_result], override_config={'TIME_LIMIT': None})
-        mock_plot.assert_called_once_with([dummy_result])
+        mock_plot.assert_called_once_with([dummy_result], force_save_plot=False)
 
 
 def test_main_multiple_tsp_files(monkeypatch):
@@ -238,11 +238,11 @@ def test_main_multiple_tsp_files(monkeypatch):
             patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
             patch('lin_kernighan_tsp_solver.main.plot_all_tours') as mock_plot:
         # Force sequential processing to avoid pickle issues with mocks
-        main(use_parallel=False)
+        main(use_parallel=False)  # Plotting is enabled by default
         # Should be called for both files
         assert mock_proc.call_count == 2
         mock_display.assert_called_once_with([dummy_result_a, dummy_result_b], override_config={'TIME_LIMIT': None})
-        mock_plot.assert_called_once_with([dummy_result_a, dummy_result_b])
+        mock_plot.assert_called_once_with([dummy_result_a, dummy_result_b], force_save_plot=False)
 
 
 def test_process_single_instance_handles_tsp_read_error(capsys):
@@ -324,9 +324,9 @@ def test_main_calls_summary_and_plot(monkeypatch):
     with patch('lin_kernighan_tsp_solver.main.process_single_instance', return_value=dummy_result), \
             patch('lin_kernighan_tsp_solver.main.display_summary_table') as mock_display, \
             patch('lin_kernighan_tsp_solver.main.plot_all_tours') as mock_plot:
-        main()
+        main()  # Plotting is now enabled by default
         mock_display.assert_called_once_with([dummy_result], override_config={'TIME_LIMIT': None})
-        mock_plot.assert_called_once_with([dummy_result])
+        mock_plot.assert_called_once_with([dummy_result], force_save_plot=False)
 
 
 def test_process_single_instance_gap_when_optimal_zero(monkeypatch):

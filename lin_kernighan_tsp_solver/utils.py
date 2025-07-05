@@ -10,9 +10,55 @@ Functions:
 """
 
 import math
+from pathlib import Path
 from typing import Any, Optional
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
+import matplotlib
+
+# Backend configuration function
+def _configure_matplotlib_backend(interactive: bool = False):
+    """Configure matplotlib backend based on plotting mode."""
+    if interactive:
+        # Try to use interactive backend
+        try:
+            import tkinter
+            matplotlib.use('TkAgg')
+            return True
+        except ImportError:
+            print("Warning: Interactive plotting requested but tkinter not available.")
+            print("Install tkinter with: sudo apt-get install python3-tk")
+            print("Falling back to non-interactive plotting.")
+            matplotlib.use('Agg')
+            return False
+    else:
+        matplotlib.use('Agg')
+        return False
+
+# Set non-interactive backend by default
+_configure_matplotlib_backend(False)
+
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
+except ImportError as e:
+    if "tkinter" in str(e).lower():
+        print("\nError: tkinter is required for matplotlib but not installed.")
+        print("On Ubuntu/Debian, install it with:")
+        print("    sudo apt-get install python3-tk")
+        print("\nAlternatively, matplotlib is configured to use non-interactive backend,")
+        print("so this error shouldn't occur during normal operation.")
+    raise
+
+# Check tkinter availability (without printing info message)
+def _check_tkinter_available():
+    """Check if tkinter is available without printing messages."""
+    try:
+        import tkinter
+        return True
+    except ImportError:
+        return False
+
+# Store tkinter availability
+_tkinter_available = _check_tkinter_available()
 
 from . import config
 
@@ -87,13 +133,29 @@ def display_summary_table(
     print("Done.")
 
 
-def plot_all_tours(results_data: list[dict[str, Any]]) -> None:
+def plot_all_tours(results_data: list[dict[str, Any]], force_save_plot: bool = False) -> None:
     """
     Plots optimal and heuristic tours for processed instances.
+    
+    Automatically uses interactive plotting if tkinter is available, otherwise saves to file.
+    This behavior can be overridden with force_save_plot.
 
     Args:
         results_data (list[dict[str, Any]]): List of result dictionaries.
+        force_save_plot (bool): If True, always save to file instead of showing interactively.
     """
+    # Determine plotting mode: interactive if tkinter available and not forced to save
+    use_interactive = _tkinter_available and not force_save_plot
+    
+    # Configure matplotlib backend based on plotting mode
+    if use_interactive:
+        backend_available = _configure_matplotlib_backend(True)
+        if not backend_available:
+            use_interactive = False  # Fall back to non-interactive
+            print("Falling back to saving plot to file.")
+    else:
+        _configure_matplotlib_backend(False)
+    
     # Filter for results that are not errored and have coordinates
     valid_results_to_plot = [
         r for r in results_data
@@ -168,7 +230,37 @@ def plot_all_tours(results_data: list[dict[str, Any]]) -> None:
         fig.subplots_adjust(top=(0.95 if num_to_plot_actual > cols else 0.90))
 
     plt.tight_layout(rect=(0, 0, 1, 0.96 if legend_elements else 1.0))  # Adjust for legend
-    plt.show()
+    
+    # Show interactive plot or save to file based on availability and preference
+    if use_interactive:
+        plt.show()
+        print("Interactive plot displayed. Close the plot window to continue.")
+    else:
+        # Save plot to solutions/plots directory with descriptive filename
+        plots_dir = Path("solutions/plots")
+        plots_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Create filename based on problem names
+        if num_to_plot_actual == 1:
+            # Single problem
+            plot_filename = f"{results_to_plot_limited[0]['name']}_tour.png"
+        else:
+            # Multiple problems - use first and last names or count
+            if num_to_plot_actual <= 3:
+                names = "_".join(r['name'] for r in results_to_plot_limited)
+                plot_filename = f"{names}_tours.png"
+            else:
+                first_name = results_to_plot_limited[0]['name']
+                last_name = results_to_plot_limited[-1]['name']
+                plot_filename = f"{first_name}_to_{last_name}_{num_to_plot_actual}_tours.png"
+        
+        plot_file = plots_dir / plot_filename
+        plt.savefig(plot_file, dpi=150, bbox_inches='tight')
+        print(f"Plot saved to: {plot_file}")
+        if not _tkinter_available:
+            print("Note: Install tkinter for interactive plots: sudo apt-get install python3-tk")
+    
+    plt.close()
 
 
 def save_heuristic_tour(tour: list[int], problem_name: str, tour_length: float,

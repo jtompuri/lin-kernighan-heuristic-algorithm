@@ -179,7 +179,9 @@ def main(
     time_limit: float | None = None,
     starting_cycle_method: str | None = None,
     tsp_files: list[str] | None = None,
-    save_tours: bool | None = None
+    save_tours: bool | None = None,
+    plot: bool = True,
+    force_save_plot: bool = False
 ):
     """Main function with configurable options.
 
@@ -275,7 +277,10 @@ def main(
 
     # Display results
     display_summary_table(all_instance_results_list, override_config={'TIME_LIMIT': time_limit})
-    plot_all_tours(all_instance_results_list)
+    
+    # Generate plots if requested
+    if plot and all_instance_results_list:
+        plot_all_tours(all_instance_results_list, force_save_plot=force_save_plot)
 
 
 def _process_sequential(

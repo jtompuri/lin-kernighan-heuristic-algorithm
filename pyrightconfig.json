@@ -1,19 +1,26 @@
 {
-    "python.analysis.extraPaths": [
-        "./lin_kernighan_tsp_solver",
-        "./venv/lib/python3.12/site-packages"
+    "executionEnvironments": [
+        {
+            "root": ".",
+            "pythonVersion": "3.12",
+            "pythonPlatform": "Linux",
+            "extraPaths": [
+                "./lin_kernighan_tsp_solver",
+                "./venv/lib/python3.12/site-packages"
+            ]
+        }
     ],
-    "python.analysis.typeCheckingMode": "basic",
-    "python.analysis.autoSearchPaths": true,
-    "python.analysis.autoImportCompletions": true,
-    "python.analysis.stubPath": "./venv/lib/python3.12/site-packages",
-    "python.analysis.include": [
+    "typeCheckingMode": "basic",
+    "autoSearchPaths": true,
+    "stubPath": "./venv/lib/python3.12/site-packages",
+    "include": [
         "./lin_kernighan_tsp_solver",
         "./tests",
         "./helpers"
     ],
-    "python.analysis.exclude": [
+    "exclude": [
         "**/node_modules",
-        "**/__pycache__"
+        "**/__pycache__",
+        "./venv"
     ]
 }

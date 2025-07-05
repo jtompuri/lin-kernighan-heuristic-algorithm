@@ -65,7 +65,7 @@ def test_process_single_instance_no_opt_tour_loaded(tmp_path, simple_tsp_setup):
         mock_clk.assert_called_once()
 
         # Check that known_optimal_length was None in the call to chained_lin_kernighan.
-        args, kwargs = mock_clk.call_args
+        _, kwargs = mock_clk.call_args
         assert kwargs.get('known_optimal_length') is None
 
         assert result is not None

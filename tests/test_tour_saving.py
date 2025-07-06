@@ -57,7 +57,7 @@ def test_main_with_save_tours_enabled():
     """Test that main function saves tours when enabled."""
     # Test with a small specific file to avoid processing all TSP files
     small_files = ["problems/random/rand4.tsp"]
-    
+
     # Test that the main function accepts the save_tours parameter
     # and processes the specified small file
     try:

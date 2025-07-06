@@ -9,18 +9,21 @@ Functions:
     plot_all_tours(results_data): Plots optimal and heuristic tours for processed instances.
 """
 
+from . import config
 import math
 from pathlib import Path
 from typing import Any, Optional
 import matplotlib
 
 # Backend configuration function
+
+
 def _configure_matplotlib_backend(interactive: bool = False):
     """Configure matplotlib backend based on plotting mode."""
     if interactive:
         # Try to use interactive backend
         try:
-            import tkinter
+            import tkinter  # noqa: F401
             matplotlib.use('TkAgg')
             return True
         except ImportError:
@@ -32,6 +35,7 @@ def _configure_matplotlib_backend(interactive: bool = False):
     else:
         matplotlib.use('Agg')
         return False
+
 
 # Set non-interactive backend by default
 _configure_matplotlib_backend(False)
@@ -49,18 +53,19 @@ except ImportError as e:
     raise
 
 # Check tkinter availability (without printing info message)
+
+
 def _check_tkinter_available():
     """Check if tkinter is available without printing messages."""
     try:
-        import tkinter
+        import tkinter  # noqa: F401
         return True
     except ImportError:
         return False
 
+
 # Store tkinter availability
 _tkinter_available = _check_tkinter_available()
-
-from . import config
 
 
 def display_summary_table(
@@ -136,7 +141,7 @@ def display_summary_table(
 def plot_all_tours(results_data: list[dict[str, Any]], force_save_plot: bool = False) -> None:
     """
     Plots optimal and heuristic tours for processed instances.
-    
+
     Automatically uses interactive plotting if tkinter is available, otherwise saves to file.
     This behavior can be overridden with force_save_plot.
 
@@ -146,7 +151,7 @@ def plot_all_tours(results_data: list[dict[str, Any]], force_save_plot: bool = F
     """
     # Determine plotting mode: interactive if tkinter available and not forced to save
     use_interactive = _tkinter_available and not force_save_plot
-    
+
     # Configure matplotlib backend based on plotting mode
     if use_interactive:
         backend_available = _configure_matplotlib_backend(True)
@@ -155,7 +160,7 @@ def plot_all_tours(results_data: list[dict[str, Any]], force_save_plot: bool = F
             print("Falling back to saving plot to file.")
     else:
         _configure_matplotlib_backend(False)
-    
+
     # Filter for results that are not errored and have coordinates
     valid_results_to_plot = [
         r for r in results_data
@@ -230,7 +235,7 @@ def plot_all_tours(results_data: list[dict[str, Any]], force_save_plot: bool = F
         fig.subplots_adjust(top=(0.95 if num_to_plot_actual > cols else 0.90))
 
     plt.tight_layout(rect=(0, 0, 1, 0.96 if legend_elements else 1.0))  # Adjust for legend
-    
+
     # Show interactive plot or save to file based on availability and preference
     if use_interactive:
         plt.show()
@@ -239,7 +244,7 @@ def plot_all_tours(results_data: list[dict[str, Any]], force_save_plot: bool = F
         # Save plot to solutions/plots directory with descriptive filename
         plots_dir = Path("solutions/plots")
         plots_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Create filename based on problem names
         if num_to_plot_actual == 1:
             # Single problem
@@ -253,13 +258,13 @@ def plot_all_tours(results_data: list[dict[str, Any]], force_save_plot: bool = F
                 first_name = results_to_plot_limited[0]['name']
                 last_name = results_to_plot_limited[-1]['name']
                 plot_filename = f"{first_name}_to_{last_name}_{num_to_plot_actual}_tours.png"
-        
+
         plot_file = plots_dir / plot_filename
         plt.savefig(plot_file, dpi=150, bbox_inches='tight')
         print(f"Plot saved to: {plot_file}")
         if not _tkinter_available:
             print("Note: Install tkinter for interactive plots: sudo apt-get install python3-tk")
-    
+
     plt.close()
 
 

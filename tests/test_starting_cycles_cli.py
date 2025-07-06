@@ -195,7 +195,7 @@ class TestStartingCycleIntegration:
             # Test that CLI argument changes the config
             # Use small file to speed up test - only test config override, not full solving
             small_files = ["problems/random/rand4.tsp"]
-            
+
             main(starting_cycle_method="nearest_neighbor", tsp_files=small_files, plot=False)
             assert LK_CONFIG["STARTING_CYCLE"] == "nearest_neighbor"
 

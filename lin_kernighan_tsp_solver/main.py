@@ -277,7 +277,7 @@ def main(
 
     # Display results
     display_summary_table(all_instance_results_list, override_config={'TIME_LIMIT': time_limit})
-    
+
     # Generate plots if requested
     if plot and all_instance_results_list:
         plot_all_tours(all_instance_results_list, force_save_plot=force_save_plot)

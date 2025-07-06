@@ -78,14 +78,15 @@ class Tour:
             self.cost = 0.0
             return
 
-        # Use vectorized operations for better performance
-        if self.n > 10:  # Threshold for vectorization benefit
+        # Use vectorized operations for larger tours where the overhead is justified
+        # Benchmark shows vectorization becomes beneficial around n > 30-50
+        if self.n >= 50:  # Threshold based on empirical benchmarking
             indices = np.arange(self.n)
             current_nodes = self.order[indices]
             next_nodes = self.order[(indices + 1) % self.n]
             self.cost = float(np.sum(D[current_nodes, next_nodes]))
         else:
-            # Original loop for small tours
+            # Use simple loop for small tours to avoid vectorization overhead
             self.cost = sum(
                 float(D[self.order[i], self.order[(i + 1) % self.n]])
                 for i in range(self.n)

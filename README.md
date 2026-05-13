@@ -110,6 +110,24 @@ python -m lin_kernighan_tsp_solver problems/tsplib95/berlin52.tsp --save-plot
 python -m lin_kernighan_tsp_solver problems/tsplib95/berlin52.tsp --no-plot
 ```
 
+### Weighted Voronoi Stippling Workflow
+
+Use this workflow to generate stipple points, solve with LK, and visualize the LK tour:
+
+```bash
+# 1) In weighted-voronoi-stippling: generate a TSPLIB .tsp instance
+python stippling.py images/photo.jpg --stipples 10000
+
+# 2) In this repository: run LK with tour saving enabled (default)
+python -m lin_kernighan_tsp_solver /path/to/weighted-voronoi-stippling/stipplings/tsp/photo_10000.tsp
+
+# 3) In weighted-voronoi-stippling: visualize with the saved heuristic tour
+python visualize.py --tsp /path/to/weighted-voronoi-stippling/stipplings/tsp/photo_10000.tsp --tour solutions/tours/photo_10000.heu.tour
+```
+
+Saved heuristic tours use the `.heu.tour` suffix and are written in TSPLIB `TOUR` format.
+Node IDs in the file are 1-based (TSPLIB convention), and are read back as 0-based internally.
+
 ## Example Output
 
 ![Example output plots](/images/lin-kernighan-example-output-20s-parallel.png)

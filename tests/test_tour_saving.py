@@ -4,6 +4,7 @@ import tempfile
 import pytest
 from pathlib import Path
 from lin_kernighan_tsp_solver.utils import save_heuristic_tour
+from lin_kernighan_tsp_solver.tsp_io import read_opt_tour
 from lin_kernighan_tsp_solver.main import main
 
 
@@ -20,17 +21,16 @@ def test_save_heuristic_tour():
         assert Path(saved_path).exists()
         assert Path(saved_path).name == "test_problem.heu.tour"
 
-        # Check file content
-        with open(saved_path, 'r') as f:
-            content = f.read()
-
-        assert "NAME: test_problem.heu.tour" in content
-        assert "TYPE: TOUR" in content
-        assert "COMMENT: Heuristic tour (Lin-Kernighan), length 123.45" in content
-        assert "DIMENSION: 5" in content
-        assert "TOUR_SECTION" in content
-        assert "1\n2\n3\n4\n5\n" in content  # 1-indexed
-        assert "-1\nEOF" in content
+        # Check file content structure and TSPLIB TOUR fields
+        lines = Path(saved_path).read_text(encoding='utf-8').splitlines()
+        assert lines[0] == "NAME: test_problem.heu.tour"
+        assert lines[1] == "TYPE: TOUR"
+        assert lines[2] == "COMMENT: Heuristic tour (Lin-Kernighan), length 123.45"
+        assert lines[3] == "DIMENSION: 5"
+        assert lines[4] == "TOUR_SECTION"
+        assert lines[5:10] == ["1", "2", "3", "4", "5"]  # 1-indexed nodes
+        assert lines[10] == "-1"
+        assert lines[11] == "EOF"
 
 
 def test_save_heuristic_tour_empty():
@@ -51,6 +51,19 @@ def test_save_heuristic_tour_empty():
 
         assert "DIMENSION: 0" in content
         assert "TOUR_SECTION\n-1\n" in content
+
+
+def test_save_heuristic_tour_round_trip_with_read_opt_tour():
+    """Saved .heu.tour should round-trip back to the same 0-based tour."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_tour = [0, 2, 1, 3]
+        problem_name = "round_trip"
+        tour_length = 42.0
+
+        saved_path = save_heuristic_tour(original_tour, problem_name, tour_length, temp_dir)
+
+        loaded_tour = read_opt_tour(saved_path)
+        assert loaded_tour == original_tour
 
 
 def test_main_with_save_tours_enabled():
